@@ -39,4 +39,13 @@ export interface StorageCtx {
   collators: Collator[] | undefined;
   balance: AssetBalance | undefined;
   currentlyNominatedCollator: Collator | undefined;
+  setNewUserIntroStakingValues: (values: UserIntroValues | undefined) => void;
+  newUserIntroStakingValues: UserIntroValues | undefined;
+}
+
+export interface UserIntroValues {
+  ringAmount: BigNumber;
+  ktonAmount: BigNumber;
+  depositAmount: BigNumber;
+  totalPower: BigNumber;
 }

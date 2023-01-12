@@ -1,5 +1,5 @@
 import { createContext, PropsWithChildren, useCallback, useContext, useEffect, useRef, useState } from "react";
-import { AssetBalance, Collator, StakingAsset, StorageCtx } from "@darwinia/app-types";
+import { AssetBalance, Collator, StakingAsset, StorageCtx, UserIntroValues } from "@darwinia/app-types";
 import { useWallet } from "./walletProvider";
 import { WsProvider, ApiPromise } from "@polkadot/api";
 import { FrameSystemAccountInfo } from "@darwinia/api-derive/accounts/types";
@@ -26,6 +26,10 @@ const initialState: StorageCtx = {
   calculateExtraPower: (stakingAsset: StakingAsset): BigNumber => {
     return BigNumber(0);
   },
+  setNewUserIntroStakingValues: (values: UserIntroValues) => {
+    //no nothing
+  },
+  newUserIntroStakingValues: undefined,
 };
 
 export type UnSubscription = () => void;
@@ -35,6 +39,8 @@ const StorageContext = createContext(initialState);
 export const StorageProvider = ({ children }: PropsWithChildren) => {
   const { selectedNetwork, selectedAccount } = useWallet();
   const [apiPromise, setApiPromise] = useState<ApiPromise>();
+  /* These will be used to show the staked values in the introduction layout */
+  const [newUserIntroStakingValues, setNewUserIntroStakingValues] = useState<UserIntroValues | undefined>();
   /* Balance will be formed by manually combining data, ktonBalance from useLedger() hook and
    * and useEffect from storageProvider */
   const [balance, setBalance] = useState<AssetBalance>({
@@ -168,6 +174,8 @@ export const StorageProvider = ({ children }: PropsWithChildren) => {
         calculatePower,
         collators,
         currentlyNominatedCollator,
+        setNewUserIntroStakingValues,
+        newUserIntroStakingValues,
       }}
     >
       {children}

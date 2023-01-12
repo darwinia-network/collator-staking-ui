@@ -38,7 +38,7 @@ const enUs = {
   [localeKeys.collator]: "Collator",
   [localeKeys.rewardLastSession]: "Your Rewards Last Session / In Total",
   [localeKeys.youStaked]: "You Staked (Power)",
-  [localeKeys.bondedTokens]: "Your Bonded Tokens",
+  [localeKeys.yourBondedTokens]: "Your Bonded Tokens",
   [localeKeys.approveKton]: "Approve {{token}}",
   [localeKeys.depositSelected]: "{{number}} deposits selected",
   [localeKeys.power]: "Power",
@@ -120,6 +120,14 @@ const enUs = {
   [localeKeys.stopCollatingInfo]: `Collators maintain parachains by collecting parachain transactions from users and producing state transition proofs for Relay Chain validators. Sure to stop collation now?`,
   [localeKeys.noDepositsToUnbond]: "No deposits to unbond",
   [localeKeys.noMoreDepositsToBond]: "No more deposits to bond",
+  [localeKeys.switchChain]: "Switch chain",
+  [localeKeys.switchChainInfo]: `You can choose the Chain in which you want to participate in Staking or deposit here.`,
+  [localeKeys.bondedTokens]: "Bonded tokens",
+  [localeKeys.bondedTokensInfo]: `Here are the tokens you’ve bonded in Staking. Note that the power is not working yet, you need to delegate the tokens to a collator to complete the staking process.`,
+  [localeKeys.next]: "Next",
+  [localeKeys.gotIt]: "Got it!",
+  [localeKeys.selectCollatorInfo]: "You can Select A Collator to delegate your bonded tokens to.",
+  [localeKeys.unbondAllInfo]: `<div>In case you want to quit the Staking, you can unbond all your bonded tokens here. Note that it takes 14 days to unbond all tokens and then it will have to be manually executed to make those tokens transferrable.</div><div style="margin-top: 10px;">Remember to come back here to execute the unbonding then.</div>`,
 };
 
 export default enUs;

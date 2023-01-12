@@ -1,4 +1,4 @@
-import { SupportedWallet } from "./wallet";
+import { ChainConfig, SupportedWallet } from "./wallet";
 
 export interface Account {
   id: number;
@@ -6,6 +6,7 @@ export interface Account {
 
 export interface Storage {
   isConnectedToWallet?: boolean;
-  selectedNetwork?: boolean;
+  selectedNetwork?: ChainConfig;
   selectedWallet?: SupportedWallet;
+  wasIntroShown?: boolean;
 }

@@ -156,6 +156,10 @@ a {
   color: #ffffff !important;
   padding: 20px;
   min-width: 256px !important;
+  &[staked-items-intro] {
+    left: 0 !important;
+    bottom: 60px !important;
+  }
   * {
     font-family: JetBrainsMono-Light, serif !important;
     .title {
@@ -212,5 +216,18 @@ a {
 }
 
 .intro-step-heighlight {
-  box-shadow: rgb(33 33 33 / 50%) 0 0 0 5000px !important;
+  box-shadow: rgba(33,33,33,0.5) 0 0 0 5000px !important;
 }
+
+.staked-items-intro-custom-tip {
+  position: absolute;
+  background: black;
+  width: 545px;
+  right: 0;
+  z-index: 9;
+  .staked-wrapper {
+    background-color: rgba(255,255,255,0.2);
+  }
+}
+
+

@@ -34,7 +34,7 @@ const StakingRecordsTable = () => {
   const selectCollatorModalRef = useRef<SelectCollatorRefs>(null);
   const { t } = useAppTranslation();
   const { selectedNetwork, stakingContract, setTransactionStatus } = useWallet();
-  const { stakedAssetDistribution, isLoadingLedger } = useStorage();
+  const { stakedAssetDistribution, isLoadingLedger, setNewUserIntroStakingValues } = useStorage();
   const [showBondTokenModal, setShowBondTokenModal] = useState<boolean>(false);
   const [showUndelegateModal, setShowUndelegateModal] = useState<boolean>(false);
   const [showBondDepositModal, setShowBondDepositModal] = useState<boolean>(false);
@@ -218,6 +218,18 @@ const StakingRecordsTable = () => {
 
     const accountNeedsACollator = hasSomeStakingAmount && !currentlyNominatedCollator;
 
+    if (accountNeedsACollator) {
+      /* This will be used to show the staked values in the introduction layout */
+      setNewUserIntroStakingValues({
+        ringAmount: stakedAssetDistribution.ring.bonded,
+        ktonAmount: stakedAssetDistribution.kton.bonded,
+        depositAmount: stakedAssetDistribution.ring.totalOfDepositsInStaking ?? BigNumber(0),
+        totalPower: totalStakedPower,
+      });
+    } else {
+      setNewUserIntroStakingValues(undefined);
+    }
+
     setDataSource([
       {
         id: currentlyNominatedCollator?.accountAddress ?? "1",
@@ -262,7 +274,7 @@ const StakingRecordsTable = () => {
                 onShowSelectCollatorModal();
               }}
               btnType={"secondary"}
-              className={"!px-[15px] !h-[30px]"}
+              className={"!px-[15px] !h-[30px] select-collator-btn"}
             >
               {t(localeKeys.selectCollator)}
             </Button>
@@ -285,7 +297,7 @@ const StakingRecordsTable = () => {
     },
     {
       id: "2",
-      title: <div className={"bonded-tokens"}>{t(localeKeys.youStaked)}</div>,
+      title: <div>{t(localeKeys.youStaked)}</div>,
       key: "staked",
       width: "250px",
       render: (row) => {
@@ -319,7 +331,7 @@ const StakingRecordsTable = () => {
     },
     {
       id: "4",
-      title: <div className={"bonded-tokens"}>{t(localeKeys.bondedTokens)}</div>,
+      title: <div className={"bonded-tokens"}>{t(localeKeys.yourBondedTokens)}</div>,
       key: "bondedTokens",
       render: (row) => {
         return (
@@ -531,7 +543,7 @@ const StakingRecordsTable = () => {
                 onUnbondAll();
               }}
               btnType={"secondary"}
-              className={"!px-[15px] !h-[30px]"}
+              className={"!px-[15px] !h-[30px] unbond-all-btn"}
             >
               {t(localeKeys.unbondAll)}
             </Button>
