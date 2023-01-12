@@ -153,21 +153,23 @@ const Header = () => {
             </div>
             {/*PC network switch and wallet connection*/}
             <div className={"hidden lg:flex items-center gap-[40px]"}>
-              {supportedNetworks.map((network) => {
-                const activeNetworkClass =
-                  network.name.toLowerCase() === selectedNetwork?.name.toLowerCase() ? `after:block` : `after:hidden`;
-                return (
-                  <div
-                    onClick={() => {
-                      changeConnectedNetwork(network);
-                    }}
-                    className={`cursor-pointer relative h-[36px] flex items-center after:absolute after:left-0 after:right-0 after:h-[2px] after:bottom-0 after:bg-primary ${activeNetworkClass}`}
-                    key={`${network.name}-${network.displayName}`}
-                  >
-                    {network.displayName}
-                  </div>
-                );
-              })}
+              <div className={"pc-network-selector flex items-center  gap-[40px]"}>
+                {supportedNetworks.map((network) => {
+                  const activeNetworkClass =
+                    network.name.toLowerCase() === selectedNetwork?.name.toLowerCase() ? `after:block` : `after:hidden`;
+                  return (
+                    <div
+                      onClick={() => {
+                        changeConnectedNetwork(network);
+                      }}
+                      className={`cursor-pointer relative h-[36px] flex items-center after:absolute after:left-0 after:right-0 after:h-[2px] after:bottom-0 after:bg-primary ${activeNetworkClass}`}
+                      key={`${network.name}-${network.displayName}`}
+                    >
+                      {network.displayName}
+                    </div>
+                  );
+                })}
+              </div>
               {selectedAccount ? (
                 <div className={"border-primary border pl-[15px]"}>
                   <div className={"flex items-center gap-[10px]"}>

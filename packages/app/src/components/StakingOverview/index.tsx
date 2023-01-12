@@ -195,6 +195,9 @@ const StakingOverview = () => {
 
     try {
       if (!selectedCollator?.accountAddress) {
+        notification.error({
+          message: <div>{t(localeKeys.selectCollator)}</div>,
+        });
         return;
       }
       const depositsIds = depositsToStake.map((item) => EthersBigNumber.from(item.id));

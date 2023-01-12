@@ -284,8 +284,8 @@ const StakingRecordsTable = () => {
       },
     },
     {
-      id: "3",
-      title: <div>{t(localeKeys.youStaked)}</div>,
+      id: "2",
+      title: <div className={"bonded-tokens"}>{t(localeKeys.youStaked)}</div>,
       key: "staked",
       width: "250px",
       render: (row) => {
@@ -319,7 +319,7 @@ const StakingRecordsTable = () => {
     },
     {
       id: "4",
-      title: <div>{t(localeKeys.bondedTokens)}</div>,
+      title: <div className={"bonded-tokens"}>{t(localeKeys.bondedTokens)}</div>,
       key: "bondedTokens",
       render: (row) => {
         return (

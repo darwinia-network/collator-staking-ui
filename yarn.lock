@@ -3410,10 +3410,10 @@ dargs@^7.0.0:
   resolved "https://registry.npmjs.org/dargs/-/dargs-7.0.0.tgz"
   integrity sha512-2iy1EkLdlBzQGvbweYRFxmFath8+K7+AKB0TlhHWkNuH+TmovaMH/Wp7V7R4u7f4SnX3OgLsU9t1NI9ioDnUpg==
 
-darwinia-js-sdk@1.2.11:
-  version "1.2.11"
-  resolved "https://registry.yarnpkg.com/darwinia-js-sdk/-/darwinia-js-sdk-1.2.11.tgz#ddb7198ff22eec3668071af3bc2c427d7611ab11"
-  integrity sha512-Zy957DACPiMGslu77Oq/AG4NQlicJ5xQC/9nIKgAjapt1ov3Wf27R6jtbUB7VXLn757BcpA2VJgvE7nAnKcvTQ==
+darwinia-js-sdk@^1.2.13:
+  version "1.2.13"
+  resolved "https://registry.yarnpkg.com/darwinia-js-sdk/-/darwinia-js-sdk-1.2.13.tgz#0324bec770cda888640480540ba494def389db78"
+  integrity sha512-8NM14LMb4bzB9YuZDrw+uR+KlIa2wKAyOJjLnc3t5Pwzr19tbAOQmLtVvhsOZF9HI+e6RrQuIv9OLEsypi8mcA==
   dependencies:
     "@polkadot/types" "^9.9.4"
     ethers "^5.7.2"
@@ -4907,6 +4907,16 @@ internal-slot@^1.0.3:
     get-intrinsic "^1.1.0"
     has "^1.0.3"
     side-channel "^1.0.4"
+
+intro.js-react@^0.7.1:
+  version "0.7.1"
+  resolved "https://registry.yarnpkg.com/intro.js-react/-/intro.js-react-0.7.1.tgz#e045e718d8716fcd66df6be92e5a82da0bc186e3"
+  integrity sha512-UtRfSlfkzY5Ztti3dcnHuWFLy2+EGFNgLXrVZUX8dloYj49e2iqEhQ7kbDH2B9lqVIy3yMfnsyWkWB61AAnz3A==
+
+intro.js@^6.0.0:
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/intro.js/-/intro.js-6.0.0.tgz#710c963ce7bc4f5d1af1f901fffc83ad7af658da"
+  integrity sha512-ZUiR6BoLSvPSlLG0boewnWVgji1fE1gBvP/pyw5pgCKXEDQz1mMeUxarggClPNs71UTq364LwSk9zxz17A9gaQ==
 
 ip@^2.0.0:
   version "2.0.0"

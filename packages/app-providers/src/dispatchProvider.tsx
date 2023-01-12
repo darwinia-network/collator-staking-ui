@@ -27,7 +27,7 @@ export const DispatchProvider = ({ children }: PropsWithChildren) => {
         if (!provider) {
           return Promise.resolve(false);
         }
-        console.log("clientBuilder AAA=====💣", clientBuilder);
+        console.log("clientBuilder AAA=====🔥", clientBuilder);
         console.log("clientBuilder.buildPangolin2Client", clientBuilder.buildPangolin2Client);
 
         /* We appended 00 to the session key to represent that we don't need any proof. Originally the setKeys method

@@ -148,3 +148,69 @@ a {
     color: #ff0083;
   }
 }
+
+.intro-step-tooltip {
+  border-radius: 0 !important;
+  border: 2px solid #ff0083 !important;
+  background-color: #242A2E !important;
+  color: #ffffff !important;
+  padding: 20px;
+  min-width: 256px !important;
+  * {
+    font-family: JetBrainsMono-Light, serif !important;
+    .title {
+      font-family: JetBrainsMono-Bold, serif !important;
+    }
+  }
+
+  .introjs-tooltip-header {
+    display: none;
+  }
+
+  .introjs-arrow {
+    display: none !important;
+  }
+
+  .introjs-tooltiptext {
+    font-size: 14px;
+    line-height: 18px;
+    padding: 0;
+  }
+
+  .introjs-tooltipbuttons {
+    border-top: none;
+    padding: 0 !important;
+    margin-top: 10px;
+  }
+
+  .introjs-button {
+    width: 100%;
+    background: transparent;
+    border: 1px solid #ff0083;
+    padding: 7px 0;
+    border-radius: 0;
+    text-align: center;
+    color: white !important;
+    text-shadow: none !important;
+
+    &:hover,
+    &:active,
+    &:focus {
+      opacity: 0.8;
+      background-color: transparent !important;
+      border-color: #ff0083 !important;
+      box-shadow: none !important;
+    }
+    &:active {
+      opacity: 0.7;
+    }
+  }
+
+  .introjs-prevbutton {
+    display: none;
+  }
+}
+
+.intro-step-heighlight {
+  box-shadow: rgb(33 33 33 / 50%) 0 0 0 5000px !important;
+}
