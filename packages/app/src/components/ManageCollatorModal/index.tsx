@@ -129,9 +129,19 @@ const ManageCollatorModal = forwardRef<ManageCollatorRefs>((props, ref) => {
       return;
     }
     setLoading(true);
-    const response = await setCollatorSessionKey(sessionKey, provider);
+    const isSuccessful = await setCollatorSessionKey(sessionKey, provider);
     setLoading(false);
-    console.log("response=====", response);
+    if (isSuccessful) {
+      setSessionKey("");
+      notification.error({
+        message: <div>{t(localeKeys.operationSuccessful)}</div>,
+      });
+      return;
+    }
+
+    notification.error({
+      message: <div>{t(localeKeys.somethingWrongHappened)}</div>,
+    });
   };
 
   const onStopCollating = async () => {

@@ -3,9 +3,6 @@
   "compilerOptions": {
     "baseUrl": ".",
     "rootDir": "src",
-    "paths": {
-      "my-darwinia-storage": ["../../node_modules/darwinia-storage/dist"]
-    }
   },
   "include": ["src"]
 }

@@ -5,6 +5,8 @@ import { useWallet } from "@darwinia/app-providers";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import { getStore, setStore } from "@darwinia/app-utils";
+import { ethers } from "ethers";
+import { clientBuilder } from "darwinia-js-sdk";
 
 const Root = () => {
   const {

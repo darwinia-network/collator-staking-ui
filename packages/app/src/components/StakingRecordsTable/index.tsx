@@ -87,7 +87,7 @@ const StakingRecordsTable = () => {
       const ktonBigNumber = stakedAssetDistribution?.kton.bonded ?? BigNumber(0);
       const ringEthersBigNumber = EthersBigNumber.from(ringBigNumber.toString());
       const ktonEthersBigNumber = EthersBigNumber.from(ktonBigNumber.toString());
-      const depositsIds = deposits?.map((item) => EthersBigNumber.from(item.id)) ?? [];
+      const depositsIds = stakedDepositsIds?.map((id) => EthersBigNumber.from(id)) ?? [];
       const response = (await stakingContract?.unstake(
         ringEthersBigNumber,
         ktonEthersBigNumber,
@@ -966,6 +966,7 @@ const UndelegationModal = ({ isVisible, onClose, onConfirm, onCancel }: Undelega
     }
   };
 
+  //TODO the localeKeys.sureToUndelegate text needs to be changed since undelegation doesn't take 14 days
   return (
     <ModalEnhanced
       modalTitle={t(localeKeys.sureToUndelegate)}

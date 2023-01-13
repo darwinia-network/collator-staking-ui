@@ -19,6 +19,7 @@
     "@ethersproject/providers": "^5.7.2",
     "@types/react-transition-group": "^4.4.5",
     "bignumber.js": "^9.1.1",
+    "darwinia-js-sdk": "^1.2.18",
     "ethers": "^5.7.2",
     "graphql": "^16.6.0",
     "intro.js": "^6.0.0",

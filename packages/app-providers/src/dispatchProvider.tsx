@@ -3,6 +3,7 @@ import { createContext, PropsWithChildren, useCallback, useContext } from "react
 import { clientBuilder } from "darwinia-js-sdk";
 import { Web3Provider } from "@ethersproject/providers";
 import { HexString } from "@polkadot/util/types";
+import { ethers } from "ethers";
 
 const initialState: DispatchCtx = {
   setCollatorSessionKey: (sessionKey: string, provider: Web3Provider | undefined) => {
@@ -27,8 +28,6 @@ export const DispatchProvider = ({ children }: PropsWithChildren) => {
         if (!provider) {
           return Promise.resolve(false);
         }
-        console.log("clientBuilder AAA=====🔥", clientBuilder);
-        console.log("clientBuilder.buildPangolin2Client", clientBuilder.buildPangolin2Client);
 
         /* We appended 00 to the session key to represent that we don't need any proof. Originally the setKeys method
          * required two params which are session key and proof but here we append both values into one param */
@@ -37,11 +36,10 @@ export const DispatchProvider = ({ children }: PropsWithChildren) => {
           provider.getSigner(),
           sessionKeyWithProof as HexString
         );
-        console.log("sessionKeyRes=======", res);
+
         return Promise.resolve(true);
       } catch (e) {
         console.log(e);
-        console.log("AN error caught=======");
         return Promise.resolve(false);
       }
     },

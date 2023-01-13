@@ -221,6 +221,7 @@ const StakingOverview = () => {
       setPowerByRing(BigNumber(0));
       setPowerByKton(BigNumber(0));
       setPowerByDeposits(BigNumber(0));
+      setSelectedCollator(undefined);
       setTransactionStatus(false);
       notification.success({
         message: <div>{t(localeKeys.operationSuccessful)}</div>,

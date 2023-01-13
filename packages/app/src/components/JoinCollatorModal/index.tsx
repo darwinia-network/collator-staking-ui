@@ -1,13 +1,9 @@
-import { ChangeEvent, forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
-import { Button, Column, Input, ModalEnhanced, notification, Tab, Table, Tabs, Tooltip } from "@darwinia/ui";
+import { ChangeEvent, forwardRef, useImperativeHandle, useState } from "react";
+import { Button, Input, ModalEnhanced, notification, Tooltip } from "@darwinia/ui";
 import { localeKeys, useAppTranslation } from "@darwinia/app-locale";
-import { Collator } from "@darwinia/app-types";
-import JazzIcon from "../JazzIcon";
-import copyIcon from "../../assets/images/copy.svg";
-import { copyToClipboard, isValidNumber, prettifyNumber } from "@darwinia/app-utils";
+import { isValidNumber } from "@darwinia/app-utils";
 import helpIcon from "../../assets/images/help.svg";
-import { useDispatch, useStorage, useWallet } from "@darwinia/app-providers";
-import BigNumber from "bignumber.js";
+import { useDispatch, useWallet } from "@darwinia/app-providers";
 import { BigNumber as EthersBigNumber } from "@ethersproject/bignumber/lib/bignumber";
 import { TransactionResponse } from "@ethersproject/providers";
 
@@ -15,11 +11,7 @@ export interface JoinCollatorRefs {
   show: () => void;
 }
 
-export interface JoinCollatorProps {
-  onCollatorJoined: () => void;
-}
-
-const JoinCollatorModal = forwardRef<JoinCollatorRefs, JoinCollatorProps>(({ onCollatorJoined }, ref) => {
+const JoinCollatorModal = forwardRef<JoinCollatorRefs>((props, ref) => {
   const [isVisible, setIsVisible] = useState(false);
   const [commission, setCommission] = useState<string>("");
   const [commissionHasError, setCommissionHasError] = useState<boolean>(false);
@@ -110,9 +102,19 @@ const JoinCollatorModal = forwardRef<JoinCollatorRefs, JoinCollatorProps>(({ onC
     }
 
     setLoading(true);
-    const response = await setCollatorSessionKey(sessionKey, provider);
+    const isSuccessful = await setCollatorSessionKey(sessionKey, provider);
     setLoading(false);
-    console.log("set session key", response);
+    if (isSuccessful) {
+      setSessionKey("");
+      notification.error({
+        message: <div>{t(localeKeys.operationSuccessful)}</div>,
+      });
+      return;
+    }
+
+    notification.error({
+      message: <div>{t(localeKeys.somethingWrongHappened)}</div>,
+    });
   };
 
   useImperativeHandle(ref, () => {

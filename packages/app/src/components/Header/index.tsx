@@ -75,10 +75,6 @@ const Header = () => {
     manageCollatorModalRef.current?.show();
   };
 
-  const onCollatorJoined = () => {
-    console.log("collator joined");
-  };
-
   const isUserACollator = () => {
     return collators?.some((collator) => collator.accountAddress.toLowerCase() === selectedAccount?.toLowerCase());
   };
@@ -229,7 +225,7 @@ const Header = () => {
           </div>
         </div>
       </div>
-      <JoinCollatorModal ref={joinCollatorModalRef} onCollatorJoined={onCollatorJoined} />
+      <JoinCollatorModal ref={joinCollatorModalRef} />
       <ManageCollatorModal ref={manageCollatorModalRef} />
     </div>
   );
