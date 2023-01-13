@@ -26,7 +26,7 @@ const initialState: StorageCtx = {
   calculateExtraPower: (stakingAsset: StakingAsset): BigNumber => {
     return BigNumber(0);
   },
-  setNewUserIntroStakingValues: (values: UserIntroValues) => {
+  setNewUserIntroStakingValues: (values: UserIntroValues | undefined) => {
     //no nothing
   },
   newUserIntroStakingValues: undefined,
