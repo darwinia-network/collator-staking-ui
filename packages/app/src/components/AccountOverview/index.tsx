@@ -27,7 +27,7 @@ const AccountOverview = () => {
     error,
   } = useQuery<{ stakingRecord: StakingRecord }, StakingStashQuery>(GET_LATEST_STAKING_REWARDS, {
     variables: {
-      accountAddress: ethers.utils.getAddress(selectedAccount ?? ""),
+      accountAddress: selectedAccount ? ethers.utils.getAddress(selectedAccount) : "",
       itemsCount: 3,
     },
   });
