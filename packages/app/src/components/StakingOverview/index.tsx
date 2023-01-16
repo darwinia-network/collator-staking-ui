@@ -202,19 +202,21 @@ const StakingOverview = () => {
       }
       const depositsIds = depositsToStake.map((item) => EthersBigNumber.from(item.id));
       setTransactionStatus(true);
-      /*const response = await stakeAndNominate({
+      const isSuccessful = await stakeAndNominate({
         ringAmount: ringEthersBigNumber,
         ktonAmount: ktonEthersBigNumber,
         provider: provider,
         collatorAddress: selectedCollator?.accountAddress,
-        depositIds: depositsIds
-      });*/
-      const response = (await stakingContract?.stake(
-        ringEthersBigNumber,
-        ktonEthersBigNumber,
-        depositsIds
-      )) as TransactionResponse;
-      await response.wait(1);
+        depositIds: depositsIds,
+      });
+
+      if (!isSuccessful) {
+        notification.error({
+          message: <div>{t(localeKeys.somethingWrongHappened)}</div>,
+        });
+        return;
+      }
+
       setDepositsToStake([]);
       setRingToStake("");
       setKtonToStake("");

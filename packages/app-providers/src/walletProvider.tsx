@@ -53,6 +53,16 @@ export const WalletProvider = ({ children }: PropsWithChildren) => {
   const [walletConfig, setWalletConfig] = useState<WalletConfig>();
   const [isLoadingTransaction, setLoadingTransaction] = useState<boolean>(false);
 
+  /*useEffect(() => {
+    if (!provider) {
+      return;
+    }
+    console.log("start listening to blocks=====");
+    provider.on("block", (block) => {
+      console.log("new block=====🚒", block);
+    });
+  }, [provider]);*/
+
   const isWalletInstalled = () => {
     return !!window.ethereum;
   };

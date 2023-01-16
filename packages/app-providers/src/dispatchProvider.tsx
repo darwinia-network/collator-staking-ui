@@ -54,21 +54,22 @@ export const DispatchProvider = ({ children }: PropsWithChildren) => {
         }
         const signer = provider.getSigner();
         // prepare calls
-        const nominateCall = getClient(provider).calls.staking.nominateD(signer, collatorAddress as HexString);
-
-        const stakeCall = getClient(provider).calls.staking.stake(
-          signer,
+        const nominateCall = getClient(provider).calls.staking.nominateCall(collatorAddress);
+        const ids = depositIds.map((item) => item.toString());
+        console.log("ids updated====", ids);
+        /*The ring and kton values should simply be in wei then converted to string NOT BigNumber */
+        const stakeCall = getClient(provider).calls.staking.stakeCall(
           ringAmount.toString(),
           ktonAmount.toString(),
-          depositIds
+          ids
         );
 
         // dispatch
-        const res = await getClient(provider).calls.utility.batchAll(signer, [nominateCall, stakeCall]);
+        const res = await getClient(provider).calls.utility.batchAll(signer, [stakeCall, nominateCall]);
+        console.log(res);
         return true;
       } catch (e) {
         console.log(e);
-        console.log("AN error caught=======");
         return Promise.resolve(false);
       }
     },
