@@ -27,7 +27,15 @@ interface HumanTime {
   unit: string;
 }
 
-export const secondsToHumanTime = (time: number): HumanTime => {
+export const secondsToHumanTime = (time: number, forceHoursOutput = false): HumanTime => {
+  if (forceHoursOutput) {
+    const hours = time / 3600;
+    const value = Math.ceil(hours);
+    return {
+      time: value,
+      unit: value === 1 ? "hour" : "hours",
+    };
+  }
   const days = time / (3600 * 24);
   if (days >= 1) {
     // 1.000003 for example will be returned as 2 days

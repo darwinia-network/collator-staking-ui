@@ -18,7 +18,7 @@ import minusIcon from "../../assets/images/minus-square.svg";
 import helpIcon from "../../assets/images/help.svg";
 import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { Deposit, Delegate, UnbondingAsset } from "@darwinia/app-types";
-import { formatToWei, isValidNumber, prettifyNumber } from "@darwinia/app-utils";
+import { formatToWei, isValidNumber, prettifyNumber, secondsToHumanTime } from "@darwinia/app-utils";
 import BigNumber from "bignumber.js";
 import { BigNumber as EthersBigNumber } from "ethers";
 import { TransactionResponse } from "@ethersproject/providers";
@@ -602,7 +602,6 @@ const StakingRecordsTable = () => {
         onClose={onCloseBondTokenModal}
       />
       <BondDepositModal
-        delegateToUpdate={delegateToUpdate.current}
         bondedDeposits={stakedDepositsIds ?? []}
         allDeposits={deposits ?? []}
         onCancel={onCloseBondDepositModal}
@@ -659,10 +658,11 @@ const BondTokenModal = ({ isVisible, type, onClose, onConfirm, onCancel, symbol,
   const [hasError, setHasError] = useState<boolean>(false);
   const [isLoading, setLoading] = useState<boolean>(false);
   const [value, setValue] = useState<string>("");
-  const { balance, calculateExtraPower } = useStorage();
+  const { balance, calculateExtraPower, unbondingDuration } = useStorage();
   const { selectedNetwork } = useWallet();
   const [power, setPower] = useState<BigNumber>(BigNumber(0));
   const { stakingContract } = useWallet();
+  const unbondingTime = secondsToHumanTime(unbondingDuration ?? 0);
 
   const getErrorJSX = () => {
     return hasError ? <div /> : null;
@@ -761,7 +761,7 @@ const BondTokenModal = ({ isVisible, type, onClose, onConfirm, onCancel, symbol,
       <div className={"divider border-b pb-[15px]"}>
         {type === "unbond" && (
           <div className={"pb-[20px] mb-[20px] divider border-b text-12"}>
-            {t(localeKeys.unbondTimeInfo, { unbondingTime: "14 days" })}
+            {t(localeKeys.unbondTimeInfo, { unbondingTime: `${unbondingTime.time} ${unbondingTime.unit}` })}
           </div>
         )}
         <div className={"flex flex-col gap-[10px]"}>
@@ -806,7 +806,6 @@ interface BondDepositProps {
   onCancel: () => void;
   allDeposits: Deposit[];
   bondedDeposits: number[];
-  delegateToUpdate: Delegate | null;
 }
 
 /*Bond more or less deposits*/
@@ -818,13 +817,14 @@ const BondDepositModal = ({
   onCancel,
   bondedDeposits,
   allDeposits,
-  delegateToUpdate,
 }: BondDepositProps) => {
   const { t } = useAppTranslation();
   const [isLoading, setLoading] = useState<boolean>(false);
   const [selectedDeposits, setSelectedDeposit] = useState<Deposit[]>([]);
   const [renderDeposits, setRenderDeposits] = useState<Deposit[]>([]);
   const { stakingContract } = useWallet();
+  const { unbondingDuration } = useStorage();
+  const unbondingTime = secondsToHumanTime(unbondingDuration ?? 0);
 
   useEffect(() => {
     setSelectedDeposit([]);
@@ -908,7 +908,7 @@ const BondDepositModal = ({
       <div className={"divider border-b pb-[20px]"}>
         {type === "unbond" && (
           <div className={"pb-[20px] mb-[20px] divider border-b text-12"}>
-            {t(localeKeys.unbondTimeInfo, { unbondingTime: "14 days" })}
+            {t(localeKeys.unbondTimeInfo, { unbondingTime: `${unbondingTime.time} ${unbondingTime.unit}` })}
           </div>
         )}
         <div className={"flex flex-col gap-[10px] max-h-[300px] dw-custom-scrollbar"}>
@@ -942,6 +942,8 @@ const UndelegationModal = ({ isVisible, onClose, onConfirm, onCancel }: Undelega
   const { t } = useAppTranslation();
   const [isLoading, setLoading] = useState<boolean>(false);
   const { stakingContract } = useWallet();
+  const { unbondingDuration } = useStorage();
+  const unbondingTime = secondsToHumanTime(unbondingDuration ?? 0);
 
   useEffect(() => {
     setLoading(false);
@@ -981,7 +983,7 @@ const UndelegationModal = ({ isVisible, onClose, onConfirm, onCancel }: Undelega
       className={"!max-w-[400px]"}
     >
       <div className={"pb-[20px] divider border-b text-12"}>
-        {t(localeKeys.undelegationConfirmInfo, { unbondingTime: "14 days" })}
+        {t(localeKeys.undelegationConfirmInfo, { unbondingTime: `${unbondingTime.time} ${unbondingTime.unit}` })}
       </div>
     </ModalEnhanced>
   );

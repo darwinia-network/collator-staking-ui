@@ -1,4 +1,4 @@
-import { createContext, PropsWithChildren, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { createContext, PropsWithChildren, useContext, useEffect, useRef, useState } from "react";
 import { AssetBalance, Collator, StakingAsset, StorageCtx, UserIntroValues } from "@darwinia/app-types";
 import { useWallet } from "./walletProvider";
 import { WsProvider, ApiPromise } from "@polkadot/api";
@@ -8,6 +8,7 @@ import useLedger from "./hooks/useLedger";
 import BigNumber from "bignumber.js";
 import useCollators from "./hooks/useCollators";
 import { keyring } from "@polkadot/ui-keyring";
+import useSession from "./hooks/useSession";
 
 const initialState: StorageCtx = {
   power: undefined,
@@ -30,6 +31,8 @@ const initialState: StorageCtx = {
     //no nothing
   },
   newUserIntroStakingValues: undefined,
+  sessionDuration: undefined,
+  unbondingDuration: undefined,
 };
 
 export type UnSubscription = () => void;
@@ -58,6 +61,8 @@ export const StorageProvider = ({ children }: PropsWithChildren) => {
     apiPromise,
     stakingAsset,
   });
+
+  const { sessionDuration, unbondingDuration } = useSession();
 
   const isKeyringInitialized = useRef<boolean>(false);
   const { collators } = useCollators(apiPromise);
@@ -176,6 +181,8 @@ export const StorageProvider = ({ children }: PropsWithChildren) => {
         currentlyNominatedCollator,
         setNewUserIntroStakingValues,
         newUserIntroStakingValues,
+        sessionDuration,
+        unbondingDuration,
       }}
     >
       {children}

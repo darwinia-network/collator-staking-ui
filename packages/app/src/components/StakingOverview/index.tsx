@@ -10,7 +10,7 @@ import StakingRecordsTable from "../StakingRecordsTable";
 import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
 import { Deposit, Collator } from "@darwinia/app-types";
 import SelectCollatorModal, { SelectCollatorRefs } from "../SelectCollatorModal";
-import { formatToWei, isValidNumber, prettifyNumber } from "@darwinia/app-utils";
+import { formatToWei, isValidNumber, prettifyNumber, secondsToHumanTime } from "@darwinia/app-utils";
 import BigNumber from "bignumber.js";
 import { BigNumber as EthersBigNumber } from "@ethersproject/bignumber/lib/bignumber";
 import { TransactionResponse } from "@ethersproject/providers";
@@ -18,7 +18,8 @@ import { TransactionResponse } from "@ethersproject/providers";
 const StakingOverview = () => {
   const { t } = useAppTranslation();
   const { selectedNetwork, stakingContract, setTransactionStatus, provider } = useWallet();
-  const { deposits, stakedDepositsIds, calculateExtraPower, balance } = useStorage();
+  const { deposits, stakedDepositsIds, calculateExtraPower, balance, sessionDuration, unbondingDuration } =
+    useStorage();
   const selectCollatorModalRef = useRef<SelectCollatorRefs>(null);
   const [selectedCollator, setSelectedCollator] = useState<Collator>();
   const [stakeAbleDeposits, setStakeAbleDeposits] = useState<Deposit[]>([]);
@@ -268,7 +269,14 @@ const StakingOverview = () => {
       <div className={"card flex flex-col gap-[10px]"}>
         <div className={"text-14-bold"}>{t(localeKeys.delegate)}</div>
         <div className={"text-halfWhite text-12 divider border-b pb-[10px]"}>
-          {t(localeKeys.stakingBasicInfo, { sessionTime: "24 hours", unbondTime: "14 days" })}
+          {t(localeKeys.stakingBasicInfo, {
+            sessionTime: `${secondsToHumanTime(sessionDuration ?? 0, true).time} ${
+              secondsToHumanTime(sessionDuration ?? 0, true).unit
+            }`,
+            unbondTime: `${secondsToHumanTime(unbondingDuration ?? 0).time} ${
+              secondsToHumanTime(unbondingDuration ?? 0).unit
+            }`,
+          })}
         </div>
         <div className={"flex flex-col gap-[10px]"}>
           {!selectedCollator && (

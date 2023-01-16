@@ -41,6 +41,8 @@ export interface StorageCtx {
   currentlyNominatedCollator: Collator | undefined;
   setNewUserIntroStakingValues: (values: UserIntroValues | undefined) => void;
   newUserIntroStakingValues: UserIntroValues | undefined;
+  sessionDuration: number | undefined;
+  unbondingDuration: number | undefined;
 }
 
 export interface UserIntroValues {
