@@ -72,22 +72,6 @@ const useLedger = ({ apiPromise, selectedAccount, secondsPerBlock = 12 }: Params
         const depositsList: Deposit[] = [];
 
         if (depositsOption.isSome) {
-          /*These are the deposits that the user has decided to unbond from staking, they are in the
-           * 14 days unbonding period  */
-          const unstakingDeposits: UnbondingDeposit[] = [];
-          if (ledgerOption.isSome) {
-            const ledgerData = ledgerOption.unwrap().toHuman() as unknown as DarwiniaStakingLedger;
-            ledgerData.unstakingDeposits?.forEach((item) => {
-              const expireBlock = Number(item[1].toString().replaceAll(",", ""));
-              const depositId = Number(item[0].toString().replaceAll(",", ""));
-              unstakingDeposits.push({
-                depositId: depositId,
-                expireBlock: expireBlock,
-                isUnbondingComplete: currentBlock.number >= expireBlock,
-              });
-            });
-          }
-          // console.log("unstakingDeposits====", unstakingDeposits, currentBlock);
           const unwrappedDeposits = depositsOption.unwrap();
           // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore
@@ -99,7 +83,6 @@ const useLedger = ({ apiPromise, selectedAccount, secondsPerBlock = 12 }: Params
             // canWithdraw (canClaim) = item.expiredTime <= now
             const hasExpireTimeReached = currentBlock.timestamp >= expiredTime;
             const canEarlyWithdraw = !hasExpireTimeReached;
-            const canRegularWithdraw = hasExpireTimeReached;
 
             const ringAmount = BigNumber(item.value.toString().replaceAll(",", ""));
 

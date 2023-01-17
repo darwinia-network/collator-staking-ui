@@ -593,6 +593,7 @@ const StakingRecordsTable = () => {
       </div>
       <SelectCollatorModal ref={selectCollatorModalRef} onCollatorSelected={onCollatorSelected} type={"update"} />
       <BondTokenModal
+        delegateToUpdate={delegateToUpdate.current}
         symbol={tokenSymbolToUpdate}
         isUpdatingRing={isUpdatingRing}
         onCancel={onCloseBondTokenModal}
@@ -650,10 +651,20 @@ interface BondTokenProps {
   onConfirm: () => void;
   onCancel: () => void;
   symbol: string;
+  delegateToUpdate: Delegate | null;
 }
 
 /*Bond more or less tokens*/
-const BondTokenModal = ({ isVisible, type, onClose, onConfirm, onCancel, symbol, isUpdatingRing }: BondTokenProps) => {
+const BondTokenModal = ({
+  isVisible,
+  type,
+  onClose,
+  onConfirm,
+  onCancel,
+  symbol,
+  isUpdatingRing,
+  delegateToUpdate,
+}: BondTokenProps) => {
   const { t } = useAppTranslation();
   const [hasError, setHasError] = useState<boolean>(false);
   const [isLoading, setLoading] = useState<boolean>(false);
@@ -743,6 +754,23 @@ const BondTokenModal = ({ isVisible, type, onClose, onConfirm, onCancel, symbol,
   };
 
   const balanceAmount = isUpdatingRing ? balance?.ring ?? BigNumber(0) : balance?.kton ?? BigNumber(0);
+  const bondedRing = delegateToUpdate?.bondedTokens?.find((item) => item.isRingBonding)?.amount ?? BigNumber(0);
+  const bondedKton = delegateToUpdate?.bondedTokens?.find((item) => item.isKtonBonding)?.amount ?? BigNumber(0);
+  const bondedAmount = isUpdatingRing ? bondedRing : bondedKton;
+  const bondMorePlaceholder = t(localeKeys.balanceAmount, {
+    amount: prettifyNumber({
+      number: balanceAmount,
+      precision: 6,
+      shouldFormatToEther: true,
+    }),
+  });
+  const unbondPlaceholder = t(localeKeys.bondedAmount, {
+    amount: prettifyNumber({
+      number: bondedAmount,
+      precision: 6,
+      shouldFormatToEther: true,
+    }),
+  });
 
   return (
     <ModalEnhanced
@@ -783,13 +811,7 @@ const BondTokenModal = ({ isVisible, type, onClose, onConfirm, onCancel, symbol,
               </div>
             }
             leftIcon={null}
-            placeholder={t(localeKeys.balanceAmount, {
-              amount: prettifyNumber({
-                number: balanceAmount,
-                precision: 6,
-                shouldFormatToEther: true,
-              }),
-            })}
+            placeholder={type === "bondMore" ? bondMorePlaceholder : unbondPlaceholder}
             rightSlot={<div className={"flex items-center px-[10px]"}>{symbol}</div>}
           />
         </div>

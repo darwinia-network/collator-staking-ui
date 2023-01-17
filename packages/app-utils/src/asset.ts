@@ -1,7 +1,7 @@
 import BigNumber from "bignumber.js";
 
-/*I don't know what this POWER_CAP is, I just took it from apps.darwinia.network in Darwinia 1.0*/
-const POWER_CAP = 1000000000;
+/*MAX_POWER is the number that I just took it from apps.darwinia.network in Darwinia 1.0*/
+const MAX_POWER = 1000000000;
 export const convertAssetToPower = (
   ringAmount: BigNumber,
   ktonAmount: BigNumber,
@@ -20,7 +20,7 @@ export const convertAssetToPower = (
     divider = poolRingAmount.div(poolKtonAmount);
   }
 
-  const power = ringAmount.plus(ktonAmount.times(divider)).div(poolRingAmount.times(2)).times(POWER_CAP).toFixed(0);
+  const power = ringAmount.plus(ktonAmount.times(divider)).div(poolRingAmount.times(2)).times(MAX_POWER).toFixed(0);
 
   return BigNumber(power);
 };

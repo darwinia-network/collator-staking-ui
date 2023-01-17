@@ -128,6 +128,7 @@ const enUs = {
   [localeKeys.gotIt]: "Got it!",
   [localeKeys.selectCollatorInfo]: "You can Select A Collator to delegate your bonded tokens to.",
   [localeKeys.unbondAllInfo]: `<div>In case you want to quit the Staking, you can unbond all your bonded tokens here. Note that it takes 14 days to unbond all tokens and then it will have to be manually executed to make those tokens transferrable.</div><div style="margin-top: 10px;">Remember to come back here to execute the unbonding then.</div>`,
+  [localeKeys.bondedAmount]: `Bonded: {{amount}}`,
 };
 
 export default enUs;

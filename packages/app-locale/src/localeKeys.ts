@@ -125,4 +125,5 @@ export const localeKeys = {
   selectCollatorInfo: "selectCollatorInfo",
   unbondAllInfo: "unbondAllInfo",
   bondedTokens: "bondedTokens",
+  bondedAmount: "bondedAmount",
 };
