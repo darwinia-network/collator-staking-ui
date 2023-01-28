@@ -18,8 +18,15 @@ import { TransactionResponse } from "@ethersproject/providers";
 const StakingOverview = () => {
   const { t } = useAppTranslation();
   const { selectedNetwork, stakingContract, setTransactionStatus, provider } = useWallet();
-  const { deposits, stakedDepositsIds, calculateExtraPower, balance, sessionDuration, unbondingDuration } =
-    useStorage();
+  const {
+    deposits,
+    stakedDepositsIds,
+    calculateExtraPower,
+    balance,
+    sessionDuration,
+    unbondingDuration,
+    stakedAssetDistribution,
+  } = useStorage();
   const selectCollatorModalRef = useRef<SelectCollatorRefs>(null);
   const [selectedCollator, setSelectedCollator] = useState<Collator>();
   const [stakeAbleDeposits, setStakeAbleDeposits] = useState<Deposit[]>([]);
@@ -31,6 +38,7 @@ const StakingOverview = () => {
   const [powerByRing, setPowerByRing] = useState(BigNumber(0));
   const [powerByKton, setPowerByKton] = useState(BigNumber(0));
   const [powerByDeposits, setPowerByDeposits] = useState(BigNumber(0));
+  const [canStake, setCanStake] = useState<boolean>(true);
   const { stakeAndNominate } = useDispatch();
   /*This is the minimum Ring balance that should be left on the account
    * for gas fee */
@@ -92,6 +100,25 @@ const StakingOverview = () => {
     const freeDeposits = deposits?.filter((deposit) => !stakedDepositsIds?.includes(deposit.id)) ?? [];
     setStakeAbleDeposits(freeDeposits);
   }, [deposits, stakedDepositsIds]);
+
+  useEffect(() => {
+    if (typeof stakedAssetDistribution === "undefined") {
+      return;
+    }
+    const hasSomeStakingAmount =
+      stakedAssetDistribution.ring.bonded.gt(0) ||
+      (stakedAssetDistribution.ring.unbondingRing || []).length > 0 ||
+      (stakedAssetDistribution.ring.totalOfDepositsInStaking || BigNumber(0)).gt(0) ||
+      (stakedAssetDistribution.ring.unbondingDeposits || []).length > 0 ||
+      stakedAssetDistribution.kton.bonded.gt(0) ||
+      (stakedAssetDistribution.kton.unbondingKton || []).length > 0;
+
+    if (hasSomeStakingAmount) {
+      setCanStake(false);
+    } else {
+      setCanStake(true);
+    }
+  }, [stakedAssetDistribution]);
 
   const depositRenderer = (option: Deposit) => {
     return (
@@ -266,6 +293,7 @@ const StakingOverview = () => {
 
   return (
     <div>
+      {/*You can evaluate here what to show if the user can not stake*/}
       <div className={"card flex flex-col gap-[10px]"}>
         <div className={"text-14-bold"}>{t(localeKeys.delegate)}</div>
         <div className={"text-halfWhite text-12 divider border-b pb-[10px]"}>
