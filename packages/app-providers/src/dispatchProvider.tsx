@@ -32,7 +32,7 @@ export const DispatchProvider = ({ children }: PropsWithChildren) => {
         /* We appended 00 to the session key to represent that we don't need any proof. Originally the setKeys method
          * required two params which are session key and proof but here we append both values into one param */
         const sessionKeyWithProof = `${sessionKey}00`;
-        const res = await getClient(provider).calls.session.setKeysD(
+        const res = await getClient(provider).calls.session.setKeysH(
           provider.getSigner(),
           sessionKeyWithProof as HexString
         );
@@ -54,11 +54,11 @@ export const DispatchProvider = ({ children }: PropsWithChildren) => {
         }
         const signer = provider.getSigner();
         // prepare calls
-        const nominateCall = getClient(provider).calls.staking.nominateCall(collatorAddress);
+        const nominateCall = getClient(provider).calls.staking.buildNominateCall(collatorAddress);
         const ids = depositIds.map((item) => item.toString());
-        console.log("ids updated====", ids);
+        console.log("ids staked====", ids);
         /*The ring and kton values should simply be in wei then converted to string NOT BigNumber */
-        const stakeCall = getClient(provider).calls.staking.stakeCall(
+        const stakeCall = getClient(provider).calls.staking.buildStakeCall(
           ringAmount.toString(),
           ktonAmount.toString(),
           ids
