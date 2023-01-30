@@ -9,6 +9,7 @@ import BigNumber from "bignumber.js";
 import useCollators from "./hooks/useCollators";
 import { keyring } from "@polkadot/ui-keyring";
 import useSession from "./hooks/useSession";
+import { formatToEther } from "@darwinia/app-utils";
 
 const initialState: StorageCtx = {
   power: undefined,
@@ -20,6 +21,7 @@ const initialState: StorageCtx = {
   collators: undefined,
   balance: undefined,
   currentlyNominatedCollator: undefined,
+  minimumDepositAmount: undefined,
   // this whole function does nothing, it's just a blueprint
   calculatePower: (stakingAsset: StakingAsset): BigNumber => {
     return BigNumber(0);
@@ -50,6 +52,8 @@ export const StorageProvider = ({ children }: PropsWithChildren) => {
     kton: BigNumber(0),
     ring: BigNumber(0),
   });
+
+  const [minimumDepositAmount, setMinimumDepositAmount] = useState<BigNumber>(BigNumber(0));
 
   const { stakingAsset, isLoadingLedger, deposits, stakedDepositsIds, stakedAssetDistribution, ktonBalance } =
     useLedger({
@@ -124,6 +128,16 @@ export const StorageProvider = ({ children }: PropsWithChildren) => {
     }
   };
 
+  /*Get the minimum deposit amount*/
+  useEffect(() => {
+    if (!apiPromise) {
+      return;
+    }
+    const amount = apiPromise.consts.deposit.minLockingAmount;
+    const amountInEther = formatToEther(amount.toString());
+    setMinimumDepositAmount(BigNumber(amountInEther));
+  }, [apiPromise]);
+
   /*Monitor account ring balance*/
   useEffect(() => {
     let unsubscription: UnSubscription | undefined;
@@ -183,6 +197,7 @@ export const StorageProvider = ({ children }: PropsWithChildren) => {
         newUserIntroStakingValues,
         sessionDuration,
         unbondingDuration,
+        minimumDepositAmount,
       }}
     >
       {children}

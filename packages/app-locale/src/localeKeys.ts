@@ -126,4 +126,5 @@ export const localeKeys = {
   unbondAllInfo: "unbondAllInfo",
   bondedTokens: "bondedTokens",
   bondedAmount: "bondedAmount",
+  depositAmountError: "depositAmountError",
 };

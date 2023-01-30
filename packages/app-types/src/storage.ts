@@ -43,6 +43,7 @@ export interface StorageCtx {
   newUserIntroStakingValues: UserIntroValues | undefined;
   sessionDuration: number | undefined;
   unbondingDuration: number | undefined;
+  minimumDepositAmount: BigNumber | undefined;
 }
 
 export interface UserIntroValues {

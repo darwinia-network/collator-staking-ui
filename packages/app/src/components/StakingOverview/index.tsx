@@ -238,6 +238,8 @@ const StakingOverview = () => {
         depositIds: depositsIds,
       });
 
+      setTransactionStatus(false);
+
       if (!isSuccessful) {
         notification.error({
           message: <div>{t(localeKeys.somethingWrongHappened)}</div>,
@@ -252,7 +254,6 @@ const StakingOverview = () => {
       setPowerByKton(BigNumber(0));
       setPowerByDeposits(BigNumber(0));
       setSelectedCollator(undefined);
-      setTransactionStatus(false);
       notification.success({
         message: <div>{t(localeKeys.operationSuccessful)}</div>,
       });

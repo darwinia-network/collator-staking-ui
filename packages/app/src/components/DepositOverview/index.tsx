@@ -2,7 +2,7 @@ import { ChangeEvent, useEffect, useState } from "react";
 import { localeKeys, useAppTranslation } from "@darwinia/app-locale";
 import { Button, Input, OptionProps, Select, notification } from "@darwinia/ui";
 import ringIcon from "../../assets/images/ring.svg";
-import { useWallet } from "@darwinia/app-providers";
+import { useStorage, useWallet } from "@darwinia/app-providers";
 import { calculateKtonFromRingDeposit, isValidNumber, formatToWei } from "@darwinia/app-utils";
 import DepositRecordsTable from "../DepositRecordsTable";
 import BigNumber from "bignumber.js";
@@ -12,6 +12,7 @@ import { TransactionResponse } from "@ethersproject/providers";
 const DepositOverview = () => {
   const { t } = useAppTranslation();
   const { selectedNetwork, depositContract, setTransactionStatus } = useWallet();
+  const { minimumDepositAmount } = useStorage();
   const [depositTerm, setDepositTerm] = useState<string>("1");
   const [amount, setAmount] = useState<string>("");
   const [amountHasError, setAmountHasError] = useState<boolean>(false);
@@ -75,6 +76,22 @@ const DepositOverview = () => {
       setAmountHasError(true);
       notification.error({
         message: <div>{t(localeKeys.depositAmountValueFormatError)}</div>,
+      });
+      return;
+    }
+    const userAmountInEther = BigNumber(amount);
+    const minimumAllowedAmount = minimumDepositAmount ?? BigNumber(1);
+    if (userAmountInEther.lt(minimumAllowedAmount)) {
+      setAmountHasError(true);
+      notification.error({
+        message: (
+          <div>
+            {t(localeKeys.depositAmountError, {
+              amount: minimumAllowedAmount.toString(),
+              ringSymbol: selectedNetwork?.ring.symbol,
+            })}
+          </div>
+        ),
       });
       return;
     }
