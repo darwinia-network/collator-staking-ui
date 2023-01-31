@@ -532,7 +532,7 @@ const StakingRecordsTable = () => {
     },
     {
       id: "5",
-      title: <div>{t(localeKeys.action)}</div>,
+      title: <div>{t(localeKeys.actions)}</div>,
       key: "collator",
       width: "300px",
       render: (row) => {
@@ -582,7 +582,7 @@ const StakingRecordsTable = () => {
 
   return (
     <div className={"flex flex-col"}>
-      <div className={"flex flex-col mt-[20px]"}>
+      <div className={"flex flex-col"}>
         <Table
           isLoading={isLoadingLedger}
           headerSlot={<div className={"text-14-bold pb-[10px]"}>{t(localeKeys.stakingDelegation)}</div>}
@@ -855,11 +855,14 @@ const BondDepositModal = ({
     if (type === "bondMore") {
       /* filter out all deposits that have already been bonded, only take the unbonded deposits */
       deposits = allDeposits.filter((item) => {
-        /* only take the deposit if it is not bonded yet */
-        return !bondedDeposits.includes(item.id);
+        /* only take the deposit if it is not in use, this is the right way to evaluate since the unstaking/unbonding
+        deposits are also in use. This will avoid showing the unbonding deposits for rebonding them */
+        return !item.inUse;
       });
     } else {
-      /*show bonded deposits so that the user can check them to unbond them*/
+      /*show bonded deposits so that the user can check them to unbond them, this is the right way to evaluate since if
+       * we use the inUse property we may end up with some deposits that are unbonding. DO NOT allow
+       * users to re-unbond the deposits that are already unbonding */
       deposits = allDeposits.filter((item) => {
         return bondedDeposits.includes(item.id);
       });

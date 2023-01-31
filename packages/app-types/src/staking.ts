@@ -90,6 +90,7 @@ export interface Deposit {
   startTime: number;
   expiredTime: number;
   canEarlyWithdraw: boolean;
+  inUse: boolean;
 }
 
 export interface Bond {

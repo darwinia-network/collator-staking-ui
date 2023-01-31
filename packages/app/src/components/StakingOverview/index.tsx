@@ -26,6 +26,7 @@ const StakingOverview = () => {
     sessionDuration,
     unbondingDuration,
     stakedAssetDistribution,
+    currentlyNominatedCollator,
   } = useStorage();
   const selectCollatorModalRef = useRef<SelectCollatorRefs>(null);
   const [selectedCollator, setSelectedCollator] = useState<Collator>();
@@ -38,7 +39,7 @@ const StakingOverview = () => {
   const [powerByRing, setPowerByRing] = useState(BigNumber(0));
   const [powerByKton, setPowerByKton] = useState(BigNumber(0));
   const [powerByDeposits, setPowerByDeposits] = useState(BigNumber(0));
-  const [canStake, setCanStake] = useState<boolean>(true);
+  const [accountIsStakingAlready, setAccountIsStakingAlready] = useState<boolean>(true);
   const { stakeAndNominate } = useDispatch();
   /*This is the minimum Ring balance that should be left on the account
    * for gas fee */
@@ -102,7 +103,7 @@ const StakingOverview = () => {
   }, [deposits, stakedDepositsIds]);
 
   useEffect(() => {
-    if (typeof stakedAssetDistribution === "undefined") {
+    if (typeof stakedAssetDistribution === "undefined" || typeof currentlyNominatedCollator === "undefined") {
       return;
     }
     const hasSomeStakingAmount =
@@ -113,12 +114,12 @@ const StakingOverview = () => {
       stakedAssetDistribution.kton.bonded.gt(0) ||
       (stakedAssetDistribution.kton.unbondingKton || []).length > 0;
 
-    if (hasSomeStakingAmount) {
-      setCanStake(false);
+    if (hasSomeStakingAmount || currentlyNominatedCollator) {
+      setAccountIsStakingAlready(true);
     } else {
-      setCanStake(true);
+      setAccountIsStakingAlready(false);
     }
-  }, [stakedAssetDistribution]);
+  }, [stakedAssetDistribution, currentlyNominatedCollator]);
 
   const depositRenderer = (option: Deposit) => {
     return (
@@ -293,157 +294,163 @@ const StakingOverview = () => {
   };
 
   return (
-    <div>
+    <div className={"flex flex-col gap-[20px]"}>
       {/*You can evaluate here what to show if the user can not stake*/}
-      <div className={"card flex flex-col gap-[10px]"}>
-        <div className={"text-14-bold"}>{t(localeKeys.delegate)}</div>
-        <div className={"text-halfWhite text-12 divider border-b pb-[10px]"}>
-          {t(localeKeys.stakingBasicInfo, {
-            sessionTime: `${secondsToHumanTime(sessionDuration ?? 0, true).time} ${
-              secondsToHumanTime(sessionDuration ?? 0, true).unit
-            }`,
-            unbondTime: `${secondsToHumanTime(unbondingDuration ?? 0).time} ${
-              secondsToHumanTime(unbondingDuration ?? 0).unit
-            }`,
-          })}
-        </div>
-        <div className={"flex flex-col gap-[10px]"}>
-          {!selectedCollator && (
-            <Button
-              onClick={() => {
-                onSelectCollator();
-              }}
-              className={"w-full"}
-              btnType={"secondary"}
-            >
-              {t(localeKeys.selectCollator)}
-            </Button>
-          )}
-          <SelectCollatorModal ref={selectCollatorModalRef} onCollatorSelected={onCollatorSelected} type={"set"} />
-          {/*Selected collator*/}
-          {selectedCollator && (
-            <div className={"flex items-center gap-[10px] px-[15px] lg:px-[25px] lg:py-[20px] border border-primary"}>
-              <div className={"shrink-0"}>
-                <JazzIcon size={30} address={selectedCollator.accountAddress ?? ""} />
-              </div>
-              <div className={"lg:flex lg:gap-[10px] min-w-0"}>
-                <div>{selectedCollator.accountName}</div>
-                <div>
-                  <div className={"break-words"}>{selectedCollator.accountAddress}</div>
-                </div>
-              </div>
-              <div
+      {!accountIsStakingAlready && (
+        <div className={"card flex flex-col gap-[10px]"}>
+          <div className={"text-14-bold"}>{t(localeKeys.delegate)}</div>
+          <div className={"text-halfWhite text-12 divider border-b pb-[10px]"}>
+            {t(localeKeys.stakingBasicInfo, {
+              sessionTime: `${secondsToHumanTime(sessionDuration ?? 0, true).time} ${
+                secondsToHumanTime(sessionDuration ?? 0, true).unit
+              }`,
+              unbondTime: `${secondsToHumanTime(unbondingDuration ?? 0).time} ${
+                secondsToHumanTime(unbondingDuration ?? 0).unit
+              }`,
+            })}
+          </div>
+          <div className={"flex flex-col gap-[10px]"}>
+            {!selectedCollator && (
+              <Button
                 onClick={() => {
                   onSelectCollator();
                 }}
-                className={"shrink-0"}
+                className={"w-full"}
+                btnType={"secondary"}
               >
-                <img className={"w-[24px] clickable"} src={switchIcon} alt="image" />
-              </div>
-            </div>
-          )}
-          <div className={"flex flex-col lg:flex-row gap-[10px] divider border-b pb-[10px]"}>
-            <div className={"flex-1 shrink-0"}>
-              <Input
-                leftIcon={null}
-                value={ringToStake}
-                onChange={onRingToStakeChanged}
-                hasErrorMessage={false}
-                error={getRingValueErrorJSX()}
-                rightSlot={
-                  <div className={"flex gap-[10px] items-center px-[10px]"}>
-                    <img className={"w-[20px]"} src={ringIcon} alt="image" />
-                    <div className={"uppercase"}>{selectedNetwork?.ring.symbol ?? "RING"}</div>
-                  </div>
-                }
-                placeholder={t(localeKeys.balanceAmount, {
-                  amount: prettifyNumber({
-                    number: balance?.ring ?? BigNumber(0),
-                    shouldFormatToEther: true,
-                    precision: 3,
-                  }),
-                })}
-              />
-              <div className={"text-12-bold text-primary pt-[10px]"}>
-                +
-                {prettifyNumber({
-                  number: powerByRing,
-                  precision: 0,
-                  shouldFormatToEther: false,
-                })}{" "}
-                {t(localeKeys.power)}
-              </div>
-            </div>
-            <div className={"flex-1 shrink-0"}>
-              <Input
-                leftIcon={null}
-                value={ktonToStake}
-                onChange={onKtonToStakeChanged}
-                hasErrorMessage={false}
-                error={getKtonValueErrorJSX()}
-                rightSlot={
-                  <div className={"flex gap-[10px] items-center px-[10px]"}>
-                    <img className={"w-[20px]"} src={ktonIcon} alt="image" />
-                    <div className={"uppercase"}>{selectedNetwork?.kton.symbol ?? "RING"}</div>
-                  </div>
-                }
-                placeholder={t(localeKeys.balanceAmount, {
-                  amount: prettifyNumber({
-                    number: balance?.kton ?? BigNumber(0),
-                    shouldFormatToEther: true,
-                    precision: 9,
-                  }),
-                })}
-              />
-              <div className={"text-12-bold text-primary pt-[10px]"}>
-                +
-                {prettifyNumber({
-                  number: powerByKton,
-                  precision: 0,
-                  shouldFormatToEther: false,
-                })}{" "}
-                {t(localeKeys.power)}
-              </div>
-            </div>
-            {/*use a deposit*/}
-            <Dropdown
-              closeOnInteraction={false}
-              overlay={getDepositsDropdown()}
-              triggerEvent={"click"}
-              className={"flex-1 shrink-0"}
-              dropdownClassName={"w-full top-[40px]"}
-            >
-              <div>
-                <div className={"flex-1 flex justify-between items-center border border-halfWhite px-[10px]"}>
-                  <div className={"py-[7px]"}>
-                    {depositsToStake.length === 0
-                      ? t(localeKeys.useDeposit)
-                      : t(localeKeys.depositSelected, { number: depositsToStake.length })}
-                  </div>
-                  <img className={"w-[16px]"} src={caretDownIcon} alt="image" />
+                {t(localeKeys.selectCollator)}
+              </Button>
+            )}
+            <SelectCollatorModal ref={selectCollatorModalRef} onCollatorSelected={onCollatorSelected} type={"set"} />
+            {/*Selected collator*/}
+            {selectedCollator && (
+              <div className={"flex items-center gap-[10px] px-[15px] lg:px-[25px] lg:py-[20px] border border-primary"}>
+                <div className={"shrink-0"}>
+                  <JazzIcon size={30} address={selectedCollator.accountAddress ?? ""} />
                 </div>
+                <div className={"lg:flex lg:gap-[10px] min-w-0"}>
+                  <div>{selectedCollator.accountName}</div>
+                  <div>
+                    <div className={"break-words"}>{selectedCollator.accountAddress}</div>
+                  </div>
+                </div>
+                <div
+                  onClick={() => {
+                    onSelectCollator();
+                  }}
+                  className={"shrink-0"}
+                >
+                  <img className={"w-[24px] clickable"} src={switchIcon} alt="image" />
+                </div>
+              </div>
+            )}
+            <div className={"flex flex-col lg:flex-row gap-[10px] divider border-b pb-[10px]"}>
+              <div className={"flex-1 shrink-0"}>
+                <Input
+                  leftIcon={null}
+                  value={ringToStake}
+                  onChange={onRingToStakeChanged}
+                  hasErrorMessage={false}
+                  error={getRingValueErrorJSX()}
+                  rightSlot={
+                    <div className={"flex gap-[10px] items-center px-[10px]"}>
+                      <img className={"w-[20px]"} src={ringIcon} alt="image" />
+                      <div className={"uppercase"}>{selectedNetwork?.ring.symbol ?? "RING"}</div>
+                    </div>
+                  }
+                  placeholder={t(localeKeys.balanceAmount, {
+                    amount: prettifyNumber({
+                      number: balance?.ring ?? BigNumber(0),
+                      shouldFormatToEther: true,
+                      precision: 3,
+                    }),
+                  })}
+                />
                 <div className={"text-12-bold text-primary pt-[10px]"}>
                   +
                   {prettifyNumber({
-                    number: powerByDeposits,
+                    number: powerByRing,
                     precision: 0,
                     shouldFormatToEther: false,
                   })}{" "}
                   {t(localeKeys.power)}
                 </div>
               </div>
-            </Dropdown>
+              <div className={"flex-1 shrink-0"}>
+                <Input
+                  leftIcon={null}
+                  value={ktonToStake}
+                  onChange={onKtonToStakeChanged}
+                  hasErrorMessage={false}
+                  error={getKtonValueErrorJSX()}
+                  rightSlot={
+                    <div className={"flex gap-[10px] items-center px-[10px]"}>
+                      <img className={"w-[20px]"} src={ktonIcon} alt="image" />
+                      <div className={"uppercase"}>{selectedNetwork?.kton.symbol ?? "RING"}</div>
+                    </div>
+                  }
+                  placeholder={t(localeKeys.balanceAmount, {
+                    amount: prettifyNumber({
+                      number: balance?.kton ?? BigNumber(0),
+                      shouldFormatToEther: true,
+                      precision: 9,
+                    }),
+                  })}
+                />
+                <div className={"text-12-bold text-primary pt-[10px]"}>
+                  +
+                  {prettifyNumber({
+                    number: powerByKton,
+                    precision: 0,
+                    shouldFormatToEther: false,
+                  })}{" "}
+                  {t(localeKeys.power)}
+                </div>
+              </div>
+              {/*use a deposit*/}
+              <Dropdown
+                closeOnInteraction={false}
+                overlay={getDepositsDropdown()}
+                triggerEvent={"click"}
+                className={"flex-1 shrink-0"}
+                dropdownClassName={"w-full top-[40px]"}
+              >
+                <div>
+                  <div className={"flex-1 flex justify-between items-center border border-halfWhite px-[10px]"}>
+                    <div className={"py-[7px]"}>
+                      {depositsToStake.length === 0
+                        ? t(localeKeys.useDeposit)
+                        : t(localeKeys.depositSelected, { number: depositsToStake.length })}
+                    </div>
+                    <img className={"w-[16px]"} src={caretDownIcon} alt="image" />
+                  </div>
+                  <div className={"text-12-bold text-primary pt-[10px]"}>
+                    +
+                    {prettifyNumber({
+                      number: powerByDeposits,
+                      precision: 0,
+                      shouldFormatToEther: false,
+                    })}{" "}
+                    {t(localeKeys.power)}
+                  </div>
+                </div>
+              </Dropdown>
+            </div>
           </div>
-        </div>
-        <div className={"w-full flex flex-col lg:flex-row gap-[10px]"}>
-          {/*<Button className={"w-full lg:w-auto !px-[55px]"}>
+          <div className={"w-full flex flex-col lg:flex-row gap-[10px]"}>
+            {/*<Button className={"w-full lg:w-auto !px-[55px]"}>
             {t(localeKeys.approveKton, { token: selectedNetwork?.kton.symbol })}
           </Button>*/}
-          <Button onClick={onStartStaking} disabled={!canSubmitStakingForm()} className={"w-full lg:w-auto !px-[55px]"}>
-            {t(localeKeys.stake)}
-          </Button>
+            <Button
+              onClick={onStartStaking}
+              disabled={!canSubmitStakingForm()}
+              className={"w-full lg:w-auto !px-[55px]"}
+            >
+              {t(localeKeys.stake)}
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
       <StakingRecordsTable />
     </div>
   );

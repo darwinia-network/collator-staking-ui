@@ -70,7 +70,7 @@ export const StorageProvider = ({ children }: PropsWithChildren) => {
 
   const isKeyringInitialized = useRef<boolean>(false);
   const { collators } = useCollators(apiPromise);
-  const [currentlyNominatedCollator, setCurrentlyNominatedCollator] = useState<Collator>();
+  const [currentlyNominatedCollator, setCurrentlyNominatedCollator] = useState<Collator | null>();
 
   useEffect(() => {
     if (!selectedAccount) {
@@ -79,7 +79,7 @@ export const StorageProvider = ({ children }: PropsWithChildren) => {
     const collator = collators.find((item) =>
       item.nominators.map((nominator) => nominator.toLowerCase()).includes(selectedAccount.toLowerCase())
     );
-    setCurrentlyNominatedCollator(collator);
+    setCurrentlyNominatedCollator(collator ?? null);
   }, [collators, selectedAccount]);
 
   useEffect(() => {

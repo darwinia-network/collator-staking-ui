@@ -32,7 +32,8 @@ const useLedger = ({ apiPromise, selectedAccount, secondsPerBlock = 12 }: Params
   const isInitialLoad = useRef<boolean>(true);
   /*These are all the deposits that have been made by the user*/
   const [deposits, setDeposits] = useState<Deposit[]>([]);
-  /*These are the IDs of the deposits that have been used in staking already*/
+  /*These are the IDs of the deposits that have been used in staking already, BUT DOESN'T
+   * include the deposits IDs that are in unbonding/unstaking stake */
   const [stakedDepositsIds, setStakedDepositsIds] = useState<number[]>([]);
   /*staking asset distribution*/
   const [stakedAssetDistribution, setStakedAssetDistribution] = useState<AssetDistribution>();
@@ -103,6 +104,7 @@ const useLedger = ({ apiPromise, selectedAccount, secondsPerBlock = 12 }: Params
               expiredTime: expiredTime,
               value: ringAmount,
               canEarlyWithdraw: canEarlyWithdraw,
+              inUse: item.inUse,
             });
           });
         }
@@ -117,7 +119,7 @@ const useLedger = ({ apiPromise, selectedAccount, secondsPerBlock = 12 }: Params
           /*These are the IDs of the deposits that have been used in staking*/
           const stakedDepositsIdsList: number[] = [];
           unwrappedLedger.stakedDeposits?.forEach((item) => {
-            stakedDepositsIdsList.push(Number(item.toString()));
+            stakedDepositsIdsList.push(Number(item.toString().replaceAll(",", "")));
           });
 
           ledgerData.stakedRing = BigNumber(ledgerData.stakedRing.toString().replaceAll(",", ""));

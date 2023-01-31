@@ -38,7 +38,7 @@ export interface StorageCtx {
   isLoadingPool: boolean | undefined;
   collators: Collator[] | undefined;
   balance: AssetBalance | undefined;
-  currentlyNominatedCollator: Collator | undefined;
+  currentlyNominatedCollator: Collator | undefined | null;
   setNewUserIntroStakingValues: (values: UserIntroValues | undefined) => void;
   newUserIntroStakingValues: UserIntroValues | undefined;
   sessionDuration: number | undefined;

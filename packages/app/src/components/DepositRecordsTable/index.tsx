@@ -108,40 +108,64 @@ const DepositRecordsTable = () => {
     },
     {
       id: "5",
-      title: <div>{t(localeKeys.action)}</div>,
+      title: <div>{t(localeKeys.actions)}</div>,
       key: "value",
       width: "240px",
       render: (row) => {
         let actionButton: JSX.Element;
         if (row.canEarlyWithdraw) {
           // these can all be withdrawn early
-          actionButton = (
-            <>
-              <Button
-                onClick={() => {
-                  onShowWithdrawModal(row, "early");
-                }}
-                btnType={"secondary"}
-                className={"!h-[30px]"}
-              >
-                {t(localeKeys.withdrawEarlier)}
-              </Button>
-            </>
-          );
+          if (row.inUse) {
+            actionButton = (
+              <>
+                <Tooltip message={<div>{t(localeKeys.depositInUseUnstakeFirst)}</div>}>
+                  <Button disabled={true} btnType={"secondary"} className={"!h-[30px]"}>
+                    {t(localeKeys.withdrawEarlier)}
+                  </Button>
+                </Tooltip>
+              </>
+            );
+          } else {
+            actionButton = (
+              <>
+                <Button
+                  onClick={() => {
+                    onShowWithdrawModal(row, "early");
+                  }}
+                  btnType={"secondary"}
+                  className={"!h-[30px]"}
+                >
+                  {t(localeKeys.withdrawEarlier)}
+                </Button>
+              </>
+            );
+          }
         } else {
-          actionButton = (
-            <>
-              <Button
-                onClick={() => {
-                  onShowWithdrawModal(row, "regular");
-                }}
-                btnType={"secondary"}
-                className={"!h-[30px]"}
-              >
-                {t(localeKeys.withdraw)}
-              </Button>
-            </>
-          );
+          if (row.inUse) {
+            actionButton = (
+              <>
+                <Tooltip message={<div>{t(localeKeys.depositInUseUnstakeFirst)}</div>}>
+                  <Button disabled={true} btnType={"secondary"} className={"!h-[30px]"}>
+                    {t(localeKeys.withdrawEarlier)}
+                  </Button>
+                </Tooltip>
+              </>
+            );
+          } else {
+            actionButton = (
+              <>
+                <Button
+                  onClick={() => {
+                    onShowWithdrawModal(row, "regular");
+                  }}
+                  btnType={"secondary"}
+                  className={"!h-[30px]"}
+                >
+                  {t(localeKeys.withdraw)}
+                </Button>
+              </>
+            );
+          }
         }
         return <div className={"flex items-center gap-[10px]"}>{actionButton}</div>;
       },

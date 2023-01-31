@@ -94,7 +94,7 @@ export const localeKeys = {
   serialNumber: "serialNumber",
   duration: "duration",
   reward: "reward",
-  action: "action",
+  actions: "actions",
   earlyWithdrawMessage: "earlyWithdrawMessage",
   regularWithdrawMessage: "regularWithdrawMessage",
   depositAmountValueFormatError: "depositAmountValueFormatError",
@@ -127,4 +127,6 @@ export const localeKeys = {
   bondedTokens: "bondedTokens",
   bondedAmount: "bondedAmount",
   depositAmountError: "depositAmountError",
+  depositInUseUnstakeFirst: "depositInUseUnstakeFirst",
+  alreadyStakingUserInfo: "alreadyStakingUserInfo",
 };

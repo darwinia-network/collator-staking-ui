@@ -97,7 +97,7 @@ const enUs = {
   [localeKeys.serialNumber]: "No.",
   [localeKeys.duration]: "Duration",
   [localeKeys.reward]: "Reward",
-  [localeKeys.action]: "Action",
+  [localeKeys.actions]: "Actions",
   [localeKeys.earlyWithdrawMessage]: "Early withdraw message",
   [localeKeys.regularWithdrawMessage]: "Regular withdraw message",
   [localeKeys.depositAmountValueFormatError]: "Amount value must be a valid number",
@@ -130,6 +130,9 @@ const enUs = {
   [localeKeys.unbondAllInfo]: `<div>In case you want to quit the Staking, you can unbond all your bonded tokens here. Note that it takes 14 days to unbond all tokens and then it will have to be manually executed to make those tokens transferrable.</div><div style="margin-top: 10px;">Remember to come back here to execute the unbonding then.</div>`,
   [localeKeys.bondedAmount]: `Bonded: {{amount}}`,
   [localeKeys.depositAmountError]: `Deposit amount can't be lower than {{amount}} {{ringSymbol}}`,
+  [localeKeys.depositInUseUnstakeFirst]:
+    "This deposit is used in staking, you should unbond it first then release it to be able to withdraw it.",
+  [localeKeys.alreadyStakingUserInfo]: `You are already taking part in staking. Use the card below to customize your staking.`,
 };
 
 export default enUs;
