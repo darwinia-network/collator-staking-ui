@@ -78,7 +78,7 @@ const usePower = ({ apiPromise, stakingAsset }: Params) => {
   }, [pool, stakingAsset]);
 
   /*This method is used to convert assets to power, simply knowing
-   * how much power is a certain asset taking in the total power. NOT adding extra power,
+   * how much power a certain asset is taking in the total power. NOT adding extra power,
    * NOTE: stakingAsset values must be in Wei */
   const calculatePower = useCallback(
     (stakingAsset: StakingAsset) => {

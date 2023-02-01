@@ -16,6 +16,10 @@ const initialState: WalletCtx = {
   stakingContract: undefined,
   selectedNetwork: undefined,
   isLoadingTransaction: undefined,
+  selectedWalletConfig: undefined,
+  selectWallet: (walletConfig: WalletConfig) => {
+    //do nothing
+  },
   changeSelectedNetwork: () => {
     // do nothing
   },
@@ -49,8 +53,8 @@ export const WalletProvider = ({ children }: PropsWithChildren) => {
   const forcedAccountAddress = useRef<string>();
   const [error, setError] = useState<WalletError | undefined>(undefined);
   const [selectedNetwork, setSelectedNetwork] = useState<ChainConfig>();
-  const [selectedWallet] = useState<SupportedWallet>("MetaMask");
-  const [walletConfig, setWalletConfig] = useState<WalletConfig>();
+  const [selectedWallet, setSelectedWallet] = useState<SupportedWallet>("MetaMask");
+  const [selectedWalletConfig, setSelectedWalletConfig] = useState<WalletConfig>();
   const [isLoadingTransaction, setLoadingTransaction] = useState<boolean>(false);
 
   /*useEffect(() => {
@@ -70,7 +74,7 @@ export const WalletProvider = ({ children }: PropsWithChildren) => {
   useEffect(() => {
     const walletConfig = dAppSupportedWallets.find((walletConfig) => walletConfig.name === selectedWallet);
     if (walletConfig) {
-      setWalletConfig(walletConfig);
+      setSelectedWalletConfig(walletConfig);
     }
   }, [selectedWallet]);
 
@@ -218,7 +222,7 @@ export const WalletProvider = ({ children }: PropsWithChildren) => {
             } catch (e) {
               setRequestingWalletConnection(false);
               setError({
-                code: 3,
+                code: 4,
                 message: "Account access permission rejected",
               });
               setWalletConnected(false);
@@ -289,6 +293,10 @@ export const WalletProvider = ({ children }: PropsWithChildren) => {
     setLoadingTransaction(isLoading);
   }, []);
 
+  const selectWallet = useCallback((walletConfig: WalletConfig) => {
+    setSelectedWallet(walletConfig.name);
+  }, []);
+
   return (
     <WalletContext.Provider
       value={{
@@ -308,6 +316,8 @@ export const WalletProvider = ({ children }: PropsWithChildren) => {
         changeSelectedNetwork,
         selectedNetwork,
         forceSetAccountAddress,
+        selectedWalletConfig,
+        selectWallet,
       }}
     >
       {children}

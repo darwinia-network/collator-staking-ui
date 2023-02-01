@@ -8,8 +8,9 @@ import { StakingRecord } from "@darwinia/app-types";
 import { prettifyNumber, toTimeAgo } from "@darwinia/app-utils";
 import { useQuery } from "@apollo/client";
 import { GET_LATEST_STAKING_REWARDS } from "@darwinia/app-config";
-import { Spinner } from "@darwinia/ui";
+import { Spinner, Tooltip } from "@darwinia/ui";
 import { ethers } from "ethers";
+import helpIcon from "../../assets/images/help.svg";
 
 interface StakingStashQuery {
   accountAddress: string;
@@ -94,7 +95,7 @@ const AccountOverview = () => {
         isLoading={!!isLoadingLedger}
       >
         <div>
-          <div className={"divider border-b pb-[20px]"}>{t(localeKeys.reservedInStaking)}</div>
+          <div className={"divider border-b pb-[20px] text-18-bold"}>{t(localeKeys.reservedInStaking)}</div>
           <div className={"flex flex-col gap-[20px] mt-[20px]"}>
             {/*RING*/}
             <div className={"divider border-b pb-[20px] gap-[20px] flex flex-col"}>
@@ -104,19 +105,42 @@ const AccountOverview = () => {
               </div>
               <div className={"flex flex-col gap-[2px]"}>
                 <div className={"flex justify-between"}>
-                  <div>{t(localeKeys.bonded)}</div>
-                  <div>
-                    {prettifyNumber({
-                      number: stakedAssetDistribution?.ring.bonded ?? BigNumber(0),
-                      precision: 4,
-                    })}
+                  <div className={"flex items-center gap-[5px]"}>
+                    <div>{t(localeKeys.bonded)}</div>
+                    <Tooltip
+                      message={
+                        <div className={"flex flex-col gap-[5px]"}>
+                          <div>
+                            {t(localeKeys.totalRingBonded, {
+                              amount: prettifyNumber({
+                                number: (stakedAssetDistribution?.ring.bonded ?? BigNumber(0)).plus(
+                                  stakedAssetDistribution?.ring.totalOfDepositsInStaking ?? BigNumber(0)
+                                ),
+                                precision: 4,
+                              }),
+                              tokenSymbol: selectedNetwork?.ring.symbol.toUpperCase(),
+                            })}
+                          </div>
+                          <div>
+                            {t(localeKeys.totalDepositBonded, {
+                              amount: prettifyNumber({
+                                number: stakedAssetDistribution?.ring.totalOfDepositsInStaking ?? BigNumber(0),
+                                precision: 4,
+                              }),
+                              tokenSymbol: selectedNetwork?.ring.symbol.toUpperCase(),
+                            })}
+                          </div>
+                        </div>
+                      }
+                    >
+                      <img className={"w-[14px]"} src={helpIcon} alt="image" />
+                    </Tooltip>
                   </div>
-                </div>
-                <div className={"flex justify-between"}>
-                  <div>{t(localeKeys.inDeposit)}</div>
-                  <div>
+                  <div className={"text-14-bold"}>
                     {prettifyNumber({
-                      number: stakedAssetDistribution?.ring.totalOfDepositsInStaking ?? BigNumber(0),
+                      number: (stakedAssetDistribution?.ring.bonded ?? BigNumber(0)).plus(
+                        stakedAssetDistribution?.ring.totalOfDepositsInStaking ?? BigNumber(0)
+                      ),
                       precision: 4,
                     })}
                   </div>
@@ -132,7 +156,7 @@ const AccountOverview = () => {
               <div className={"flex flex-col gap-[2px]"}>
                 <div className={"flex justify-between"}>
                   <div>{t(localeKeys.bonded)}</div>
-                  <div>
+                  <div className={"text-14-bold"}>
                     {prettifyNumber({
                       number: stakedAssetDistribution?.kton.bonded ?? BigNumber(0),
                       precision: 4,

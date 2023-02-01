@@ -13,7 +13,6 @@ import SelectCollatorModal, { SelectCollatorRefs } from "../SelectCollatorModal"
 import { formatToWei, isValidNumber, prettifyNumber, secondsToHumanTime } from "@darwinia/app-utils";
 import BigNumber from "bignumber.js";
 import { BigNumber as EthersBigNumber } from "@ethersproject/bignumber/lib/bignumber";
-import { TransactionResponse } from "@ethersproject/providers";
 
 const StakingOverview = () => {
   const { t } = useAppTranslation();

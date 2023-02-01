@@ -79,6 +79,8 @@ export interface WalletCtx {
   selectedAccount: string | undefined;
   setTransactionStatus: (value: boolean) => void;
   isLoadingTransaction: boolean | undefined;
+  selectedWalletConfig: WalletConfig | undefined;
+  selectWallet: (walletConfig: WalletConfig) => void;
 }
 
 export interface DispatchCtx {

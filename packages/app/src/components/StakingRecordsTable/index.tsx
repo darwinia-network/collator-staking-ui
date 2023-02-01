@@ -774,7 +774,11 @@ const BondTokenModal = ({
 
   return (
     <ModalEnhanced
-      modalTitle={type === "bondMore" ? t(localeKeys.bondMore) : t(localeKeys.unbond)}
+      modalTitle={
+        type === "bondMore"
+          ? t(localeKeys.bondMoreToken, { tokenSymbol: symbol.toUpperCase() })
+          : t(localeKeys.unbondToken, { tokenSymbol: symbol.toUpperCase() })
+      }
       cancelText={t(localeKeys.cancel)}
       confirmText={type === "bondMore" ? t(localeKeys.bond) : t(localeKeys.unbond)}
       onConfirm={onConfirmBonding}
@@ -843,14 +847,17 @@ const BondDepositModal = ({
   const { t } = useAppTranslation();
   const [isLoading, setLoading] = useState<boolean>(false);
   const [selectedDeposits, setSelectedDeposit] = useState<Deposit[]>([]);
+  const [powerByDeposits, setPowerByDeposits] = useState(BigNumber(0));
   const [renderDeposits, setRenderDeposits] = useState<Deposit[]>([]);
   const { stakingContract } = useWallet();
-  const { unbondingDuration } = useStorage();
+  const { unbondingDuration, calculateExtraPower } = useStorage();
   const unbondingTime = secondsToHumanTime(unbondingDuration ?? 0);
 
   useEffect(() => {
     setSelectedDeposit([]);
     setLoading(false);
+    setPowerByDeposits(BigNumber(0));
+    setSelectedDeposit([]);
     let deposits: Deposit[] = [];
     if (type === "bondMore") {
       /* filter out all deposits that have already been bonded, only take the unbonded deposits */
@@ -885,6 +892,13 @@ const BondDepositModal = ({
   };
 
   const onDepositSelectionChange = (selectedItem: Deposit, allItems: Deposit[]) => {
+    /*totalSelectedRing value is already in Wei*/
+    const totalSelectedRing = allItems.reduce((acc, deposit) => acc.plus(deposit.value), BigNumber(0));
+    const power = calculateExtraPower({
+      kton: BigNumber(0),
+      ring: BigNumber(totalSelectedRing.toString()),
+    });
+    setPowerByDeposits(power);
     setSelectedDeposit(allItems);
   };
 
@@ -930,25 +944,36 @@ const BondDepositModal = ({
       confirmDisabled={selectedDeposits.length === 0}
       className={"!max-w-[400px]"}
     >
-      <div className={"divider border-b pb-[20px]"}>
-        {type === "unbond" && (
-          <div className={"pb-[20px] mb-[20px] divider border-b text-12"}>
-            {t(localeKeys.unbondTimeInfo, { unbondingTime: `${unbondingTime.time} ${unbondingTime.unit}` })}
-          </div>
-        )}
-        <div className={"flex flex-col gap-[10px] max-h-[300px] dw-custom-scrollbar"}>
-          {renderDeposits.length === 0 ? (
-            <div className={"text-12"}>
-              {type === "bondMore" ? t(localeKeys.noMoreDepositsToBond) : t(localeKeys.noDepositsToUnbond)}
+      <div className={"flex flex-col"}>
+        <div className={"divider border-b pb-[20px]"}>
+          {type === "unbond" && (
+            <div className={"pb-[20px] mb-[20px] divider border-b text-12"}>
+              {t(localeKeys.unbondTimeInfo, { unbondingTime: `${unbondingTime.time} ${unbondingTime.unit}` })}
             </div>
-          ) : (
-            <CheckboxGroup
-              options={renderDeposits}
-              render={depositRenderer}
-              onChange={onDepositSelectionChange}
-              selectedOptions={selectedDeposits}
-            />
           )}
+          <div className={"flex flex-col gap-[10px] max-h-[300px] dw-custom-scrollbar"}>
+            {renderDeposits.length === 0 ? (
+              <div className={"text-12"}>
+                {type === "bondMore" ? t(localeKeys.noMoreDepositsToBond) : t(localeKeys.noDepositsToUnbond)}
+              </div>
+            ) : (
+              <CheckboxGroup
+                options={renderDeposits}
+                render={depositRenderer}
+                onChange={onDepositSelectionChange}
+                selectedOptions={selectedDeposits}
+              />
+            )}
+          </div>
+        </div>
+        <div className={"text-12-bold text-primary pt-[10px]"}>
+          {type === "bondMore" ? "+" : "-"}
+          {prettifyNumber({
+            number: powerByDeposits,
+            precision: 0,
+            shouldFormatToEther: false,
+          })}{" "}
+          {t(localeKeys.power)}
         </div>
       </div>
     </ModalEnhanced>

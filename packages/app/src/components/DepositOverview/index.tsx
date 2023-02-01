@@ -3,7 +3,7 @@ import { localeKeys, useAppTranslation } from "@darwinia/app-locale";
 import { Button, Input, OptionProps, Select, notification } from "@darwinia/ui";
 import ringIcon from "../../assets/images/ring.svg";
 import { useStorage, useWallet } from "@darwinia/app-providers";
-import { calculateKtonFromRingDeposit, isValidNumber, formatToWei } from "@darwinia/app-utils";
+import { calculateKtonFromRingDeposit, isValidNumber, formatToWei, prettifyNumber } from "@darwinia/app-utils";
 import DepositRecordsTable from "../DepositRecordsTable";
 import BigNumber from "bignumber.js";
 import { BigNumber as EthersBigNumber } from "ethers";
@@ -12,7 +12,7 @@ import { TransactionResponse } from "@ethersproject/providers";
 const DepositOverview = () => {
   const { t } = useAppTranslation();
   const { selectedNetwork, depositContract, setTransactionStatus } = useWallet();
-  const { minimumDepositAmount } = useStorage();
+  const { minimumDepositAmount, balance } = useStorage();
   const [depositTerm, setDepositTerm] = useState<string>("1");
   const [amount, setAmount] = useState<string>("");
   const [amountHasError, setAmountHasError] = useState<boolean>(false);
@@ -140,7 +140,13 @@ const DepositOverview = () => {
                     <div className={"uppercase"}>{(selectedNetwork?.ring.symbol ?? "RING").toUpperCase()}</div>
                   </div>
                 }
-                placeholder={t(localeKeys.amount)}
+                placeholder={t(localeKeys.balanceAmount, {
+                  amount: prettifyNumber({
+                    number: balance?.ring ?? BigNumber(0),
+                    shouldFormatToEther: true,
+                    precision: 3,
+                  }),
+                })}
                 value={amount}
                 onChange={onAmountChange}
                 error={getAmountErrorJSX()}

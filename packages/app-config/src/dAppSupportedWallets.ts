@@ -8,24 +8,23 @@ export const dAppSupportedWallets: WalletConfig[] = [
     extensions: [
       {
         browser: "Chrome",
-        downloadURL: "https://chrome.google.com/webstore/detail/metamask/nkbihfbeogaeaoehlefnkodbefgpgknn",
+        downloadURL: "https://metamask.io/",
       },
       {
         browser: "Firefox",
-        downloadURL: "https://addons.mozilla.org/en-US/firefox/addon/ether-metamask/",
+        downloadURL: "https://metamask.io/",
       },
       {
         browser: "Brave",
-        downloadURL: "https://chrome.google.com/webstore/detail/metamask/nkbihfbeogaeaoehlefnkodbefgpgknn",
+        downloadURL: "https://metamask.io/",
       },
       {
         browser: "Edge",
-        downloadURL:
-          "https://microsoftedge.microsoft.com/addons/detail/metamask/ejbalbakoplchlghecdalmeeeajnimhm?hl=en-US",
+        downloadURL: "https://metamask.io/",
       },
       {
         browser: "Opera",
-        downloadURL: "https://addons.opera.com/en-gb/extensions/details/metamask-10/",
+        downloadURL: "https://metamask.io/",
       },
     ],
   },

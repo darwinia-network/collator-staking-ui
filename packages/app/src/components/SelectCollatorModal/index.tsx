@@ -148,7 +148,7 @@ const SelectCollatorModal = forwardRef<SelectCollatorRefs, SelectCollatorProps>(
       },
       {
         id: "4",
-        title: <div className={"capitalize"} dangerouslySetInnerHTML={{ __html: t(localeKeys.blocksLastSession) }} />,
+        title: <div dangerouslySetInnerHTML={{ __html: t(localeKeys.blocksLastSession) }} />,
         key: "totalStaked",
         render: (row) => {
           return <div>{row.lastSessionBlocks}</div>;
