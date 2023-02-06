@@ -135,4 +135,9 @@ export const localeKeys = {
   unbondToken: "unbondToken",
   totalRingBonded: "totalRingBonded",
   totalDepositBonded: "totalDepositBonded",
+  depositAmountMaxError: "depositAmountMaxError",
+  unbondAmountMaxError: "unbondAmountMaxError",
+  bondAmountMaxError: "bondAmountMaxError",
+  reservedInStakingRing: "reservedInStakingRing",
+  reservedInStakingDeposit: "reservedInStakingDeposit",
 };

@@ -42,7 +42,7 @@ const StakingOverview = () => {
   const { stakeAndNominate } = useDispatch();
   /*This is the minimum Ring balance that should be left on the account
    * for gas fee */
-  const minimumRingBalance = 2;
+  const minimumRingBalance = 0;
 
   const getRingValueErrorJSX = () => {
     return ringHasError ? <div /> : null;

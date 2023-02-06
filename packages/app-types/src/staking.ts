@@ -111,6 +111,7 @@ export interface Delegate {
   bondedTokens: Bond[];
   isActive?: boolean;
   accountNeedsACollator?: boolean;
+  canUnbondAll: boolean;
 }
 
 export interface UnbondingDeposit {

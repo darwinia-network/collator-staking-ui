@@ -111,7 +111,7 @@ const AccountOverview = () => {
                       message={
                         <div className={"flex flex-col gap-[5px]"}>
                           <div>
-                            {t(localeKeys.totalRingBonded, {
+                            {t(localeKeys.reservedInStakingRing, {
                               amount: prettifyNumber({
                                 number: (stakedAssetDistribution?.ring.bonded ?? BigNumber(0)).plus(
                                   stakedAssetDistribution?.ring.totalOfDepositsInStaking ?? BigNumber(0)
@@ -122,7 +122,7 @@ const AccountOverview = () => {
                             })}
                           </div>
                           <div>
-                            {t(localeKeys.totalDepositBonded, {
+                            {t(localeKeys.reservedInStakingDeposit, {
                               amount: prettifyNumber({
                                 number: stakedAssetDistribution?.ring.totalOfDepositsInStaking ?? BigNumber(0),
                                 precision: 4,

@@ -30,6 +30,8 @@ interface RestakeParams {
   depositsIds: EthersBigNumber[];
 }
 
+const amountPrecision = 6;
+
 const StakingRecordsTable = () => {
   const selectCollatorModalRef = useRef<SelectCollatorRefs>(null);
   const { t } = useAppTranslation();
@@ -211,6 +213,11 @@ const StakingRecordsTable = () => {
       stakedAssetDistribution.kton.bonded.gt(0) ||
       (stakedAssetDistribution.kton.unbondingKton || []).length > 0;
 
+    const hasSomeUnbondingAmount =
+      (stakedAssetDistribution.ring.unbondingRing || []).length > 0 ||
+      (stakedAssetDistribution.ring.unbondingDeposits || []).length > 0 ||
+      (stakedAssetDistribution.kton.unbondingKton || []).length > 0;
+
     if (!hasSomeStakingAmount && !currentlyNominatedCollator) {
       setDataSource([]);
       return;
@@ -237,6 +244,7 @@ const StakingRecordsTable = () => {
         staked: totalStakedPower,
         isActive: currentlyNominatedCollator?.isActive,
         accountNeedsACollator: accountNeedsACollator,
+        canUnbondAll: !hasSomeUnbondingAmount,
         bondedTokens: [
           {
             amount: stakedAssetDistribution.ring.bonded,
@@ -334,12 +342,17 @@ const StakingRecordsTable = () => {
       title: <div className={"bonded-tokens"}>{t(localeKeys.yourBondedTokens)}</div>,
       key: "bondedTokens",
       render: (row) => {
+        let hasAnyUnbondingItem = false;
+        row.bondedTokens.forEach((item) => {
+          if (item.unbondingDeposits?.length || item?.unbondingRing?.length || item?.unbondingKton?.length) {
+            hasAnyUnbondingItem = true;
+          }
+        });
         return (
           <div>
             {row.bondedTokens.map((item, index) => {
               let message: JSX.Element = <div />;
               let hasSomeUnbondingItems = false;
-              const amountPrecision = 6;
               /*Create the message JSX for deposits that are ready to be released and the ones that aren't ready to be released */
               if (item.isDeposit) {
                 hasSomeUnbondingItems = !!item?.unbondingDeposits?.length;
@@ -472,15 +485,22 @@ const StakingRecordsTable = () => {
                 <div
                   className={`flex gap-[5px] ${hasSomeUnbondingItems ? "text-halfWhite cursor-default" : "text-white"}`}
                 >
-                  <div>
-                    <>
+                  <div className={"relative"}>
+                    {hasSomeUnbondingItems && (
+                      <img
+                        className={"w-[15px] absolute z-10 left-0 top-[50%] -translate-y-1/2"}
+                        src={helpIcon}
+                        alt="image"
+                      />
+                    )}
+                    <div className={`${hasAnyUnbondingItem ? "pl-[20px]" : ""}`}>
                       {prettifyNumber({
                         number: item.amount,
                         precision: amountPrecision,
                         shouldFormatToEther: true,
                       })}{" "}
                       {item.isDeposit ? t(localeKeys.deposit) : ""} {item.symbol.toUpperCase()}
-                    </>
+                    </div>
                   </div>
                   {row.accountNeedsACollator ? null : (
                     <div className={"flex items-center"}>
@@ -542,6 +562,7 @@ const StakingRecordsTable = () => {
               onClick={() => {
                 onUnbondAll();
               }}
+              disabled={!row.canUnbondAll}
               btnType={"secondary"}
               className={"!px-[15px] !h-[30px] unbond-all-btn"}
             >
@@ -679,6 +700,27 @@ const BondTokenModal = ({
     return hasError ? <div /> : null;
   };
 
+  const balanceAmount: BigNumber = isUpdatingRing ? balance?.ring ?? BigNumber(0) : balance?.kton ?? BigNumber(0);
+  const bondedRing: BigNumber =
+    delegateToUpdate?.bondedTokens?.find((item) => item.isRingBonding)?.amount ?? BigNumber(0);
+  const bondedKton: BigNumber =
+    delegateToUpdate?.bondedTokens?.find((item) => item.isKtonBonding)?.amount ?? BigNumber(0);
+  const bondedAmount: BigNumber = isUpdatingRing ? bondedRing : bondedKton;
+  const bondMorePlaceholder = t(localeKeys.balanceAmount, {
+    amount: prettifyNumber({
+      number: balanceAmount,
+      precision: amountPrecision,
+      shouldFormatToEther: true,
+    }),
+  });
+  const unbondPlaceholder = t(localeKeys.bondedAmount, {
+    amount: prettifyNumber({
+      number: bondedAmount,
+      precision: amountPrecision,
+      shouldFormatToEther: true,
+    }),
+  });
+
   useEffect(() => {
     setValue("");
     setPower(BigNumber(0));
@@ -725,9 +767,92 @@ const BondTokenModal = ({
     if (isUpdatingRing) {
       //the user is trying to update his ring bond
       ringEthersBigNumber = formatToWei(value);
+      if (type === "bondMore") {
+        //make sure that the user doesn't bond more than his balance
+        const valueInWei = formatToWei(value).toString();
+        if (BigNumber(valueInWei).gt(balanceAmount)) {
+          notification.error({
+            message: (
+              <div>
+                {t(localeKeys.bondAmountMaxError, {
+                  amount: prettifyNumber({
+                    number: balanceAmount,
+                    shouldFormatToEther: true,
+                    precision: amountPrecision,
+                  }),
+                  tokenSymbol: selectedNetwork?.ring.symbol,
+                })}
+              </div>
+            ),
+          });
+          return;
+        }
+      } else {
+        //make sure that the user doesn't unbond more than what he bonded
+        const valueInWei = formatToWei(value).toString();
+        if (BigNumber(valueInWei).gt(bondedAmount)) {
+          notification.error({
+            message: (
+              <div>
+                {t(localeKeys.unbondAmountMaxError, {
+                  amount: prettifyNumber({
+                    number: bondedAmount,
+                    shouldFormatToEther: true,
+                    precision: amountPrecision,
+                  }),
+                  tokenSymbol: selectedNetwork?.ring.symbol,
+                })}
+              </div>
+            ),
+          });
+          return;
+        }
+      }
     } else {
       // the user is trying to update kton deposits
       ktonEthersBigNumber = formatToWei(value);
+      // in here balanceAmount is some KTON not RING
+      if (type === "bondMore") {
+        //make sure that the user doesn't bond more than his balance
+        const valueInWei = formatToWei(value).toString();
+        if (BigNumber(valueInWei).gt(balanceAmount)) {
+          notification.error({
+            message: (
+              <div>
+                {t(localeKeys.bondAmountMaxError, {
+                  amount: prettifyNumber({
+                    number: balanceAmount,
+                    shouldFormatToEther: true,
+                    precision: amountPrecision,
+                  }),
+                  tokenSymbol: selectedNetwork?.kton.symbol,
+                })}
+              </div>
+            ),
+          });
+          return;
+        }
+      } else {
+        //make sure that the user doesn't unbond more than what he bonded
+        const valueInWei = formatToWei(value).toString();
+        if (BigNumber(valueInWei).gt(bondedAmount)) {
+          notification.error({
+            message: (
+              <div>
+                {t(localeKeys.unbondAmountMaxError, {
+                  amount: prettifyNumber({
+                    number: bondedAmount,
+                    shouldFormatToEther: true,
+                    precision: amountPrecision,
+                  }),
+                  tokenSymbol: selectedNetwork?.kton.symbol,
+                })}
+              </div>
+            ),
+          });
+          return;
+        }
+      }
     }
 
     try {
@@ -752,25 +877,6 @@ const BondTokenModal = ({
       // console.log(e);
     }
   };
-
-  const balanceAmount = isUpdatingRing ? balance?.ring ?? BigNumber(0) : balance?.kton ?? BigNumber(0);
-  const bondedRing = delegateToUpdate?.bondedTokens?.find((item) => item.isRingBonding)?.amount ?? BigNumber(0);
-  const bondedKton = delegateToUpdate?.bondedTokens?.find((item) => item.isKtonBonding)?.amount ?? BigNumber(0);
-  const bondedAmount = isUpdatingRing ? bondedRing : bondedKton;
-  const bondMorePlaceholder = t(localeKeys.balanceAmount, {
-    amount: prettifyNumber({
-      number: balanceAmount,
-      precision: 6,
-      shouldFormatToEther: true,
-    }),
-  });
-  const unbondPlaceholder = t(localeKeys.bondedAmount, {
-    amount: prettifyNumber({
-      number: bondedAmount,
-      precision: 6,
-      shouldFormatToEther: true,
-    }),
-  });
 
   return (
     <ModalEnhanced
@@ -884,7 +990,7 @@ const BondDepositModal = ({
         <div>
           {prettifyNumber({
             number: option.value,
-            precision: 3,
+            precision: amountPrecision,
           })}
         </div>
       </div>

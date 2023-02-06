@@ -57,7 +57,7 @@ const enUs = {
   [localeKeys.update]: "Update",
   [localeKeys.updateSessionKey]: "Update session key",
   [localeKeys.sureToUndelegate]: "sure to undelegate now?",
-  [localeKeys.undelegationConfirmInfo]: `The undelegation takes {{unbondingTime}} and then it will have to be manually executed to make those tokens transferrable. The power won’t work immediately after you undelegate the collator.`,
+  [localeKeys.undelegationConfirmInfo]: `After undelegation, if there are some bonded token, you’ll have to manually unbond them. After unbonding, they’ll go through the {{unbondingTime}} unbonding period. When the unbonding period is over, you’ll have to manually release them before they become transferable.`,
   [localeKeys.tokensToBeReleased]: `{{amount}} {{token}} is unbonding and will be released in {{timeLeft}}.`,
   [localeKeys.cancelUnbonding]: "Cancel unbonding",
   [localeKeys.tokensReadyToRelease]: `{{amount}} {{token}} has complete the unbonding exit delay period.`,
@@ -126,7 +126,7 @@ const enUs = {
   [localeKeys.next]: "Next",
   [localeKeys.gotIt]: "Got it!",
   [localeKeys.selectCollatorInfo]: "You can Select A Collator to delegate your bonded tokens to.",
-  [localeKeys.unbondAllInfo]: `<div>In case you want to quit the Staking, you can unbond all your bonded tokens here. Note that it takes 14 days to unbond all tokens and then it will have to be manually executed to make those tokens transferrable.</div><div style="margin-top: 10px;">Remember to come back here to execute the unbonding then.</div>`,
+  [localeKeys.unbondAllInfo]: `<div>In case you want to quit the Staking, you can unbond all your bonded tokens here. Note that it takes {{unbondingTime}} to unbond all tokens and then it will have to be manually executed to make those tokens transferrable.</div><div style="margin-top: 10px;">Remember to come back here to execute the unbonding then.</div>`,
   [localeKeys.bondedAmount]: `Bonded: {{amount}}`,
   [localeKeys.depositAmountError]: `Deposit amount can't be lower than {{amount}} {{ringSymbol}}`,
   [localeKeys.depositInUseUnstakeFirst]:
@@ -139,6 +139,11 @@ const enUs = {
   [localeKeys.unbondToken]: `Unbond {{tokenSymbol}}`,
   [localeKeys.totalRingBonded]: `Total bonded: {{amount}} {{tokenSymbol}}`,
   [localeKeys.totalDepositBonded]: `Deposit bonded: {{amount}} {{tokenSymbol}}`,
+  [localeKeys.depositAmountMaxError]: `Your deposit amount can't be more than {{amount}} {{tokenSymbol}}`,
+  [localeKeys.unbondAmountMaxError]: `You can't unbond more than {{amount}} {{tokenSymbol}}`,
+  [localeKeys.bondAmountMaxError]: `You can't bond more than {{amount}} {{tokenSymbol}}`,
+  [localeKeys.reservedInStakingRing]: `{{tokenSymbol}}:{{amount}}`,
+  [localeKeys.reservedInStakingDeposit]: `Deposit {{tokenSymbol}}:{{amount}}`,
 };
 
 export default enUs;

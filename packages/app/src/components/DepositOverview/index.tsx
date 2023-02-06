@@ -3,7 +3,13 @@ import { localeKeys, useAppTranslation } from "@darwinia/app-locale";
 import { Button, Input, OptionProps, Select, notification } from "@darwinia/ui";
 import ringIcon from "../../assets/images/ring.svg";
 import { useStorage, useWallet } from "@darwinia/app-providers";
-import { calculateKtonFromRingDeposit, isValidNumber, formatToWei, prettifyNumber } from "@darwinia/app-utils";
+import {
+  calculateKtonFromRingDeposit,
+  isValidNumber,
+  formatToWei,
+  prettifyNumber,
+  formatToEther,
+} from "@darwinia/app-utils";
 import DepositRecordsTable from "../DepositRecordsTable";
 import BigNumber from "bignumber.js";
 import { BigNumber as EthersBigNumber } from "ethers";
@@ -17,6 +23,7 @@ const DepositOverview = () => {
   const [amount, setAmount] = useState<string>("");
   const [amountHasError, setAmountHasError] = useState<boolean>(false);
   const [rewardedKTON, setRewardedKTON] = useState<string>("0");
+  const precision = 3;
 
   useEffect(() => {
     setDepositTerm("1");
@@ -81,6 +88,7 @@ const DepositOverview = () => {
     }
     const userAmountInEther = BigNumber(amount);
     const minimumAllowedAmount = minimumDepositAmount ?? BigNumber(1);
+    /*Evaluate for the lowest possible amount that can be deposited */
     if (userAmountInEther.lt(minimumAllowedAmount)) {
       setAmountHasError(true);
       notification.error({
@@ -89,6 +97,26 @@ const DepositOverview = () => {
             {t(localeKeys.depositAmountError, {
               amount: minimumAllowedAmount.toString(),
               ringSymbol: selectedNetwork?.ring.symbol,
+            })}
+          </div>
+        ),
+      });
+      return;
+    }
+    /*Deposit amount can not be more than balance */
+    const userAmountInWei = BigNumber(formatToWei(amount).toString());
+    if (userAmountInWei.gt(balance?.ring ?? BigNumber(0))) {
+      setAmountHasError(true);
+      notification.error({
+        message: (
+          <div>
+            {t(localeKeys.depositAmountMaxError, {
+              amount: prettifyNumber({
+                number: balance?.ring ?? BigNumber(0),
+                shouldFormatToEther: true,
+                precision: precision,
+              }),
+              tokenSymbol: selectedNetwork?.ring.symbol,
             })}
           </div>
         ),
@@ -144,7 +172,7 @@ const DepositOverview = () => {
                   amount: prettifyNumber({
                     number: balance?.ring ?? BigNumber(0),
                     shouldFormatToEther: true,
-                    precision: 3,
+                    precision: precision,
                   }),
                 })}
                 value={amount}
