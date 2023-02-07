@@ -5,7 +5,7 @@ import ringIcon from "../../assets/images/ring.svg";
 import ktonIcon from "../../assets/images/kton.svg";
 import { useStorage, useWallet } from "@darwinia/app-providers";
 import { StakingRecord } from "@darwinia/app-types";
-import { prettifyNumber, toTimeAgo } from "@darwinia/app-utils";
+import { prettifyNumber, prettifyTooltipNumber, toTimeAgo } from "@darwinia/app-utils";
 import { useQuery } from "@apollo/client";
 import { GET_LATEST_STAKING_REWARDS } from "@darwinia/app-config";
 import { Spinner, Tooltip } from "@darwinia/ui";
@@ -46,6 +46,7 @@ const AccountOverview = () => {
             {prettifyNumber({
               number: power ?? BigNumber(0),
               shouldFormatToEther: false,
+              precision: 0,
             })}
           </div>
         </div>
@@ -59,11 +60,14 @@ const AccountOverview = () => {
                     return (
                       <div className={"flex justify-between"} key={item.id}>
                         <div>
-                          {prettifyNumber({
-                            number: BigNumber(item.amount),
-                            precision: 6,
-                          })}{" "}
-                          {selectedNetwork?.ring.symbol}
+                          <Tooltip message={<div>{prettifyTooltipNumber(BigNumber(item.amount))}</div>}>
+                            <div>
+                              {prettifyNumber({
+                                number: BigNumber(item.amount),
+                              })}{" "}
+                              {selectedNetwork?.ring.symbol}
+                            </div>
+                          </Tooltip>
                         </div>
                         <div>{toTimeAgo(item.blockTime)}</div>
                       </div>
@@ -112,21 +116,19 @@ const AccountOverview = () => {
                         <div className={"flex flex-col gap-[5px]"}>
                           <div>
                             {t(localeKeys.reservedInStakingRing, {
-                              amount: prettifyNumber({
-                                number: (stakedAssetDistribution?.ring.bonded ?? BigNumber(0)).plus(
+                              amount: prettifyTooltipNumber(
+                                (stakedAssetDistribution?.ring.bonded ?? BigNumber(0)).plus(
                                   stakedAssetDistribution?.ring.totalOfDepositsInStaking ?? BigNumber(0)
-                                ),
-                                precision: 4,
-                              }),
+                                )
+                              ),
                               tokenSymbol: selectedNetwork?.ring.symbol.toUpperCase(),
                             })}
                           </div>
                           <div>
                             {t(localeKeys.reservedInStakingDeposit, {
-                              amount: prettifyNumber({
-                                number: stakedAssetDistribution?.ring.totalOfDepositsInStaking ?? BigNumber(0),
-                                precision: 4,
-                              }),
+                              amount: prettifyTooltipNumber(
+                                stakedAssetDistribution?.ring.totalOfDepositsInStaking ?? BigNumber(0)
+                              ),
                               tokenSymbol: selectedNetwork?.ring.symbol.toUpperCase(),
                             })}
                           </div>
@@ -137,12 +139,23 @@ const AccountOverview = () => {
                     </Tooltip>
                   </div>
                   <div className={"text-14-bold"}>
-                    {prettifyNumber({
-                      number: (stakedAssetDistribution?.ring.bonded ?? BigNumber(0)).plus(
-                        stakedAssetDistribution?.ring.totalOfDepositsInStaking ?? BigNumber(0)
-                      ),
-                      precision: 4,
-                    })}
+                    <Tooltip
+                      message={
+                        <div>
+                          {prettifyTooltipNumber(
+                            (stakedAssetDistribution?.ring.bonded ?? BigNumber(0)).plus(
+                              stakedAssetDistribution?.ring.totalOfDepositsInStaking ?? BigNumber(0)
+                            )
+                          )}
+                        </div>
+                      }
+                    >
+                      {prettifyNumber({
+                        number: (stakedAssetDistribution?.ring.bonded ?? BigNumber(0)).plus(
+                          stakedAssetDistribution?.ring.totalOfDepositsInStaking ?? BigNumber(0)
+                        ),
+                      })}
+                    </Tooltip>
                   </div>
                 </div>
               </div>
@@ -157,10 +170,13 @@ const AccountOverview = () => {
                 <div className={"flex justify-between"}>
                   <div>{t(localeKeys.bonded)}</div>
                   <div className={"text-14-bold"}>
-                    {prettifyNumber({
-                      number: stakedAssetDistribution?.kton.bonded ?? BigNumber(0),
-                      precision: 4,
-                    })}
+                    <Tooltip
+                      message={<div>{prettifyTooltipNumber(stakedAssetDistribution?.kton.bonded ?? BigNumber(0))}</div>}
+                    >
+                      {prettifyNumber({
+                        number: stakedAssetDistribution?.kton.bonded ?? BigNumber(0),
+                      })}
+                    </Tooltip>
                   </div>
                 </div>
               </div>

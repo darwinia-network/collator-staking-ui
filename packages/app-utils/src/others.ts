@@ -57,9 +57,19 @@ interface PrettyNumberInput {
   keepTrailingZeros?: boolean;
   shouldFormatToEther?: boolean;
 }
+
+export const prettifyTooltipNumber = (number: BigNumber, shouldFormatToEther = true) => {
+  return prettifyNumber({
+    number,
+    precision: 8,
+    keepTrailingZeros: true,
+    shouldFormatToEther: shouldFormatToEther,
+  });
+};
+
 export const prettifyNumber = ({
   number,
-  precision = 0,
+  precision = 4,
   round = BigNumber.ROUND_DOWN,
   keepTrailingZeros = true,
   shouldFormatToEther = true,

@@ -1,6 +1,6 @@
 import { ChangeEvent, useEffect, useState } from "react";
 import { localeKeys, useAppTranslation } from "@darwinia/app-locale";
-import { Button, Input, OptionProps, Select, notification } from "@darwinia/ui";
+import { Button, Input, OptionProps, Select, notification, Tooltip } from "@darwinia/ui";
 import ringIcon from "../../assets/images/ring.svg";
 import { useStorage, useWallet } from "@darwinia/app-providers";
 import {
@@ -8,7 +8,7 @@ import {
   isValidNumber,
   formatToWei,
   prettifyNumber,
-  formatToEther,
+  prettifyTooltipNumber,
 } from "@darwinia/app-utils";
 import DepositRecordsTable from "../DepositRecordsTable";
 import BigNumber from "bignumber.js";
@@ -23,7 +23,6 @@ const DepositOverview = () => {
   const [amount, setAmount] = useState<string>("");
   const [amountHasError, setAmountHasError] = useState<boolean>(false);
   const [rewardedKTON, setRewardedKTON] = useState<string>("0");
-  const precision = 3;
 
   useEffect(() => {
     setDepositTerm("1");
@@ -111,11 +110,7 @@ const DepositOverview = () => {
         message: (
           <div>
             {t(localeKeys.depositAmountMaxError, {
-              amount: prettifyNumber({
-                number: balance?.ring ?? BigNumber(0),
-                shouldFormatToEther: true,
-                precision: precision,
-              }),
+              amount: prettifyTooltipNumber(balance?.ring ?? BigNumber(0)),
               tokenSymbol: selectedNetwork?.ring.symbol,
             })}
           </div>
@@ -172,7 +167,6 @@ const DepositOverview = () => {
                   amount: prettifyNumber({
                     number: balance?.ring ?? BigNumber(0),
                     shouldFormatToEther: true,
-                    precision: precision,
                   }),
                 })}
                 value={amount}
@@ -195,7 +189,14 @@ const DepositOverview = () => {
             <div className={"flex-1 flex flex-col gap-[10px] shrink-0"}>
               <div className={"text-12"}>{t(localeKeys.rewardYouReceive)}</div>
               <div className={"h-[40px] px-[10px] bg-primary border-primary border flex items-center justify-between"}>
-                <div>{rewardedKTON}</div>
+                <div>
+                  <Tooltip message={<div>{prettifyTooltipNumber(BigNumber(rewardedKTON), false)}</div>}>
+                    {prettifyNumber({
+                      number: BigNumber(rewardedKTON),
+                      shouldFormatToEther: false,
+                    })}
+                  </Tooltip>
+                </div>
                 <div className={"uppercase"}>{selectedNetwork?.kton.symbol}</div>
               </div>
             </div>

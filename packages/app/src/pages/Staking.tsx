@@ -199,13 +199,12 @@ const Staking = () => {
 const CustomTip = ({ ktonAmount, ringAmount, depositAmount, totalPower }: UserIntroValues) => {
   const { t } = useAppTranslation();
   const { selectedNetwork } = useWallet();
-  const amountPrecision = 6;
+
   const bondJSX = (amount: BigNumber, isDeposit = false, symbol = "RING") => {
     return (
       <div className={`text-white`}>
         {prettifyNumber({
           number: amount,
-          precision: amountPrecision,
           shouldFormatToEther: true,
         })}{" "}
         {isDeposit ? t(localeKeys.deposit) : ""} {symbol.toUpperCase()}

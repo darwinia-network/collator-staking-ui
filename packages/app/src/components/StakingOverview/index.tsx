@@ -1,5 +1,5 @@
 import { localeKeys, useAppTranslation } from "@darwinia/app-locale";
-import { Button, CheckboxGroup, Dropdown, Input, notification } from "@darwinia/ui";
+import { Button, CheckboxGroup, Dropdown, Input, notification, Tooltip } from "@darwinia/ui";
 import ringIcon from "../../assets/images/ring.svg";
 import ktonIcon from "../../assets/images/kton.svg";
 import { useDispatch, useStorage, useWallet } from "@darwinia/app-providers";
@@ -10,7 +10,13 @@ import StakingRecordsTable from "../StakingRecordsTable";
 import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
 import { Deposit, Collator } from "@darwinia/app-types";
 import SelectCollatorModal, { SelectCollatorRefs } from "../SelectCollatorModal";
-import { formatToWei, isValidNumber, prettifyNumber, secondsToHumanTime } from "@darwinia/app-utils";
+import {
+  formatToWei,
+  isValidNumber,
+  prettifyNumber,
+  prettifyTooltipNumber,
+  secondsToHumanTime,
+} from "@darwinia/app-utils";
 import BigNumber from "bignumber.js";
 import { BigNumber as EthersBigNumber } from "@ethersproject/bignumber/lib/bignumber";
 
@@ -125,10 +131,11 @@ const StakingOverview = () => {
       <div className={"flex justify-between"}>
         <div>ID#{option.id}</div>
         <div>
-          {prettifyNumber({
-            number: option.value,
-            precision: 3,
-          })}
+          <Tooltip message={<div>{prettifyTooltipNumber(option.value)}</div>}>
+            {prettifyNumber({
+              number: option.value,
+            })}
+          </Tooltip>
         </div>
       </div>
     );
@@ -361,7 +368,6 @@ const StakingOverview = () => {
                     amount: prettifyNumber({
                       number: balance?.ring ?? BigNumber(0),
                       shouldFormatToEther: true,
-                      precision: 3,
                     }),
                   })}
                 />
@@ -392,7 +398,6 @@ const StakingOverview = () => {
                     amount: prettifyNumber({
                       number: balance?.kton ?? BigNumber(0),
                       shouldFormatToEther: true,
-                      precision: 9,
                     }),
                   })}
                 />

@@ -18,7 +18,13 @@ import minusIcon from "../../assets/images/minus-square.svg";
 import helpIcon from "../../assets/images/help.svg";
 import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { Deposit, Delegate, UnbondingAsset } from "@darwinia/app-types";
-import { formatToWei, isValidNumber, prettifyNumber, secondsToHumanTime } from "@darwinia/app-utils";
+import {
+  formatToWei,
+  isValidNumber,
+  prettifyNumber,
+  prettifyTooltipNumber,
+  secondsToHumanTime,
+} from "@darwinia/app-utils";
 import BigNumber from "bignumber.js";
 import { BigNumber as EthersBigNumber } from "ethers";
 import { TransactionResponse } from "@ethersproject/providers";
@@ -29,8 +35,6 @@ interface RestakeParams {
   ktonEthersBigNumber: EthersBigNumber;
   depositsIds: EthersBigNumber[];
 }
-
-const amountPrecision = 6;
 
 const StakingRecordsTable = () => {
   const selectCollatorModalRef = useRef<SelectCollatorRefs>(null);
@@ -365,12 +369,7 @@ const StakingRecordsTable = () => {
                       return (
                         <div key={index}>
                           {t(localeKeys.depositsToBeReleased, {
-                            amount: prettifyNumber({
-                              number: asset.amount,
-                              precision: amountPrecision,
-                              keepTrailingZeros: false,
-                              shouldFormatToEther: true,
-                            }),
+                            amount: prettifyTooltipNumber(asset.amount),
                             ringSymbol: selectedNetwork?.ring.symbol,
                             timeLeft: asset.expiredHumanTime,
                           })}
@@ -393,12 +392,7 @@ const StakingRecordsTable = () => {
                       return (
                         <div key={index}>
                           {t(localeKeys.depositsReadyToRelease, {
-                            amount: prettifyNumber({
-                              number: asset.amount,
-                              precision: amountPrecision,
-                              keepTrailingZeros: false,
-                              shouldFormatToEther: true,
-                            }),
+                            amount: prettifyTooltipNumber(asset.amount),
                             ringSymbol: selectedNetwork?.ring.symbol,
                           })}
                           <span
@@ -434,12 +428,7 @@ const StakingRecordsTable = () => {
                       return (
                         <div key={index}>
                           {t(localeKeys.tokensToBeReleased, {
-                            amount: prettifyNumber({
-                              number: asset.amount,
-                              precision: amountPrecision,
-                              keepTrailingZeros: false,
-                              shouldFormatToEther: true,
-                            }),
+                            amount: prettifyTooltipNumber(asset.amount),
                             token: item.isRingBonding ? selectedNetwork?.ring.symbol : selectedNetwork?.kton.symbol,
                             timeLeft: asset.expiredHumanTime,
                           })}
@@ -459,12 +448,7 @@ const StakingRecordsTable = () => {
                       return (
                         <div key={index}>
                           {t(localeKeys.tokensReadyToRelease, {
-                            amount: prettifyNumber({
-                              number: asset.amount,
-                              precision: amountPrecision,
-                              keepTrailingZeros: false,
-                              shouldFormatToEther: true,
-                            }),
+                            amount: prettifyTooltipNumber(asset.amount),
                             token: item.isRingBonding ? selectedNetwork?.ring.symbol : selectedNetwork?.kton.symbol,
                           })}
                           <span
@@ -494,11 +478,22 @@ const StakingRecordsTable = () => {
                       />
                     )}
                     <div className={`${hasAnyUnbondingItem ? "pl-[20px]" : ""}`}>
-                      {prettifyNumber({
-                        number: item.amount,
-                        precision: amountPrecision,
-                        shouldFormatToEther: true,
-                      })}{" "}
+                      {hasAnyUnbondingItem ? (
+                        <>
+                          {/*Don't show a tool tip since there will be another tooltip */}
+                          {prettifyNumber({
+                            number: item.amount,
+                          })}
+                        </>
+                      ) : (
+                        <Tooltip className={"inline-block"} message={<div>{prettifyTooltipNumber(item.amount)}</div>}>
+                          <>
+                            {prettifyNumber({
+                              number: item.amount,
+                            })}
+                          </>
+                        </Tooltip>
+                      )}{" "}
                       {item.isDeposit ? t(localeKeys.deposit) : ""} {item.symbol.toUpperCase()}
                     </div>
                   </div>
@@ -709,14 +704,12 @@ const BondTokenModal = ({
   const bondMorePlaceholder = t(localeKeys.balanceAmount, {
     amount: prettifyNumber({
       number: balanceAmount,
-      precision: amountPrecision,
       shouldFormatToEther: true,
     }),
   });
   const unbondPlaceholder = t(localeKeys.bondedAmount, {
     amount: prettifyNumber({
       number: bondedAmount,
-      precision: amountPrecision,
       shouldFormatToEther: true,
     }),
   });
@@ -775,11 +768,7 @@ const BondTokenModal = ({
             message: (
               <div>
                 {t(localeKeys.bondAmountMaxError, {
-                  amount: prettifyNumber({
-                    number: balanceAmount,
-                    shouldFormatToEther: true,
-                    precision: amountPrecision,
-                  }),
+                  amount: prettifyTooltipNumber(balanceAmount),
                   tokenSymbol: selectedNetwork?.ring.symbol,
                 })}
               </div>
@@ -795,11 +784,7 @@ const BondTokenModal = ({
             message: (
               <div>
                 {t(localeKeys.unbondAmountMaxError, {
-                  amount: prettifyNumber({
-                    number: bondedAmount,
-                    shouldFormatToEther: true,
-                    precision: amountPrecision,
-                  }),
+                  amount: prettifyTooltipNumber(bondedAmount),
                   tokenSymbol: selectedNetwork?.ring.symbol,
                 })}
               </div>
@@ -820,11 +805,7 @@ const BondTokenModal = ({
             message: (
               <div>
                 {t(localeKeys.bondAmountMaxError, {
-                  amount: prettifyNumber({
-                    number: balanceAmount,
-                    shouldFormatToEther: true,
-                    precision: amountPrecision,
-                  }),
+                  amount: prettifyTooltipNumber(balanceAmount),
                   tokenSymbol: selectedNetwork?.kton.symbol,
                 })}
               </div>
@@ -840,11 +821,7 @@ const BondTokenModal = ({
             message: (
               <div>
                 {t(localeKeys.unbondAmountMaxError, {
-                  amount: prettifyNumber({
-                    number: bondedAmount,
-                    shouldFormatToEther: true,
-                    precision: amountPrecision,
-                  }),
+                  amount: prettifyTooltipNumber(bondedAmount),
                   tokenSymbol: selectedNetwork?.kton.symbol,
                 })}
               </div>
@@ -987,10 +964,11 @@ const BondDepositModal = ({
       <div className={"flex justify-between"}>
         <div>ID#{option.id}</div>
         <div>
-          {prettifyNumber({
-            number: option.value,
-            precision: amountPrecision,
-          })}
+          <Tooltip message={<div>{prettifyTooltipNumber(option.value)}</div>}>
+            {prettifyNumber({
+              number: option.value,
+            })}
+          </Tooltip>
         </div>
       </div>
     );

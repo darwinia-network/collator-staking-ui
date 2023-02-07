@@ -4,7 +4,7 @@ import { useStorage, useWallet } from "@darwinia/app-providers";
 import helpIcon from "../../assets/images/help.svg";
 import { useEffect, useRef, useState } from "react";
 import { Deposit } from "@darwinia/app-types";
-import { formatDate, prettifyNumber } from "@darwinia/app-utils";
+import { formatDate, prettifyNumber, prettifyTooltipNumber } from "@darwinia/app-utils";
 import BigNumber from "bignumber.js";
 import { BigNumber as EthersBigNumber } from "@ethersproject/bignumber/lib/bignumber";
 import { TransactionResponse } from "@ethersproject/providers";
@@ -18,8 +18,6 @@ const DepositRecordsTable = () => {
   const [showWithdrawModal, setShowWithdrawModal] = useState<boolean>(false);
   const depositToWithdraw = useRef<Deposit | null>(null);
   const withdrawType = useRef<WithdrawModalType>("early");
-  const precision = 3;
-  const rewardPrecision = 9;
 
   const onCloseWithdrawModal = () => {
     setShowWithdrawModal(false);
@@ -80,13 +78,14 @@ const DepositRecordsTable = () => {
       key: "value",
       render: (row) => {
         return (
-          <div>
-            {prettifyNumber({
-              number: row.value,
-              precision,
-            })}{" "}
-            {selectedNetwork?.ring.symbol.toUpperCase()}
-          </div>
+          <Tooltip message={<div>{prettifyTooltipNumber(row.value)}</div>}>
+            <div>
+              {prettifyNumber({
+                number: row.value,
+              })}{" "}
+              {selectedNetwork?.ring.symbol.toUpperCase()}
+            </div>
+          </Tooltip>
         );
       },
     },
@@ -96,13 +95,14 @@ const DepositRecordsTable = () => {
       key: "value",
       render: (row) => {
         return (
-          <div>
-            {prettifyNumber({
-              number: row.reward,
-              precision: rewardPrecision,
-            })}{" "}
-            {selectedNetwork?.kton.symbol.toUpperCase()}
-          </div>
+          <Tooltip message={<div>{prettifyTooltipNumber(row.reward)}</div>}>
+            <div>
+              {prettifyNumber({
+                number: row.reward,
+              })}{" "}
+              {selectedNetwork?.kton.symbol.toUpperCase()}
+            </div>
+          </Tooltip>
         );
       },
     },
@@ -221,7 +221,6 @@ const WithdrawModal = ({ isVisible, onClose, onConfirm, onCancel, deposit, type 
       ? `${t(localeKeys.payAmount, {
           amount: `${prettifyNumber({
             number: penaltyAmount,
-            precision: 9,
           })} ${selectedNetwork?.kton.symbol.toUpperCase()}`,
         })}`
       : `${t(localeKeys.withdraw)}`;
