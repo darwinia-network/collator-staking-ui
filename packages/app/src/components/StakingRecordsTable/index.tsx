@@ -16,6 +16,7 @@ import warningIcon from "../../assets/images/warning.svg";
 import plusIcon from "../../assets/images/plus-square.svg";
 import minusIcon from "../../assets/images/minus-square.svg";
 import helpIcon from "../../assets/images/help.svg";
+import infoIcon from "../../assets/images/info.svg";
 import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { Deposit, Delegate, UnbondingAsset } from "@darwinia/app-types";
 import {
@@ -473,7 +474,7 @@ const StakingRecordsTable = () => {
                     {hasSomeUnbondingItems && (
                       <img
                         className={"w-[15px] absolute z-10 left-0 top-[50%] -translate-y-1/2"}
-                        src={helpIcon}
+                        src={infoIcon}
                         alt="image"
                       />
                     )}

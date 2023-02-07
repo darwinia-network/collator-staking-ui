@@ -111,32 +111,6 @@ const AccountOverview = () => {
                 <div className={"flex justify-between"}>
                   <div className={"flex items-center gap-[5px]"}>
                     <div>{t(localeKeys.bonded)}</div>
-                    <Tooltip
-                      message={
-                        <div className={"flex flex-col gap-[5px]"}>
-                          <div>
-                            {t(localeKeys.reservedInStakingRing, {
-                              amount: prettifyTooltipNumber(
-                                (stakedAssetDistribution?.ring.bonded ?? BigNumber(0)).plus(
-                                  stakedAssetDistribution?.ring.totalOfDepositsInStaking ?? BigNumber(0)
-                                )
-                              ),
-                              tokenSymbol: selectedNetwork?.ring.symbol.toUpperCase(),
-                            })}
-                          </div>
-                          <div>
-                            {t(localeKeys.reservedInStakingDeposit, {
-                              amount: prettifyTooltipNumber(
-                                stakedAssetDistribution?.ring.totalOfDepositsInStaking ?? BigNumber(0)
-                              ),
-                              tokenSymbol: selectedNetwork?.ring.symbol.toUpperCase(),
-                            })}
-                          </div>
-                        </div>
-                      }
-                    >
-                      <img className={"w-[14px]"} src={helpIcon} alt="image" />
-                    </Tooltip>
                   </div>
                   <div className={"text-14-bold"}>
                     <Tooltip
