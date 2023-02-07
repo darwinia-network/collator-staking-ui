@@ -301,7 +301,6 @@ const WithdrawModal = ({ isVisible, onClose, onConfirm, onCancel, deposit, type 
       onCancel={onCancel}
       className={"!max-w-[400px]"}
       isLoading={isLoading}
-      isCancellable={false}
     >
       <div className={"pb-[20px] divider border-b text-12"}>{modalText}</div>
     </ModalEnhanced>

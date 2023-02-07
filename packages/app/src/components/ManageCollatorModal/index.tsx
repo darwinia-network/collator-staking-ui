@@ -175,7 +175,6 @@ const ManageCollatorModal = forwardRef<ManageCollatorRefs>((props, ref) => {
       onClose={onClose}
       modalTitle={t(localeKeys.manageCollator)}
       isVisible={isVisible}
-      isCancellable={false}
       isLoading={isLoading}
     >
       <div>

@@ -231,7 +231,6 @@ const SelectCollatorModal = forwardRef<SelectCollatorRefs, SelectCollatorProps>(
         onClose={onClose}
         modalTitle={t(localeKeys.selectCollator)}
         isVisible={isVisible}
-        isCancellable={false}
         isLoading={isLoading}
       >
         <div>

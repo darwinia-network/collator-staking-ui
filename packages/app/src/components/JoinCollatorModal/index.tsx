@@ -130,7 +130,6 @@ const JoinCollatorModal = forwardRef<JoinCollatorRefs>((props, ref) => {
       onClose={onClose}
       modalTitle={t(localeKeys.joinCollator)}
       isVisible={isVisible}
-      isCancellable={false}
       isLoading={isLoading}
     >
       <div>

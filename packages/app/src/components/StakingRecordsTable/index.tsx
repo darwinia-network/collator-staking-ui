@@ -889,7 +889,6 @@ const BondTokenModal = ({
       confirmText={type === "bondMore" ? t(localeKeys.bond) : t(localeKeys.unbond)}
       onConfirm={onConfirmBonding}
       isLoading={isLoading}
-      isCancellable={false}
       isVisible={isVisible}
       onClose={onClose}
       onCancel={onCancel}
@@ -1042,7 +1041,6 @@ const BondDepositModal = ({
       cancelText={t(localeKeys.cancel)}
       confirmText={type === "bondMore" ? t(localeKeys.bond) : t(localeKeys.unbond)}
       onConfirm={onConfirmBonding}
-      isCancellable={false}
       isLoading={isLoading}
       isVisible={isVisible}
       onClose={onClose}
@@ -1132,7 +1130,6 @@ const UndelegationModal = ({ isVisible, onClose, onConfirm, onCancel }: Undelega
       confirmText={t(localeKeys.undelegate)}
       onConfirm={onConfirmUndelegation}
       isLoading={isLoading}
-      isCancellable={false}
       isVisible={isVisible}
       onClose={onClose}
       onCancel={onCancel}
