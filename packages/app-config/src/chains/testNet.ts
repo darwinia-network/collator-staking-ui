@@ -30,7 +30,7 @@ export const testNet: ChainConfig = {
   substrate: {
     graphQlURL: "https://api.subquery.network/sq/isunaslabs/pangolin2",
     wssURL: "wss://pangolin-rpc.darwinia.network/",
-    httpsURL: "https://pangolin-rpc.darwinia.network",
+    httpsURL: "https://pangolin-rpc.darwinia.network", //useless for now
   },
   secondsPerBlock: 12,
 };

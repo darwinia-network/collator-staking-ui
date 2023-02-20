@@ -6,16 +6,16 @@ import depositABI from "../abi/testNet/deposit.json";
 export const pangoro: ChainConfig = {
   name: "Pangoro",
   displayName: "Pangoro",
-  explorerURLs: ["https://pangolin.subscan.io/"],
-  httpsURLs: ["https://pangolin-rpc.darwinia.network"],
+  explorerURLs: ["https://pangoro.subscan.io/"],
+  httpsURLs: ["https://cors.kahub.in/http://g1.dev.darwinia.network:10000"],
   kton: {
     address: "0x0000000000000000000000000000000000000402",
-    symbol: "PKTON",
+    symbol: "OKTON",
     decimals: 18,
   },
   ring: {
-    name: "PRING",
-    symbol: "PRING",
+    name: "ORING",
+    symbol: "ORING",
     decimals: 18,
   },
   contractAddresses: {
@@ -26,11 +26,11 @@ export const pangoro: ChainConfig = {
     staking: stakingABI,
     deposit: depositABI,
   },
-  chainId: 43,
+  chainId: 45,
   substrate: {
     graphQlURL: "https://api.subquery.network/sq/isunaslabs/pangolin2",
-    wssURL: "wss://pangolin-rpc.darwinia.network/",
-    httpsURL: "https://pangolin-rpc.darwinia.network",
+    wssURL: "ws://g1.dev.darwinia.network:20000",
+    httpsURL: "https://pangolin-rpc.darwinia.network", //useless for now
   },
   secondsPerBlock: 12,
 };
