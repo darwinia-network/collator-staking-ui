@@ -44,10 +44,10 @@ const useCollators = (apiPromise: ApiPromise | undefined) => {
           allCollatorUnsubscription();
         }
 
-        /* apiPromise.query.staking.collators and apiPromise.query.staking.exposures.entries return almost the same
+        /* apiPromise.query.darwiniaStaking.collators and apiPromise.query.darwiniaStaking.exposures.entries return almost the same
          * kind of data (both active and waiting collators), the ONLY difference is that staking.collators contains commission percentage which staking.exposures.entries
          * doesn't. Here we have to call staking.collators since we need commission percentage */
-        allCollatorUnsubscription = (await apiPromise.query.staking.collators.entries(
+        allCollatorUnsubscription = (await apiPromise.query.darwiniaStaking.collators.entries(
           async (allCollatorEntries: [StorageKey<AnyTuple>, Codec][]) => {
             const allCollators = [];
             for (let i = 0; i < allCollatorEntries.length; i++) {
@@ -78,7 +78,7 @@ const useCollators = (apiPromise: ApiPromise | undefined) => {
         )) as unknown as UnSubscription;
       };
 
-      nominatorsUnsubscription = (await apiPromise.query.staking.nominators.entries(
+      nominatorsUnsubscription = (await apiPromise.query.darwiniaStaking.nominators.entries(
         (nominatorsEntries: [StorageKey<AnyTuple>, Option<Codec>][]) => {
           allCollatorsNominatorsMap.current.clear();
           nominatorsEntries.forEach(([key, result]) => {
@@ -94,10 +94,10 @@ const useCollators = (apiPromise: ApiPromise | undefined) => {
         }
       )) as unknown as UnSubscription;
 
-      /* apiPromise.query.staking.collators and apiPromise.query.staking.exposures.entries return almost the same
+      /* apiPromise.query.darwiniaStaking.collators and apiPromise.query.darwiniaStaking.exposures.entries return almost the same
        * kind of data (both active and waiting collators), but staking.exposures.entries has some other properties
        * that staking.collators doesn't have */
-      exposureUnsubscription = (await apiPromise.query.staking.exposures.entries(
+      exposureUnsubscription = (await apiPromise.query.darwiniaStaking.exposures.entries(
         (exposureEntries: [StorageKey<AnyTuple>, Codec][]) => {
           allCollatorsStakedPowersMap.current.clear();
           /*Get all the collators and the total powers staked to them */
@@ -123,7 +123,7 @@ const useCollators = (apiPromise: ApiPromise | undefined) => {
         updateCollators();
       })) as unknown as UnSubscription;
 
-      rewardsUnsubscription = (await apiPromise.query.staking.rewardPoints((rewardPointsEncoded: Codec) => {
+      rewardsUnsubscription = (await apiPromise.query.darwiniaStaking.rewardPoints((rewardPointsEncoded: Codec) => {
         const rewardPoints = rewardPointsEncoded.toHuman() as unknown as [string, { [key: string]: string }];
         if (rewardPoints.length >= 2) {
           const collatorsPoints = rewardPoints[1];

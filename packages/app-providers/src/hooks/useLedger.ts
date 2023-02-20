@@ -231,7 +231,7 @@ const useLedger = ({ apiPromise, selectedAccount, secondsPerBlock = 12 }: Params
         setLoadingLedger(false);
       };
 
-      ledgerUnsubscription = (await apiPromise.query.staking.ledgers(
+      ledgerUnsubscription = (await apiPromise.query.darwiniaStaking.ledgers(
         selectedAccount,
         (ledger: Option<DarwiniaStakingLedgerEncoded>) => {
           ledgerInfo = ledger;

@@ -31,7 +31,7 @@ const usePower = ({ apiPromise, stakingAsset }: Params) => {
       }
       setLoadingPool(true);
 
-      ringUnsubscription = (await apiPromise.query.staking.ringPool((value: Balance) => {
+      ringUnsubscription = (await apiPromise.query.darwiniaStaking.ringPool((value: Balance) => {
         setPool((old) => {
           return {
             ...old,
@@ -40,7 +40,7 @@ const usePower = ({ apiPromise, stakingAsset }: Params) => {
         });
       })) as unknown as UnSubscription;
 
-      ktonUnsubscription = (await apiPromise.query.staking.ktonPool((value: Balance) => {
+      ktonUnsubscription = (await apiPromise.query.darwiniaStaking.ktonPool((value: Balance) => {
         setPool((old) => {
           return {
             ...old,
