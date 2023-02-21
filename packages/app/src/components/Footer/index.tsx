@@ -17,38 +17,39 @@ interface SocialNetwork {
 const socialNetworks: SocialNetwork[] = [
   {
     id: 1,
-    logo: twitter,
-    url: "https://google.com",
+    logo: github,
+    url: "https://github.com/darwinia-network",
   },
   {
     id: 2,
-    logo: telegram,
-    url: "https://google.com",
+    logo: twitter,
+    url: "https://twitter.com/DarwiniaNetwork",
   },
   {
     id: 3,
-    logo: discord,
-    url: "https://google.com",
+    logo: medium,
+    url: "https://medium.com/darwinianetwork",
   },
   {
     id: 4,
-    logo: element,
-    url: "https://google.com",
+    logo: telegram,
+    url: "https://t.me/DarwiniaNetwork",
   },
   {
     id: 5,
-    logo: github,
-    url: "https://google.com",
+    logo: discord,
+    url: "https://discord.com/invite/VcYFYETrw5",
   },
   {
     id: 6,
-    logo: medium,
-    url: "https://google.com",
+    logo: element,
+    url: "https://app.element.io/#/room/#darwinia:matrix.org",
   },
+
   {
     id: 7,
     logo: email,
-    url: "https://google.com",
+    url: "mailto:hello@darwinia.network",
   },
 ];
 
@@ -70,7 +71,7 @@ const Footer = () => {
       <div
         className={"app-container flex flex-1 flex-col gap-[15px] lg:gap-0 lg:flex-row lg:items-center justify-between"}
       >
-        <div className={"text-halfWhite"}>
+        <div className={"text-halfWhite capitalize"}>
           &copy; {new Date().getFullYear()} {t(localeKeys.darwiniaNetwork)}
         </div>
         <div>

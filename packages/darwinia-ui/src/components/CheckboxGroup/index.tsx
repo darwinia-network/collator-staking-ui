@@ -12,7 +12,7 @@ export interface CheckboxProps<T> {
 }
 
 export interface CheckboxItem extends Object {
-  id: string;
+  id: string | number;
 }
 
 const CheckboxGroup = <T extends CheckboxItem>({

@@ -31,6 +31,7 @@ export interface ModalEnhancedProps extends DetailedHTMLProps<HTMLAttributes<HTM
   confirmDisabled?: boolean;
   isLoading?: boolean;
   spinnerText?: string;
+  isCancellable?: boolean /*avoid closing the modal when it is loading*/;
 }
 
 /**
@@ -56,6 +57,7 @@ const ModalEnhanced = forwardRef<ModalEnhancedRefs, ModalEnhancedProps>(
       confirmDisabled = false,
       isLoading = false,
       spinnerText,
+      isCancellable = true,
     },
     ref
   ) => {
@@ -66,6 +68,9 @@ const ModalEnhanced = forwardRef<ModalEnhancedRefs, ModalEnhancedProps>(
     }, [isVisible]);
 
     const onModalClose = () => {
+      if (!isCancellable && isLoading) {
+        return;
+      }
       setModalVisibility(false);
       if (onClose) {
         onClose();
@@ -104,6 +109,7 @@ const ModalEnhanced = forwardRef<ModalEnhancedRefs, ModalEnhancedProps>(
         modalStyles={modalStyles}
         isVisible={isModalVisible}
         className={className}
+        isCancellable={isCancellable || !isLoading}
       >
         <div className={"dw-enhanced-modal"}>
           <div className={"dw-modal-enhanced-header"}>

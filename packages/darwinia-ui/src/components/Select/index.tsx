@@ -64,7 +64,7 @@ const Select = ({
   };
 
   useEffect(() => {
-    if (!value) {
+    if (typeof value === "undefined") {
       return;
     }
     let selectedValuesArray = Array.isArray(value) ? value : [value];
@@ -87,7 +87,7 @@ const Select = ({
 
     selectedValuesRef.current = selectedValuesArray;
     setSelectedValues(selectedValuesRef.current);
-  }, []);
+  }, [value]);
 
   const deselectAnOption = (option: OptionProps) => {
     const index = selectedValuesRef.current.findIndex((value) => value === option.value);

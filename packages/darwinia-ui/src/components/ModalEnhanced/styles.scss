@@ -18,7 +18,7 @@
     gap: var(--44px);
 
     .dw-modal-enhanced-title {
-      @extend .dw-text-18-bold;
+      @extend .dw-text-14-bold;
       text-transform: capitalize;
 
       @include ellipsis;

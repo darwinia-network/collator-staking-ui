@@ -1,50 +1,92 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { notification, Spinner } from "@darwinia/ui";
-import { useWallet } from "@darwinia/app-wallet";
+import { useWallet } from "@darwinia/app-providers";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import { getStore, setStore } from "@darwinia/app-utils";
+import { localeKeys, useAppTranslation } from "@darwinia/app-locale";
 
 const Root = () => {
-  const { isRequestingWalletConnection, error, connectWallet, isWalletConnected, selectedNetwork } = useWallet();
-  const [loading, setLoading] = useState(false);
+  const {
+    isRequestingWalletConnection,
+    error,
+    connectWallet,
+    isWalletConnected,
+    selectedNetwork,
+    isLoadingTransaction,
+    selectedWalletConfig,
+  } = useWallet();
+  const [loading, setLoading] = useState<boolean | undefined>(false);
   const navigate = useNavigate();
   const location = useLocation();
-  /*This lock will prevent the app from infinite redirecting sometimes */
-  const isUserAuthed = useRef(false);
+  const { t } = useAppTranslation();
 
   useEffect(() => {
-    setLoading(isRequestingWalletConnection);
-  }, [isRequestingWalletConnection, isWalletConnected]);
+    setLoading(isRequestingWalletConnection || isLoadingTransaction);
+  }, [isRequestingWalletConnection, isWalletConnected, isLoadingTransaction]);
+
+  const redirect = useCallback(() => {
+    setStore("isConnectedToWallet", true);
+    if (location.pathname === "/") {
+      navigate(`/staking${location.search}`, { replace: true });
+      return;
+    }
+
+    /* only navigate if the user is supposed to be redirected to another URL */
+    if (location.state && location.state.from) {
+      const nextPath = location.state.from.pathname ? location.state.from.pathname : "/staking";
+      navigate(`${nextPath}${location.search}`, { replace: true });
+    }
+  }, [location, navigate]);
 
   /*Monitor wallet connection and redirect to the required location */
   useEffect(() => {
-    /* if the user has just connected to the wallet, this will redirect to the
-     * staking page */
-    if (isWalletConnected && !isUserAuthed.current) {
-      setStore("isConnectedToWallet", isWalletConnected);
-      if (location.pathname === "/") {
-        /* This user is connected to wallet already but trying to go to the homepage,
-         * force redirect him to the staking page  */
-        isUserAuthed.current = true;
-        navigate(`/staking${location.search}`, { replace: true });
-        return;
-      }
-
-      /* only navigate if the user is supposed to be redirected to another URL */
-      if (location.state && location.state.from) {
-        const nextPath = location.state.from.pathname ? location.state.from.pathname : "/staking";
-        navigate(`${nextPath}${location.search}`, { replace: true });
-      }
+    if (isWalletConnected) {
+      redirect();
     }
-  }, [isWalletConnected, location.state]);
+  }, [isWalletConnected]);
 
   useEffect(() => {
     if (error) {
-      notification.error({
-        message: <div>{error.message}</div>,
-      });
+      switch (error.code) {
+        case 0: {
+          /*The user has not installed the wallet*/
+          notification.error({
+            message: (
+              <div
+                dangerouslySetInnerHTML={{
+                  __html: t(localeKeys.installWalletReminder, {
+                    walletName: selectedWalletConfig?.name,
+                    downloadURL: selectedWalletConfig?.extensions[0].downloadURL,
+                  }),
+                }}
+              />
+            ),
+            duration: 10000,
+          });
+          break;
+        }
+        case 1: {
+          /*The user rejected adding the network configurations*/
+          notification.error({
+            message: <div>{t(localeKeys.chainAdditionRejected, { networkName: selectedNetwork?.displayName })}</div>,
+          });
+          break;
+        }
+        case 4: {
+          /*Configurations were added but the user rejected the account access permission*/
+          notification.error({
+            message: <div>{t(localeKeys.accountPermissionRejected)}</div>,
+          });
+          break;
+        }
+        default: {
+          notification.error({
+            message: <div>{error.message}</div>,
+          });
+        }
+      }
     }
   }, [error]);
 
@@ -57,7 +99,7 @@ const Root = () => {
   }, [selectedNetwork]);
 
   return (
-    <Spinner isLoading={loading}>
+    <Spinner isLoading={!!loading} maskClassName={"!fixed !z-[99]"}>
       <div className={"w-full"}>
         <Header />
         <div className={"flex flex-col min-h-screen justify-center flex-1 pt-[80px] lg:pt-[90px]"}>

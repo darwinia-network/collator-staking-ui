@@ -1,6 +1,6 @@
 import { PropsWithChildren } from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { useWallet } from "@darwinia/app-wallet";
+import { useWallet } from "@darwinia/app-providers";
 
 const Protected = ({ children }: PropsWithChildren) => {
   const { isWalletConnected, isRequestingWalletConnection } = useWallet();

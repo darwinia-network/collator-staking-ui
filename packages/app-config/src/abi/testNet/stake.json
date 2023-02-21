@@ -1,0 +1,153 @@
+[
+	{
+		"inputs": [],
+		"name": "chill",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "result",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "claim",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "result",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint32",
+				"name": "commission",
+				"type": "uint32"
+			}
+		],
+		"name": "collect",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "result",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "target",
+				"type": "address"
+			}
+		],
+		"name": "nominate",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "result",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "ring_amount",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "kton_amount",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint8[]",
+				"name": "deposits",
+				"type": "uint8[]"
+			}
+		],
+		"name": "restake",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "result",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "ring_amount",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "kton_amount",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint8[]",
+				"name": "deposits",
+				"type": "uint8[]"
+			}
+		],
+		"name": "stake",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "result",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "ring_amount",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "kton_amount",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint8[]",
+				"name": "deposits",
+				"type": "uint8[]"
+			}
+		],
+		"name": "unstake",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "result",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	}
+]

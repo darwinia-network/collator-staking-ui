@@ -20,10 +20,11 @@ export interface ModalProps extends DetailedHTMLProps<HTMLAttributes<HTMLDivElem
   isVisible: boolean;
   modalStyles?: CSSProperties;
   onClose: () => void;
+  isCancellable?: boolean;
 }
 
 const Modal = forwardRef<ModalRefs, ModalProps>(
-  ({ isVisible, modalStyles, children, onClose, className, ...rest }, ref) => {
+  ({ isVisible, isCancellable, modalStyles, children, onClose, className, ...rest }, ref) => {
     const [isModalVisible, setModalVisibility] = useState(false);
     const nodeRef = useRef(null);
     const transitionTimeout = 300;
@@ -54,9 +55,11 @@ const Modal = forwardRef<ModalRefs, ModalProps>(
         <div ref={nodeRef} className={"dw-modal-wrapper"}>
           <div
             onClick={() => {
-              toggleModal();
-              if (onClose) {
-                onClose();
+              if (isCancellable) {
+                toggleModal();
+                if (onClose) {
+                  onClose();
+                }
               }
             }}
             className={"dw-mask"}

@@ -9,7 +9,7 @@ import Spinner from "../Spinner";
 
 export type Order = "ascend" | "descend";
 export interface Column<T> {
-  id: string;
+  id: string | number;
   title: JSX.Element;
   key: keyof T;
   width?: string;
@@ -35,13 +35,13 @@ export interface TableProps<T> {
   isLoading?: boolean;
   spinnerText?: string;
   className?: string;
-  selectedRowsIds?: string[];
+  selectedRowsIds?: string[] | number[];
   selectedRowClass?: string;
   onRowClick?: (row: T) => void;
 }
 
 export interface TableRow extends Object {
-  id: string;
+  id: string | number;
 }
 
 /**
@@ -114,6 +114,8 @@ const Table = <T extends TableRow>({
             <div className={"dw-table-body"}>
               {dataSource.map((row, index) => {
                 const rowKey = row.id ?? index;
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
                 const isRowSelected = selectedRowsIds?.includes(row.id);
                 const rowClass = isRowSelected ? selectedRowClass : "";
                 return (

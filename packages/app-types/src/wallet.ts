@@ -1,16 +1,35 @@
 import { ContractInterface } from "ethers";
 import { Web3Provider, JsonRpcSigner } from "@ethersproject/providers";
 import { Contract } from "@ethersproject/contracts";
+import { StakeAndNominateParams } from "./staking";
 
 export type SupportedWallet = "MetaMask";
 export type SupportedBrowser = "Chrome" | "Firefox" | "Brave" | "Edge" | "Opera";
 export type ChainName = "Crab" | "Pangolin" | "Darwinia" | "Pangoro";
 
 export interface Token {
-  address: string;
+  name?: string;
+  address?: string;
   symbol: string;
   decimals: number;
   logo?: string;
+}
+
+export interface ContractAddress {
+  staking: string;
+  deposit: string;
+}
+
+export interface ContractABI {
+  staking: ContractInterface;
+  deposit: ContractInterface;
+}
+
+export interface Substrate {
+  wssURL: string;
+  httpsURL: string;
+  metadata?: string;
+  graphQlURL: string;
 }
 
 export interface ChainConfig {
@@ -19,10 +38,12 @@ export interface ChainConfig {
   chainId: number;
   ring: Token;
   kton: Token;
-  explorerURL: [string];
-  rpcURL: [string];
-  contractInterface: ContractInterface;
-  contractAddress: string;
+  httpsURLs: string[];
+  explorerURLs: string[];
+  contractInterface: ContractABI;
+  contractAddresses: ContractAddress;
+  substrate: Substrate;
+  secondsPerBlock: number;
 }
 
 export interface WalletExtension {
@@ -44,13 +65,25 @@ export interface WalletError {
 export interface WalletCtx {
   provider: Web3Provider | undefined;
   signer: JsonRpcSigner | undefined;
-  contract: Contract | undefined;
+  depositContract: Contract | undefined;
+  stakingContract: Contract | undefined;
   isRequestingWalletConnection: boolean;
   isWalletConnected: boolean;
   connectWallet: () => void;
+  disconnectWallet: () => void;
   addKTONtoWallet: () => void;
+  forceSetAccountAddress: (accountAddress: string) => void;
   changeSelectedNetwork: (network: ChainConfig) => void;
   selectedNetwork: ChainConfig | undefined;
   error: WalletError | undefined;
   selectedAccount: string | undefined;
+  setTransactionStatus: (value: boolean) => void;
+  isLoadingTransaction: boolean | undefined;
+  selectedWalletConfig: WalletConfig | undefined;
+  selectWallet: (walletConfig: WalletConfig) => void;
+}
+
+export interface DispatchCtx {
+  setCollatorSessionKey: (sessionKey: string, provider: Web3Provider | undefined) => Promise<boolean>;
+  stakeAndNominate: (params: StakeAndNominateParams) => Promise<boolean>;
 }
