@@ -3,9 +3,9 @@ import stakingABI from "../abi/testNet/stake.json";
 import depositABI from "../abi/testNet/deposit.json";
 // import myTest from "../abi/testNet/myTest.json";
 
-export const testNet: ChainConfig = {
+export const pangolin: ChainConfig = {
   name: "Pangolin",
-  displayName: "TestNet",
+  displayName: "Pangolin",
   explorerURLs: ["https://pangolin.subscan.io/"],
   httpsURLs: ["https://pangolin-rpc.darwinia.network"],
   kton: {
