@@ -1,8 +1,8 @@
 name: Deploy staging
 
 on:
-  release:
-    types: [prereleased]
+  push:
+    branches: [master]
 
 jobs:
   deploy:
