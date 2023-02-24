@@ -7,7 +7,7 @@ export const pangoro: ChainConfig = {
   name: "Pangoro",
   displayName: "Pangoro",
   explorerURLs: ["https://pangoro.subscan.io/"],
-  httpsURLs: ["https://cors.kahub.in/http://g1.dev.darwinia.network:10000"],
+  httpsURLs: ["https://pangoro-rpc.darwinia.network"],
   kton: {
     address: "0x0000000000000000000000000000000000000402",
     symbol: "OKTON",
