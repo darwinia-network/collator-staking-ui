@@ -28,7 +28,7 @@ export const pangolin: ChainConfig = {
   },
   chainId: 43,
   substrate: {
-    graphQlURL: "https://subql.darwinia.network/subql-staking-pangolin",
+    graphQlURL: "https://subql.darwinia.network/subql-apps-pangolin",
     wssURL: "wss://pangolin-rpc.darwinia.network/",
     httpsURL: "https://pangolin-rpc.darwinia.network", //useless for now
   },
