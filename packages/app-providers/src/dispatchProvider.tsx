@@ -29,8 +29,7 @@ export const DispatchProvider = ({ children }: PropsWithChildren) => {
           return clientBuilder.buildPangolinClient(provider);
         }
         case "Pangoro": {
-          //TODO update this API accordingly
-          return clientBuilder.buildPangolinClient(provider);
+          return clientBuilder.buildPangoroClient(provider);
         }
         case "Darwinia": {
           //TODO update this API accordingly
