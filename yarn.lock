@@ -3418,10 +3418,10 @@ darwinia-js-sdk@^1.2.18:
     "@polkadot/types" "^9.9.4"
     ethers "^5.7.2"
 
-darwinia-js-sdk@^1.2.21:
-  version "1.2.21"
-  resolved "https://registry.yarnpkg.com/darwinia-js-sdk/-/darwinia-js-sdk-1.2.21.tgz#614ff29e77f05dab47626e20d3cfcd2d28da61a9"
-  integrity sha512-XF8xymsIRjrqvxMWIy9fzY5fDHr7rqc6uER8FU8vWBkYOxG5zXhAoZja0sLkTK27h3uoI5kQ3/05nXW/rFHL0A==
+darwinia-js-sdk@^1.3.0:
+  version "1.3.0"
+  resolved "https://registry.yarnpkg.com/darwinia-js-sdk/-/darwinia-js-sdk-1.3.0.tgz#7df24be606e49667e1f9df91576e3eecf69d63ce"
+  integrity sha512-OJTazQK81oeubD7twFAKtJ9EfXhB4UJhHjsVXvceTXJtADdIfjoSpgyVRIwiv/OgcCiMHTl5cAjmTfxWIofX1w==
   dependencies:
     "@polkadot/types" "^9.9.4"
     ethers "^5.7.2"

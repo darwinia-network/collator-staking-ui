@@ -4,6 +4,7 @@ import { clientBuilder } from "darwinia-js-sdk";
 import { Web3Provider } from "@ethersproject/providers";
 import { HexString } from "@polkadot/util/types";
 import { ethers } from "ethers";
+import { useWallet } from "./walletProvider";
 
 const initialState: DispatchCtx = {
   setCollatorSessionKey: (sessionKey: string, provider: Web3Provider | undefined) => {
@@ -19,9 +20,30 @@ const initialState: DispatchCtx = {
 const DispatchContext = createContext(initialState);
 
 export const DispatchProvider = ({ children }: PropsWithChildren) => {
-  const getClient = (provider: Web3Provider) => {
-    return clientBuilder.buildPangolin2Client(provider);
-  };
+  const { selectedNetwork } = useWallet();
+  const getClient = useCallback(
+    (provider: Web3Provider) => {
+      switch (selectedNetwork?.name) {
+        default:
+        case "Pangolin": {
+          return clientBuilder.buildPangolinClient(provider);
+        }
+        case "Pangoro": {
+          //TODO update this API accordingly
+          return clientBuilder.buildPangolinClient(provider);
+        }
+        case "Darwinia": {
+          //TODO update this API accordingly
+          return clientBuilder.buildPangolinClient(provider);
+        }
+        case "Crab": {
+          //TODO update this API accordingly
+          return clientBuilder.buildPangolinClient(provider);
+        }
+      }
+    },
+    [selectedNetwork]
+  );
   const setCollatorSessionKey = useCallback(
     async (sessionKey: string, provider: Web3Provider | undefined): Promise<boolean> => {
       try {
@@ -54,11 +76,11 @@ export const DispatchProvider = ({ children }: PropsWithChildren) => {
         }
         const signer = provider.getSigner();
         // prepare calls
-        const nominateCall = getClient(provider).calls.staking.buildNominateCall(collatorAddress);
+        const nominateCall = getClient(provider).calls.darwiniaStaking.buildNominateCall(collatorAddress);
         const ids = depositIds.map((item) => item.toString());
         console.log("ids staked====", ids);
         /*The ring and kton values should simply be in wei then converted to string NOT BigNumber */
-        const stakeCall = getClient(provider).calls.staking.buildStakeCall(
+        const stakeCall = getClient(provider).calls.darwiniaStaking.buildStakeCall(
           ringAmount.toString(),
           ktonAmount.toString(),
           ids
