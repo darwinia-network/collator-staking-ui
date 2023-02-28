@@ -30,7 +30,7 @@ export const pangolin: ChainConfig = {
   substrate: {
     graphQlURL: "https://subql.darwinia.network/subql-apps-pangolin",
     wssURL: "wss://pangolin-rpc.darwinia.network/",
-    httpsURL: "https://pangolin-rpc.darwinia.network", //useless for now
+    httpsURL: "https://pangolin-rpc.darwinia.network",
   },
   secondsPerBlock: 12,
 };
