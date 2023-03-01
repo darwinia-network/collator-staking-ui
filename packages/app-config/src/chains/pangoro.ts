@@ -7,7 +7,7 @@ export const pangoro: ChainConfig = {
   name: "Pangoro",
   displayName: "Pangoro",
   explorerURLs: ["https://pangoro.subscan.io/"],
-  httpsURLs: ["https://cors.kahub.in/http://g1.dev.darwinia.network:10000"],
+  httpsURLs: ["https://pangoro-rpc.darwinia.network"],
   kton: {
     address: "0x0000000000000000000000000000000000000402",
     symbol: "OKTON",
@@ -28,9 +28,9 @@ export const pangoro: ChainConfig = {
   },
   chainId: 45,
   substrate: {
-    graphQlURL: "https://api.subquery.network/sq/isunaslabs/pangolin2",
-    wssURL: "ws://g1.dev.darwinia.network:20000",
-    httpsURL: "https://pangolin-rpc.darwinia.network", //useless for now
+    graphQlURL: "https://subql.darwinia.network/subql-apps-pangoro",
+    wssURL: "wss://pangoro-rpc.darwinia.network",
+    httpsURL: "https://pangoro-rpc.darwinia.network",
   },
   secondsPerBlock: 12,
 };
