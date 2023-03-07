@@ -63,8 +63,8 @@ export const calculateKtonFromRingDeposit = ({
     .div(someMagicNumber);
   if (keepTrailingZeros) {
     // will return a number like 12,345.506000
-    return ktonValue.toFormat(decimalPrecision, round);
+    return ktonValue.toFormat(decimalPrecision, round).replaceAll(",", "");
   }
   // will return a number like 12,345.506
-  return ktonValue.decimalPlaces(decimalPrecision, round).toFormat();
+  return ktonValue.decimalPlaces(decimalPrecision, round).toFormat().replaceAll(",", "");
 };
