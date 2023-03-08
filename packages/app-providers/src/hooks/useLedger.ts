@@ -187,13 +187,13 @@ const useLedger = ({ apiPromise, selectedAccount, secondsPerBlock = 12 }: Params
 
           setStakedAssetDistribution({
             ring: {
-              bonded: BigNumber(ledgerData.stakedRing.toString()),
-              totalOfDepositsInStaking: BigNumber(totalOfDepositsInStaking.toString()),
+              bonded: BigNumber(ledgerData.stakedRing.toFixed()),
+              totalOfDepositsInStaking: BigNumber(totalOfDepositsInStaking.toFixed()),
               unbondingDeposits: unbondingDeposits,
               unbondingRing: unbondingRing,
             },
             kton: {
-              bonded: BigNumber(ledgerData.stakedKton.toString()),
+              bonded: BigNumber(ledgerData.stakedKton.toFixed()),
               unbondingKton: unbondingKton,
             },
           });
@@ -202,8 +202,8 @@ const useLedger = ({ apiPromise, selectedAccount, secondsPerBlock = 12 }: Params
           const totalKtonInStaking = ledgerData.stakedKton;
           totalStakedKton = ledgerData.stakedKton;
           setStakingAsset({
-            ring: BigNumber(totalRingInStaking.toString()),
-            kton: BigNumber(totalKtonInStaking.toString()),
+            ring: BigNumber(totalRingInStaking.toFixed()),
+            kton: BigNumber(totalKtonInStaking.toFixed()),
           });
 
           setStakedDepositsIds(stakedDepositsIdsList);
