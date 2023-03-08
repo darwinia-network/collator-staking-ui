@@ -110,7 +110,7 @@ const StakingRecordsTable = () => {
       notification.error({
         message: <div>{t(localeKeys.somethingWrongHappened)}</div>,
       });
-      // console.log(e);
+      console.log(e);
     }
   };
 
