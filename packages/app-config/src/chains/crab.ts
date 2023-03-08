@@ -25,7 +25,7 @@ export const crab: ChainConfig = {
     staking: stakingABI,
     deposit: depositABI,
   },
-  chainId: 43,
+  chainId: 44,
   substrate: {
     graphQlURL: "https://subql.darwinia.network/subql-apps-crab/",
     wssURL: "wss://crab-rpc.darwinia.network",
