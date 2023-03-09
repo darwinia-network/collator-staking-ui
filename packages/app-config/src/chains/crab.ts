@@ -18,8 +18,8 @@ export const crab: ChainConfig = {
     decimals: 18,
   },
   contractAddresses: {
-    staking: "0xcA927Df15afb7629b79dA4713a871190315c7409",
-    deposit: "0xcA927Df15afb7629b79dA4713a871190315c7409",
+    staking: "0x0000000000000000000000000000000000000601",
+    deposit: "0x0000000000000000000000000000000000000600",
   },
   contractInterface: {
     staking: stakingABI,

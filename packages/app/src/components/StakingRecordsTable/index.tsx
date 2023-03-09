@@ -92,8 +92,8 @@ const StakingRecordsTable = () => {
       setTransactionStatus(true);
       const ringBigNumber = stakedAssetDistribution?.ring.bonded ?? BigNumber(0);
       const ktonBigNumber = stakedAssetDistribution?.kton.bonded ?? BigNumber(0);
-      const ringEthersBigNumber = EthersBigNumber.from(ringBigNumber.toString());
-      const ktonEthersBigNumber = EthersBigNumber.from(ktonBigNumber.toString());
+      const ringEthersBigNumber = EthersBigNumber.from(ringBigNumber.toFixed());
+      const ktonEthersBigNumber = EthersBigNumber.from(ktonBigNumber.toFixed());
       const depositsIds = stakedDepositsIds?.map((id) => EthersBigNumber.from(id)) ?? [];
       const response = (await stakingContract?.unstake(
         ringEthersBigNumber,
@@ -110,7 +110,7 @@ const StakingRecordsTable = () => {
       notification.error({
         message: <div>{t(localeKeys.somethingWrongHappened)}</div>,
       });
-      // console.log(e);
+      console.log(e);
     }
   };
 
@@ -160,8 +160,8 @@ const StakingRecordsTable = () => {
   };
 
   const onCancelTokenUnbonding = (amount: BigNumber, isRing: boolean) => {
-    const ringAmount = isRing ? EthersBigNumber.from(amount.toString()) : EthersBigNumber.from(0);
-    const ktonAmount = isRing ? EthersBigNumber.from(0) : EthersBigNumber.from(amount.toString());
+    const ringAmount = isRing ? EthersBigNumber.from(amount.toFixed()) : EthersBigNumber.from(0);
+    const ktonAmount = isRing ? EthersBigNumber.from(0) : EthersBigNumber.from(amount.toFixed());
     const depositIds: EthersBigNumber[] = [];
     reStake({
       ringEthersBigNumber: ringAmount,
