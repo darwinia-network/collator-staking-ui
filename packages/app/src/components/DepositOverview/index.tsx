@@ -2,6 +2,7 @@ import { ChangeEvent, useEffect, useState } from "react";
 import { localeKeys, useAppTranslation } from "@darwinia/app-locale";
 import { Button, Input, OptionProps, Select, notification, Tooltip } from "@darwinia/ui";
 import ringIcon from "../../assets/images/ring.svg";
+import crabIcon from "../../assets/images/crab.svg";
 import { useStorage, useWallet } from "@darwinia/app-providers";
 import {
   calculateKtonFromRingDeposit,
@@ -23,6 +24,7 @@ const DepositOverview = () => {
   const [amount, setAmount] = useState<string>("");
   const [amountHasError, setAmountHasError] = useState<boolean>(false);
   const [rewardedKTON, setRewardedKTON] = useState<string>("0");
+  const ringTokenIcon = selectedNetwork?.name === "Crab" ? crabIcon : ringIcon;
 
   useEffect(() => {
     setDepositTerm("1");
@@ -159,7 +161,7 @@ const DepositOverview = () => {
                 leftIcon={null}
                 rightSlot={
                   <div className={"flex gap-[10px] items-center px-[10px]"}>
-                    <img className={"w-[20px]"} src={ringIcon} alt="image" />
+                    <img className={"w-[20px]"} src={ringTokenIcon} alt="image" />
                     <div className={"uppercase"}>{(selectedNetwork?.ring.symbol ?? "RING").toUpperCase()}</div>
                   </div>
                 }

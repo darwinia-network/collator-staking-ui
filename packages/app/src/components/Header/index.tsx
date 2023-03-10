@@ -44,8 +44,8 @@ const Header = () => {
         forceSetAccountAddress(account);
       }
     } else {
-      /* use test network by default */
-      const index = supportedNetworks.findIndex((network) => network.name === "Pangolin");
+      /* use Crab network by default */
+      const index = supportedNetworks.findIndex((network) => network.name === "Crab");
       changeConnectedNetwork(supportedNetworks[index]);
     }
   }, []);

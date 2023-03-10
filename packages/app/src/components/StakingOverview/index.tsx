@@ -2,6 +2,8 @@ import { localeKeys, useAppTranslation } from "@darwinia/app-locale";
 import { Button, CheckboxGroup, Dropdown, Input, notification, Tooltip } from "@darwinia/ui";
 import ringIcon from "../../assets/images/ring.svg";
 import ktonIcon from "../../assets/images/kton.svg";
+import crabIcon from "../../assets/images/crab.svg";
+import cktonIcon from "../../assets/images/ckton.svg";
 import { useDispatch, useStorage, useWallet } from "@darwinia/app-providers";
 import caretDownIcon from "../../assets/images/caret-down.svg";
 import JazzIcon from "../JazzIcon";
@@ -49,6 +51,9 @@ const StakingOverview = () => {
   /*This is the minimum Ring balance that should be left on the account
    * for gas fee */
   const minimumRingBalance = 0;
+
+  const ringTokenIcon = selectedNetwork?.name === "Crab" ? crabIcon : ringIcon;
+  const ktonTokenIcon = selectedNetwork?.name === "Crab" ? cktonIcon : ktonIcon;
 
   const getRingValueErrorJSX = () => {
     return ringHasError ? <div /> : null;
@@ -360,7 +365,7 @@ const StakingOverview = () => {
                   error={getRingValueErrorJSX()}
                   rightSlot={
                     <div className={"flex gap-[10px] items-center px-[10px]"}>
-                      <img className={"w-[20px]"} src={ringIcon} alt="image" />
+                      <img className={"w-[20px]"} src={ringTokenIcon} alt="image" />
                       <div className={"uppercase"}>{selectedNetwork?.ring.symbol ?? "RING"}</div>
                     </div>
                   }
@@ -390,7 +395,7 @@ const StakingOverview = () => {
                   error={getKtonValueErrorJSX()}
                   rightSlot={
                     <div className={"flex gap-[10px] items-center px-[10px]"}>
-                      <img className={"w-[20px]"} src={ktonIcon} alt="image" />
+                      <img className={"w-[20px]"} src={ktonTokenIcon} alt="image" />
                       <div className={"uppercase"}>{selectedNetwork?.kton.symbol ?? "RING"}</div>
                     </div>
                   }
