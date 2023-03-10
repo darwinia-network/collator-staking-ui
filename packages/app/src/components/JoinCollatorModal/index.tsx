@@ -138,8 +138,8 @@ const JoinCollatorModal = forwardRef<JoinCollatorRefs>((props, ref) => {
             className={"text-halfWhite text-12 divider border-b pb-[10px]"}
             dangerouslySetInnerHTML={{
               __html: t(localeKeys.howToJoinCollator, {
-                runNodeUrl: "https://www.baidu.com",
-                tutorialUrl: "https://www.baidu.com",
+                runNodeUrl: "https://docs.darwinia.network/how-to-become-a-collator-679e363b68ab47189bde7826c8258c1d",
+                tutorialUrl: "https://docs.darwinia.network/how-to-become-a-collator-679e363b68ab47189bde7826c8258c1d",
               }),
             }}
           />
