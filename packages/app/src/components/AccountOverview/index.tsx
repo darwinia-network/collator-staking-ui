@@ -3,6 +3,8 @@ import { localeKeys, useAppTranslation } from "@darwinia/app-locale";
 import BigNumber from "bignumber.js";
 import ringIcon from "../../assets/images/ring.svg";
 import ktonIcon from "../../assets/images/kton.svg";
+import crabIcon from "../../assets/images/crab.svg";
+import cktonIcon from "../../assets/images/ckton.svg";
 import { useStorage, useWallet } from "@darwinia/app-providers";
 import { StakingRecord } from "@darwinia/app-types";
 import { prettifyNumber, prettifyTooltipNumber, toTimeAgo } from "@darwinia/app-utils";
@@ -32,6 +34,9 @@ const AccountOverview = () => {
       itemsCount: 3,
     },
   });
+
+  const ringTokenIcon = selectedNetwork?.name === "Crab" ? crabIcon : ringIcon;
+  const ktonTokenIcon = selectedNetwork?.name === "Crab" ? cktonIcon : ktonIcon;
 
   return (
     <div className={"flex gap-[20px] lg:gap-0 justify-between flex-col lg:flex-row"}>
@@ -104,7 +109,7 @@ const AccountOverview = () => {
             {/*RING*/}
             <div className={"divider border-b pb-[20px] gap-[20px] flex flex-col"}>
               <div className={"flex gap-[5px] items-center"}>
-                <img className={"w-[30px]"} src={ringIcon} alt="image" />
+                <img className={"w-[30px]"} src={ringTokenIcon} alt="image" />
                 <div className={"uppercase text-18-bold"}>{selectedNetwork?.ring.symbol ?? "RING"}</div>
               </div>
               <div className={"flex flex-col gap-[2px]"}>
@@ -137,7 +142,7 @@ const AccountOverview = () => {
             {/*KTON*/}
             <div className={"gap-[20px] flex flex-col"}>
               <div className={"flex gap-[5px] items-center"}>
-                <img className={"w-[30px]"} src={ktonIcon} alt="image" />
+                <img className={"w-[30px]"} src={ktonTokenIcon} alt="image" />
                 <div className={"uppercase text-18-bold"}>{selectedNetwork?.kton.symbol ?? "KTON"}</div>
               </div>
               <div className={"flex flex-col gap-[2px]"}>
