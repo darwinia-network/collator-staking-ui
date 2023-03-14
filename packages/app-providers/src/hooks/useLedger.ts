@@ -6,9 +6,10 @@ import {
   DarwiniaStakingLedgerEncoded,
   Deposit,
   DepositEncoded,
+  PalletAssetsAssetAccount,
+  PalletAssetsAssetAccountEncoded,
   StakingAsset,
   UnbondingAsset,
-  UnbondingDeposit,
 } from "@darwinia/app-types";
 import { Option, Vec } from "@polkadot/types";
 import BigNumber from "bignumber.js";
@@ -16,6 +17,7 @@ import { ApiPromise } from "@polkadot/api";
 import { UnSubscription } from "../storageProvider";
 import useBlock from "./useBlock";
 import { calculateKtonFromRingDeposit, getMonthsRange, secondsToHumanTime } from "@darwinia/app-utils";
+import { Codec } from "@polkadot/types/types";
 
 interface Params {
   apiPromise: ApiPromise | undefined;
@@ -39,12 +41,14 @@ const useLedger = ({ apiPromise, selectedAccount, secondsPerBlock = 12 }: Params
   const [stakedAssetDistribution, setStakedAssetDistribution] = useState<AssetDistribution>();
   const [ktonBalance, setKtonBalance] = useState<BigNumber>(BigNumber(0));
   const { currentBlock } = useBlock(apiPromise);
+  const ktonId = 1026; // this is constant already set on the chain
 
   /*Get staking ledger and deposits. The data that comes back from the server needs a lot of decoding,
    * This useEffect will run on every new block */
   useEffect(() => {
     let depositsUnsubscription: UnSubscription | undefined;
     let ledgerUnsubscription: UnSubscription | undefined;
+    let ktonBalanceUnsubscription: UnSubscription | undefined;
     const getStakingLedgerAndDeposits = async () => {
       if (!selectedAccount || !apiPromise || !currentBlock) {
         return;
@@ -56,18 +60,19 @@ const useLedger = ({ apiPromise, selectedAccount, secondsPerBlock = 12 }: Params
 
       let ledgerInfo: Option<DarwiniaStakingLedgerEncoded> | undefined;
       let depositsInfo: Option<Vec<DepositEncoded>> | undefined;
+      let ktonAsset: Option<PalletAssetsAssetAccountEncoded> | undefined;
 
       /*This method will be called every time there are changes in the deposits or ledger, it is managed by
        * socket */
       const parseData = (
         ledgerOption: Option<DarwiniaStakingLedgerEncoded> | undefined,
-        depositsOption: Option<Vec<DepositEncoded>> | undefined
+        depositsOption: Option<Vec<DepositEncoded>> | undefined,
+        ktonAssetOption: Option<PalletAssetsAssetAccountEncoded> | undefined
       ) => {
-        if (!ledgerOption || !depositsOption) {
+        if (!ledgerOption || !depositsOption || !ktonAssetOption) {
           return;
         }
 
-        let totalKtonRewarded = BigNumber(0);
         let totalStakedKton = BigNumber(0);
 
         const depositsList: Deposit[] = [];
@@ -93,8 +98,6 @@ const useLedger = ({ apiPromise, selectedAccount, secondsPerBlock = 12 }: Params
               depositMonths: getMonthsRange(startTime, expiredTime),
               decimalPrecision: 0,
             }).replaceAll(",", "");
-
-            totalKtonRewarded = totalKtonRewarded.plus(BigNumber(reward));
 
             depositsList.push({
               id: Number(item.id.toString().replaceAll(",", "")),
@@ -226,8 +229,14 @@ const useLedger = ({ apiPromise, selectedAccount, secondsPerBlock = 12 }: Params
 
         /*This is the kton amount that will be used to display the kton balance, and
          * will also in storageProvider to create the account balance (AssetBalance)  */
-        const usableKton = totalKtonRewarded.minus(totalStakedKton);
-        setKtonBalance(usableKton);
+        if (ktonAssetOption.isSome) {
+          const unwrappedKtonAsset = ktonAssetOption.unwrap();
+          const ktonAsset = unwrappedKtonAsset.toHuman() as unknown as PalletAssetsAssetAccount;
+          ktonAsset.balance = BigNumber(ktonAsset.balance.toString().replaceAll(",", ""));
+          setKtonBalance(ktonAsset.balance.minus(totalStakedKton));
+        } else {
+          setKtonBalance(BigNumber(0));
+        }
         setLoadingLedger(false);
       };
 
@@ -235,7 +244,7 @@ const useLedger = ({ apiPromise, selectedAccount, secondsPerBlock = 12 }: Params
         selectedAccount,
         (ledger: Option<DarwiniaStakingLedgerEncoded>) => {
           ledgerInfo = ledger;
-          parseData(ledgerInfo, depositsInfo);
+          parseData(ledgerInfo, depositsInfo, ktonAsset);
         }
       )) as unknown as UnSubscription;
 
@@ -243,7 +252,16 @@ const useLedger = ({ apiPromise, selectedAccount, secondsPerBlock = 12 }: Params
         selectedAccount,
         (deposits: Option<Vec<DepositEncoded>>) => {
           depositsInfo = deposits;
-          parseData(ledgerInfo, depositsInfo);
+          parseData(ledgerInfo, depositsInfo, ktonAsset);
+        }
+      )) as unknown as UnSubscription;
+
+      ktonBalanceUnsubscription = (await apiPromise.query.assets.account(
+        ktonId,
+        selectedAccount,
+        (result: Option<PalletAssetsAssetAccountEncoded>) => {
+          ktonAsset = result;
+          parseData(ledgerInfo, depositsInfo, ktonAsset);
         }
       )) as unknown as UnSubscription;
     };
@@ -259,6 +277,9 @@ const useLedger = ({ apiPromise, selectedAccount, secondsPerBlock = 12 }: Params
       }
       if (depositsUnsubscription) {
         depositsUnsubscription();
+      }
+      if (ktonBalanceUnsubscription) {
+        ktonBalanceUnsubscription();
       }
     };
   }, [apiPromise, selectedAccount, currentBlock]);

@@ -1,5 +1,6 @@
 import BigNumber from "bignumber.js";
 import { Collator, Deposit, StakingAsset } from "./staking";
+import { u128, Struct, bool } from "@polkadot/types";
 
 export interface UnbondingAsset {
   depositId?: number;
@@ -51,4 +52,14 @@ export interface UserIntroValues {
   ktonAmount: BigNumber;
   depositAmount: BigNumber;
   totalPower: BigNumber;
+}
+
+export interface PalletAssetsAssetAccountEncoded extends Struct {
+  balance: u128;
+  isFrozen: bool;
+}
+
+export interface PalletAssetsAssetAccount extends Struct {
+  balance: BigNumber;
+  isFrozen: boolean;
 }
