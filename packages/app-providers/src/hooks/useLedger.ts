@@ -73,8 +73,6 @@ const useLedger = ({ apiPromise, selectedAccount, secondsPerBlock = 12 }: Params
           return;
         }
 
-        let totalStakedKton = BigNumber(0);
-
         const depositsList: Deposit[] = [];
 
         if (depositsOption.isSome) {
@@ -203,7 +201,6 @@ const useLedger = ({ apiPromise, selectedAccount, secondsPerBlock = 12 }: Params
 
           const totalRingInStaking = ledgerData.stakedRing.plus(totalOfDepositsInStaking);
           const totalKtonInStaking = ledgerData.stakedKton;
-          totalStakedKton = ledgerData.stakedKton;
           setStakingAsset({
             ring: BigNumber(totalRingInStaking.toFixed()),
             kton: BigNumber(totalKtonInStaking.toFixed()),
@@ -232,8 +229,8 @@ const useLedger = ({ apiPromise, selectedAccount, secondsPerBlock = 12 }: Params
         if (ktonAssetOption.isSome) {
           const unwrappedKtonAsset = ktonAssetOption.unwrap();
           const ktonAsset = unwrappedKtonAsset.toHuman() as unknown as PalletAssetsAssetAccount;
-          ktonAsset.balance = BigNumber(ktonAsset.balance.toString().replaceAll(",", ""));
-          setKtonBalance(ktonAsset.balance.minus(totalStakedKton));
+          const balance = BigNumber(ktonAsset.balance.toString().replaceAll(",", ""));
+          setKtonBalance(balance);
         } else {
           setKtonBalance(BigNumber(0));
         }
