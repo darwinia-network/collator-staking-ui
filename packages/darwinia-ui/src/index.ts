@@ -15,6 +15,7 @@ import Tooltip from "./components/Tooltip";
 import Dropdown from "./components/Dropdown";
 import DateRangePicker from "./components/DateRangePicker";
 import notification from "./components/Notification";
+import enhancedNotification from "./components/EnhancedNotification";
 import Menu from "./components/Menu";
 import CheckboxGroup from "./components/CheckboxGroup";
 
@@ -38,6 +39,7 @@ export {
   notification,
   Menu,
   CheckboxGroup,
+  enhancedNotification,
 };
 
 /*Types*/

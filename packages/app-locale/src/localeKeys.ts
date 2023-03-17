@@ -140,4 +140,5 @@ export const localeKeys = {
   bondAmountMaxError: "bondAmountMaxError",
   reservedInStakingRing: "reservedInStakingRing",
   reservedInStakingDeposit: "reservedInStakingDeposit",
+  switchToNetwork: "switchToNetwork",
 };

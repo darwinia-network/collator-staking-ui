@@ -240,17 +240,10 @@ export const WalletProvider = ({ children }: PropsWithChildren) => {
       }
       setRequestingWalletConnection(false);
       setWalletConnected(false);
-      if ((e as { code: number }).code === 4001) {
-        setError({
-          code: 4,
-          message: "Account access permission rejected",
-        });
-      } else {
-        setError({
-          code: 5,
-          message: "Something else happened",
-        });
-      }
+      setError({
+        code: 1,
+        message: "User rejected adding ethereum chain",
+      });
     }
   }, [isWalletInstalled, selectedNetwork, isRequestingWalletConnection]);
 
