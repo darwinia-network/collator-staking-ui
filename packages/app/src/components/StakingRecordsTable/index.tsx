@@ -376,10 +376,9 @@ const StakingRecordsTable = () => {
                           })}
                           <span
                             onClick={() => {
-                              if (!asset.depositId) {
-                                return;
+                              if (typeof asset.depositId !== "undefined" && asset.depositId !== null) {
+                                onCancelDepositUnbonding(asset.depositId);
                               }
-                              onCancelDepositUnbonding(asset.depositId);
                             }}
                             className={"text-primary pl-[8px] clickable"}
                           >
