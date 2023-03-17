@@ -1,6 +1,6 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useCallback, useEffect, useState } from "react";
-import { notification, Spinner } from "@darwinia/ui";
+import { Button, notification, enhancedNotification, Spinner } from "@darwinia/ui";
 import { useWallet } from "@darwinia/app-providers";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
@@ -69,8 +69,21 @@ const Root = () => {
         }
         case 1: {
           /*The user rejected adding the network configurations*/
-          notification.error({
-            message: <div>{t(localeKeys.chainAdditionRejected, { networkName: selectedNetwork?.displayName })}</div>,
+          const myNotification = enhancedNotification.success({
+            message: (
+              <div className={"flex flex-col gap-[5px]"}>
+                <div>{t(localeKeys.chainAdditionRejected)}</div>
+                <Button
+                  onClick={() => {
+                    myNotification.close();
+                    connectWallet();
+                  }}
+                >
+                  {t(localeKeys.switchToNetwork, { network: selectedNetwork?.displayName })}
+                </Button>
+              </div>
+            ),
+            duration: 15000,
           });
           break;
         }

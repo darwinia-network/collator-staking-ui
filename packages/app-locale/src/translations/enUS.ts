@@ -134,7 +134,7 @@ const enUs = {
   [localeKeys.alreadyStakingUserInfo]: `You are already taking part in staking. Use the card below to customize your staking.`,
   [localeKeys.installWalletReminder]: `Connection failed. Please download {{walletName}} Extension <a target="_blank" class="link link-primary" href={{downloadURL}}>here</a>.`,
   [localeKeys.accountPermissionRejected]: `Account access permission rejected`,
-  [localeKeys.chainAdditionRejected]: `User rejected adding {{networkName}} configurations`,
+  [localeKeys.chainAdditionRejected]: `Network mismatch, you can switch network manually in metamask or do it manually by clicking the button below.`,
   [localeKeys.bondMoreToken]: `Bond more {{tokenSymbol}}`,
   [localeKeys.unbondToken]: `Unbond {{tokenSymbol}}`,
   [localeKeys.totalRingBonded]: `Total bonded: {{amount}} {{tokenSymbol}}`,
@@ -144,6 +144,7 @@ const enUs = {
   [localeKeys.bondAmountMaxError]: `You can't bond more than {{amount}} {{tokenSymbol}}`,
   [localeKeys.reservedInStakingRing]: `{{tokenSymbol}}:{{amount}}`,
   [localeKeys.reservedInStakingDeposit]: `Deposit {{tokenSymbol}}:{{amount}}`,
+  [localeKeys.switchToNetwork]: `Switch to {{network}}`,
 };
 
 export default enUs;
