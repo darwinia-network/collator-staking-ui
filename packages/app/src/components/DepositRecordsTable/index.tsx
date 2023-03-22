@@ -148,7 +148,7 @@ const DepositRecordsTable = () => {
               <>
                 <Tooltip message={<div>{t(localeKeys.depositInUseUnstakeFirst)}</div>}>
                   <Button disabled={true} btnType={"secondary"} className={"!h-[30px]"}>
-                    {t(localeKeys.timeExpired)}
+                    {t(localeKeys.withdraw)}
                   </Button>
                 </Tooltip>
               </>
