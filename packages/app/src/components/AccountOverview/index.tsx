@@ -74,7 +74,7 @@ const AccountOverview = () => {
                             </div>
                           </Tooltip>
                         </div>
-                        <div>{toTimeAgo(item.blockTime)}</div>
+                        <div>{toTimeAgo(item.blockTime, true)}</div>
                       </div>
                     );
                   })}

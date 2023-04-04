@@ -55,7 +55,9 @@ const DepositRecordsTable = () => {
         const endDate = formatDate(row.expiredTime);
         const totalTimeRange = row.expiredTime - row.startTime;
         const timeRangeSoFar = new Date().getTime() - row.startTime;
-        const percentage = (timeRangeSoFar / totalTimeRange) * 100;
+        /*This will yield a value more than 100 if the deposit time has expired */
+        let percentage = (timeRangeSoFar / totalTimeRange) * 100;
+        percentage = percentage > 100 ? 100 : percentage;
 
         return (
           <div className={"flex flex-col gap-[3px]"}>
@@ -146,7 +148,7 @@ const DepositRecordsTable = () => {
               <>
                 <Tooltip message={<div>{t(localeKeys.depositInUseUnstakeFirst)}</div>}>
                   <Button disabled={true} btnType={"secondary"} className={"!h-[30px]"}>
-                    {t(localeKeys.withdrawEarlier)}
+                    {t(localeKeys.withdraw)}
                   </Button>
                 </Tooltip>
               </>

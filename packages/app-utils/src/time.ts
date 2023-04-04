@@ -11,11 +11,11 @@ export const formatDate = (timestamp: number, outputFormat = "YYYY-MM-DD"): stri
   return moment(timestamp).format(outputFormat);
 };
 
-export const toTimeAgo = (time: string | number, format = "YYYY-MM-DDTHH:mm:ss.SSS") => {
+export const toTimeAgo = (time: string | number, isUTC = false, format = "YYYY-MM-DDTHH:mm:ss.SSS") => {
   if (typeof time === "number") {
-    return moment(time).fromNow();
+    return isUTC ? moment.utc(time).fromNow() : moment(time).fromNow();
   }
-  return moment(time, format).fromNow();
+  return isUTC ? moment.utc(time, format).utc().fromNow() : moment(time, format).utc().fromNow();
 };
 
 export const getMonthsRange = (startTimestamp: number, endTimestamp: number) => {

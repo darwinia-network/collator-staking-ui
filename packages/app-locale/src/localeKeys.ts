@@ -141,4 +141,5 @@ export const localeKeys = {
   reservedInStakingRing: "reservedInStakingRing",
   reservedInStakingDeposit: "reservedInStakingDeposit",
   switchToNetwork: "switchToNetwork",
+  timeExpired: "timeExpired",
 };
