@@ -10,13 +10,14 @@ import JazzIcon from "../JazzIcon";
 import switchIcon from "../../assets/images/switch.svg";
 import StakingRecordsTable from "../StakingRecordsTable";
 import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
-import { Deposit, Collator } from "@darwinia/app-types";
+import { Deposit, Collator, MetaMaskError } from "@darwinia/app-types";
 import SelectCollatorModal, { SelectCollatorRefs } from "../SelectCollatorModal";
 import {
   formatToWei,
   isValidNumber,
   prettifyNumber,
   prettifyTooltipNumber,
+  processTransactionError,
   secondsToHumanTime,
 } from "@darwinia/app-utils";
 import BigNumber from "bignumber.js";
@@ -254,7 +255,7 @@ const StakingOverview = () => {
 
       if (!isSuccessful) {
         notification.error({
-          message: <div>{t(localeKeys.somethingWrongHappened)}</div>,
+          message: <div>{t(localeKeys.nominationUnsuccessful)}</div>,
         });
         return;
       }
@@ -270,9 +271,10 @@ const StakingOverview = () => {
         message: <div>{t(localeKeys.operationSuccessful)}</div>,
       });
     } catch (e) {
+      const error = processTransactionError(e as MetaMaskError);
       setTransactionStatus(false);
       notification.error({
-        message: <div>{t(localeKeys.somethingWrongHappened)}</div>,
+        message: <div>{error.message}</div>,
       });
       console.log(e);
     }

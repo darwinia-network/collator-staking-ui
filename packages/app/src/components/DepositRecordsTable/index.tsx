@@ -3,8 +3,8 @@ import { localeKeys, useAppTranslation } from "@darwinia/app-locale";
 import { useStorage, useWallet } from "@darwinia/app-providers";
 import helpIcon from "../../assets/images/help.svg";
 import { useEffect, useRef, useState } from "react";
-import { Deposit } from "@darwinia/app-types";
-import { formatDate, prettifyNumber, prettifyTooltipNumber } from "@darwinia/app-utils";
+import { Deposit, MetaMaskError } from "@darwinia/app-types";
+import { formatDate, prettifyNumber, prettifyTooltipNumber, processTransactionError } from "@darwinia/app-utils";
 import BigNumber from "bignumber.js";
 import { BigNumber as EthersBigNumber } from "@ethersproject/bignumber/lib/bignumber";
 import { TransactionResponse } from "@ethersproject/providers";
@@ -242,9 +242,10 @@ const WithdrawModal = ({ isVisible, onClose, onConfirm, onCancel, deposit, type 
         message: <div>{t(localeKeys.operationSuccessful)}</div>,
       });
     } catch (e) {
+      const error = processTransactionError(e as MetaMaskError);
       setLoading(false);
       notification.error({
-        message: <div>{t(localeKeys.somethingWrongHappened)}</div>,
+        message: <div>{error.message}</div>,
       });
       console.log(e);
     }
@@ -263,9 +264,10 @@ const WithdrawModal = ({ isVisible, onClose, onConfirm, onCancel, deposit, type 
         message: <div>{t(localeKeys.operationSuccessful)}</div>,
       });
     } catch (e) {
+      const error = processTransactionError(e as MetaMaskError);
       setLoading(false);
       notification.error({
-        message: <div>{t(localeKeys.somethingWrongHappened)}</div>,
+        message: <div>{error.message}</div>,
       });
       console.log(e);
     }

@@ -10,11 +10,13 @@ import {
   formatToWei,
   prettifyNumber,
   prettifyTooltipNumber,
+  processTransactionError,
 } from "@darwinia/app-utils";
 import DepositRecordsTable from "../DepositRecordsTable";
 import BigNumber from "bignumber.js";
 import { BigNumber as EthersBigNumber } from "ethers";
 import { TransactionResponse } from "@ethersproject/providers";
+import { MetaMaskError } from "@darwinia/app-types";
 
 const DepositOverview = () => {
   const { t } = useAppTranslation();
@@ -135,9 +137,10 @@ const DepositOverview = () => {
         message: <div>{t(localeKeys.operationSuccessful)}</div>,
       });
     } catch (e) {
+      const error = processTransactionError(e as MetaMaskError);
       setTransactionStatus(false);
       notification.error({
-        message: <div>{t(localeKeys.somethingWrongHappened)}</div>,
+        message: <div>{error.message}</div>,
       });
       console.log(e);
     }

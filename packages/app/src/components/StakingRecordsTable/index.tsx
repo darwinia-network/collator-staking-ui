@@ -18,12 +18,13 @@ import minusIcon from "../../assets/images/minus-square.svg";
 import helpIcon from "../../assets/images/help.svg";
 import infoIcon from "../../assets/images/info.svg";
 import { ChangeEvent, useEffect, useRef, useState } from "react";
-import { Deposit, Delegate, UnbondingAsset } from "@darwinia/app-types";
+import { Deposit, Delegate, UnbondingAsset, MetaMaskError } from "@darwinia/app-types";
 import {
   formatToWei,
   isValidNumber,
   prettifyNumber,
   prettifyTooltipNumber,
+  processTransactionError,
   secondsToHumanTime,
 } from "@darwinia/app-utils";
 import BigNumber from "bignumber.js";
@@ -106,9 +107,10 @@ const StakingRecordsTable = () => {
         message: <div>{t(localeKeys.operationSuccessful)}</div>,
       });
     } catch (e) {
+      const error = processTransactionError(e as MetaMaskError);
       setTransactionStatus(false);
       notification.error({
-        message: <div>{t(localeKeys.somethingWrongHappened)}</div>,
+        message: <div>{error.message}</div>,
       });
       console.log(e);
     }
@@ -140,9 +142,10 @@ const StakingRecordsTable = () => {
         message: <div>{t(localeKeys.operationSuccessful)}</div>,
       });
     } catch (e) {
+      const error = processTransactionError(e as MetaMaskError);
       setTransactionStatus(false);
       notification.error({
-        message: <div>{t(localeKeys.somethingWrongHappened)}</div>,
+        message: <div>{error.message}</div>,
       });
       // console.log(e);
     }
@@ -180,9 +183,10 @@ const StakingRecordsTable = () => {
         message: <div>{t(localeKeys.operationSuccessful)}</div>,
       });
     } catch (e) {
+      const error = processTransactionError(e as MetaMaskError);
       setTransactionStatus(false);
       notification.error({
-        message: <div>{t(localeKeys.somethingWrongHappened)}</div>,
+        message: <div>{error.message}</div>,
       });
       // console.log(e);
     }
@@ -847,9 +851,10 @@ const BondTokenModal = ({
         message: <div>{t(localeKeys.operationSuccessful)}</div>,
       });
     } catch (e) {
+      const error = processTransactionError(e as MetaMaskError);
       setLoading(false);
       notification.error({
-        message: <div>{t(localeKeys.somethingWrongHappened)}</div>,
+        message: <div>{error.message}</div>,
       });
       // console.log(e);
     }
@@ -1006,10 +1011,10 @@ const BondDepositModal = ({
       });
     } catch (e) {
       setLoading(false);
+      const error = processTransactionError(e as MetaMaskError);
       notification.error({
-        message: <div>{t(localeKeys.somethingWrongHappened)}</div>,
+        message: <div>{error.message}</div>,
       });
-      // console.log(e);
     }
   };
 
@@ -1092,9 +1097,10 @@ const UndelegationModal = ({ isVisible, onClose, onConfirm, onCancel }: Undelega
         message: <div>{t(localeKeys.operationSuccessful)}</div>,
       });
     } catch (e) {
+      const error = processTransactionError(e as MetaMaskError);
       setLoading(false);
       notification.error({
-        message: <div>{t(localeKeys.somethingWrongHappened)}</div>,
+        message: <div>{error.message}</div>,
       });
       // console.log(e);
     }

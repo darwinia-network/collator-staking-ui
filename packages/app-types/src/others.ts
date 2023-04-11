@@ -10,3 +10,13 @@ export interface Storage {
   selectedWallet?: SupportedWallet;
   wasIntroShown?: boolean;
 }
+
+export interface ErrorEntity {
+  code: number;
+  message: string;
+}
+
+export interface MetaMaskError {
+  code: number;
+  data: ErrorEntity;
+}

@@ -1,10 +1,10 @@
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { Button, Column, Input, ModalEnhanced, notification, Tab, Table, Tabs } from "@darwinia/ui";
 import { localeKeys, useAppTranslation } from "@darwinia/app-locale";
-import { Collator } from "@darwinia/app-types";
+import { Collator, MetaMaskError } from "@darwinia/app-types";
 import JazzIcon from "../JazzIcon";
 import copyIcon from "../../assets/images/copy.svg";
-import { copyToClipboard, prettifyNumber } from "@darwinia/app-utils";
+import { copyToClipboard, prettifyNumber, processTransactionError } from "@darwinia/app-utils";
 import { useStorage, useWallet } from "@darwinia/app-providers";
 import { BigNumber as EthersBigNumber } from "@ethersproject/bignumber/lib/bignumber";
 import { TransactionResponse } from "@ethersproject/providers";
@@ -210,9 +210,10 @@ const SelectCollatorModal = forwardRef<SelectCollatorRefs, SelectCollatorProps>(
           message: <div>{t(localeKeys.operationSuccessful)}</div>,
         });
       } catch (e) {
+        const error = processTransactionError(e as MetaMaskError);
         setLoading(false);
         notification.error({
-          message: <div>{t(localeKeys.somethingWrongHappened)}</div>,
+          message: <div>{error.message}</div>,
         });
         console.log(e);
       }

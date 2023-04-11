@@ -146,6 +146,7 @@ const enUs = {
   [localeKeys.reservedInStakingDeposit]: `Deposit {{tokenSymbol}}:{{amount}}`,
   [localeKeys.switchToNetwork]: `Switch to {{network}}`,
   [localeKeys.timeExpired]: "Time expired",
+  [localeKeys.nominationUnsuccessful]: "Nomination unsuccessful",
 };
 
 export default enUs;
