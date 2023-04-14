@@ -141,6 +141,7 @@ const ManageCollatorModal = forwardRef<ManageCollatorRefs>((props, ref) => {
         return;
       }
 
+      console.log("up======");
       notification.error({
         message: <div>{t(localeKeys.sessionSettingUnsuccessful)}</div>,
       });
