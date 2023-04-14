@@ -143,4 +143,5 @@ export const localeKeys = {
   switchToNetwork: "switchToNetwork",
   timeExpired: "timeExpired",
   nominationUnsuccessful: "nominationUnsuccessful",
+  sessionSettingUnsuccessful: "sessionSettingUnsuccessful",
 };

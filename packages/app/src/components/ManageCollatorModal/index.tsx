@@ -122,27 +122,34 @@ const ManageCollatorModal = forwardRef<ManageCollatorRefs>((props, ref) => {
   };
 
   const onSetSessionKey = async () => {
-    if (sessionKey.trim().length === 0) {
-      setSessionKeyHasError(true);
-      notification.error({
-        message: <div>{t(localeKeys.invalidSessionKey)}</div>,
-      });
-      return;
-    }
-    setLoading(true);
-    const isSuccessful = await setCollatorSessionKey(sessionKey, provider);
-    setLoading(false);
-    if (isSuccessful) {
-      setSessionKey("");
-      notification.error({
-        message: <div>{t(localeKeys.operationSuccessful)}</div>,
-      });
-      return;
-    }
+    try {
+      if (sessionKey.trim().length === 0) {
+        setSessionKeyHasError(true);
+        notification.error({
+          message: <div>{t(localeKeys.invalidSessionKey)}</div>,
+        });
+        return;
+      }
+      setLoading(true);
+      const isSuccessful = await setCollatorSessionKey(sessionKey, provider);
+      setLoading(false);
+      if (isSuccessful) {
+        setSessionKey("");
+        notification.error({
+          message: <div>{t(localeKeys.operationSuccessful)}</div>,
+        });
+        return;
+      }
 
-    notification.error({
-      message: <div>{t(localeKeys.somethingWrongHappened)}</div>,
-    });
+      notification.error({
+        message: <div>{t(localeKeys.sessionSettingUnsuccessful)}</div>,
+      });
+    } catch (e) {
+      console.log(e);
+      notification.error({
+        message: <div>{t(localeKeys.sessionSettingUnsuccessful)}</div>,
+      });
+    }
   };
 
   const onStopCollating = async () => {

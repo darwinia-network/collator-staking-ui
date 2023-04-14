@@ -147,6 +147,7 @@ const enUs = {
   [localeKeys.switchToNetwork]: `Switch to {{network}}`,
   [localeKeys.timeExpired]: "Time expired",
   [localeKeys.nominationUnsuccessful]: "Nomination unsuccessful",
+  [localeKeys.sessionSettingUnsuccessful]: "Session key setting unsuccessful",
 };
 
 export default enUs;

@@ -36,8 +36,7 @@ export const DispatchProvider = ({ children }: PropsWithChildren) => {
           return clientBuilder.buildPangolinClient(provider);
         }
         case "Crab": {
-          //TODO update this API accordingly
-          return clientBuilder.buildPangolinClient(provider);
+          return clientBuilder.buildCrabClient(provider);
         }
       }
     },
