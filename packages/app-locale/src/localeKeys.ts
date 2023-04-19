@@ -142,4 +142,6 @@ export const localeKeys = {
   reservedInStakingDeposit: "reservedInStakingDeposit",
   switchToNetwork: "switchToNetwork",
   timeExpired: "timeExpired",
+  nominationUnsuccessful: "nominationUnsuccessful",
+  sessionSettingUnsuccessful: "sessionSettingUnsuccessful",
 };

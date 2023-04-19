@@ -1,4 +1,4 @@
-import { PalletIdentityRegistration, Storage } from "@darwinia/app-types";
+import { MetaMaskError, PalletIdentityRegistration, Storage } from "@darwinia/app-types";
 import { STORAGE as APP_STORAGE } from "@darwinia/app-config";
 import BigNumber from "bignumber.js";
 import { ethers } from "ethers";
@@ -97,4 +97,102 @@ export const formatToEther = (valueInWei: string): string => {
 
 export const formatToWei = (valueInEther: string) => {
   return ethers.utils.parseEther(valueInEther);
+};
+
+export const processTransactionError = (error: unknown) => {
+  try {
+    const castedError = error as unknown as MetaMaskError;
+    if (castedError.data && castedError.data.message) {
+      /*Stake precompile errors*/
+      if (castedError.data.message.includes("ExceedMaxDeposits")) {
+        return {
+          code: 1,
+          message: "You've reached the maximum deposit count",
+        };
+      }
+      if (castedError.data.message.includes("ExceedMaxUnstakings")) {
+        return {
+          code: 2,
+          message: "You've reached the maximum unstaking/unbonding count",
+        };
+      }
+      if (castedError.data.message.includes("DepositNotFound")) {
+        return {
+          code: 3,
+          message: "Deposit not found",
+        };
+      }
+      if (castedError.data.message.includes("NotStaker")) {
+        return {
+          code: 4,
+          message: "You're not a staker",
+        };
+      }
+      if (castedError.data.message.includes("TargetNotCollator")) {
+        return {
+          code: 5,
+          message: "You've chosen a none-collator",
+        };
+      }
+      if (castedError.data.message.includes("ZeroCollatorCount")) {
+        return {
+          code: 6,
+          message: "Collator count must not be zero",
+        };
+      }
+
+      /*Deposit precompile errors*/
+      if (castedError.data.message.includes("LockAtLeastSome")) {
+        return {
+          code: 7,
+          message: "Deposited amount too low",
+        };
+      }
+
+      if (castedError.data.message.includes("LockAtLeastOneMonth")) {
+        return {
+          code: 8,
+          message: "Lock the deposit for at least one month",
+        };
+      }
+
+      if (castedError.data.message.includes("LockAtMostThirtySixMonths")) {
+        return {
+          code: 9,
+          message: "Lock time can't be more than 36 months",
+        };
+      }
+
+      if (castedError.data.message.includes("DepositInUse")) {
+        return {
+          code: 10,
+          message: "Deposit is already in use",
+        };
+      }
+
+      if (castedError.data.message.includes("DepositNotInUse")) {
+        return {
+          code: 11,
+          message: "Deposit not in use",
+        };
+      }
+
+      if (castedError.data.message.includes("DepositAlreadyExpired")) {
+        return {
+          code: 12,
+          message: "Deposit already expired",
+        };
+      }
+    }
+  } catch (e) {
+    return {
+      code: 900,
+      message: "Unknown error",
+    };
+  }
+
+  return {
+    code: 900,
+    message: "Unknown error",
+  };
 };

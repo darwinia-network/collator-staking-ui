@@ -1,8 +1,8 @@
 import { ChangeEvent, forwardRef, useImperativeHandle, useRef, useState } from "react";
 import { Button, Input, ModalEnhanced, notification, Tab, Tabs, Tooltip } from "@darwinia/ui";
 import { localeKeys, useAppTranslation } from "@darwinia/app-locale";
-import { Collator } from "@darwinia/app-types";
-import { isValidNumber } from "@darwinia/app-utils";
+import { Collator, MetaMaskError } from "@darwinia/app-types";
+import { isValidNumber, processTransactionError } from "@darwinia/app-utils";
 import helpIcon from "../../assets/images/help.svg";
 import { useDispatch, useWallet } from "@darwinia/app-providers";
 import { BigNumber as EthersBigNumber } from "@ethersproject/bignumber/lib/bignumber";
@@ -112,36 +112,45 @@ const ManageCollatorModal = forwardRef<ManageCollatorRefs>((props, ref) => {
         message: <div>{t(localeKeys.operationSuccessful)}</div>,
       });
     } catch (e) {
+      const error = processTransactionError(e as MetaMaskError);
       setLoading(false);
       notification.error({
-        message: <div>{t(localeKeys.somethingWrongHappened)}</div>,
+        message: <div>{error.message}</div>,
       });
       console.log(e);
     }
   };
 
   const onSetSessionKey = async () => {
-    if (sessionKey.trim().length === 0) {
-      setSessionKeyHasError(true);
-      notification.error({
-        message: <div>{t(localeKeys.invalidSessionKey)}</div>,
-      });
-      return;
-    }
-    setLoading(true);
-    const isSuccessful = await setCollatorSessionKey(sessionKey, provider);
-    setLoading(false);
-    if (isSuccessful) {
-      setSessionKey("");
-      notification.error({
-        message: <div>{t(localeKeys.operationSuccessful)}</div>,
-      });
-      return;
-    }
+    try {
+      if (sessionKey.trim().length === 0) {
+        setSessionKeyHasError(true);
+        notification.error({
+          message: <div>{t(localeKeys.invalidSessionKey)}</div>,
+        });
+        return;
+      }
+      setLoading(true);
+      const isSuccessful = await setCollatorSessionKey(sessionKey, provider);
+      setLoading(false);
+      if (isSuccessful) {
+        setSessionKey("");
+        notification.error({
+          message: <div>{t(localeKeys.operationSuccessful)}</div>,
+        });
+        return;
+      }
 
-    notification.error({
-      message: <div>{t(localeKeys.somethingWrongHappened)}</div>,
-    });
+      console.log("up======");
+      notification.error({
+        message: <div>{t(localeKeys.sessionSettingUnsuccessful)}</div>,
+      });
+    } catch (e) {
+      console.log(e);
+      notification.error({
+        message: <div>{t(localeKeys.sessionSettingUnsuccessful)}</div>,
+      });
+    }
   };
 
   const onStopCollating = async () => {
@@ -155,9 +164,10 @@ const ManageCollatorModal = forwardRef<ManageCollatorRefs>((props, ref) => {
         message: <div>{t(localeKeys.operationSuccessful)}</div>,
       });
     } catch (e) {
+      const error = processTransactionError(e as MetaMaskError);
       setLoading(false);
       notification.error({
-        message: <div>{t(localeKeys.somethingWrongHappened)}</div>,
+        message: <div>{error.message}</div>,
       });
     }
   };
