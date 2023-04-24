@@ -18,8 +18,8 @@ export const darwinia: ChainConfig = {
     decimals: 18,
   },
   contractAddresses: {
-    staking: "0xcA927Df15afb7629b79dA4713a871190315c7409",
-    deposit: "0xcA927Df15afb7629b79dA4713a871190315c7409",
+    staking: "0x0000000000000000000000000000000000000601",
+    deposit: "0x0000000000000000000000000000000000000600",
   },
   contractInterface: {
     staking: stakingABI,
@@ -33,3 +33,16 @@ export const darwinia: ChainConfig = {
   },
   secondsPerBlock: 12,
 };
+
+/*
+ * DevNet
+ * httpsURLs: ["https://cors.zimjs.com/http://g1.dev.darwinia.network:10000"]
+ * graphQlURL: "https://api.subquery.network/sq/isunaslabs/darwinia2",
+ * wssURL: "ws://g1.dev.darwinia.network:20000",
+ *
+ * LiveNet
+ * httpURLs: ["https://rpc.darwinia.network"]
+ * wssURL: "wss://rpc.darwinia.network",
+ * graphQlURL: "https://subql.darwinia.network/subql-apps-darwinia/",
+ *
+ * */
