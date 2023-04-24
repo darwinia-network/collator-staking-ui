@@ -6,7 +6,7 @@ export const darwinia: ChainConfig = {
   name: "Darwinia",
   displayName: "Darwinia",
   explorerURLs: ["https://darwinia.subscan.io/"],
-  httpsURLs: ["https://cors.zimjs.com/http://g1.dev.darwinia.network:10000"],
+  httpsURLs: ["https://rpc.darwinia.network"],
   kton: {
     address: "0x0000000000000000000000000000000000000402",
     symbol: "KTON",
@@ -27,9 +27,9 @@ export const darwinia: ChainConfig = {
   },
   chainId: 46,
   substrate: {
-    graphQlURL: "https://api.subquery.network/sq/isunaslabs/darwinia2",
-    wssURL: "ws://g1.dev.darwinia.network:20000",
-    httpsURL: "https://cors.kahub.in/http://g1.dev.darwinia.network:10000",
+    graphQlURL: "https://subql.darwinia.network/subql-apps-darwinia/",
+    wssURL: "wss://rpc.darwinia.network",
+    httpsURL: "https://rpc.darwinia.network",
   },
   secondsPerBlock: 12,
 };
