@@ -45,7 +45,7 @@ const Header = () => {
       }
     } else {
       /* use Crab network by default */
-      const index = supportedNetworks.findIndex((network) => network.name === "Crab");
+      const index = supportedNetworks.findIndex((network) => network.name === "Darwinia");
       changeConnectedNetwork(supportedNetworks[index]);
     }
   }, []);
