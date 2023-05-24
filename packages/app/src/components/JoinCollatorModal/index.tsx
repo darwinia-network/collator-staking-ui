@@ -1,18 +1,19 @@
-import { ChangeEvent, forwardRef, useImperativeHandle, useState } from "react";
+import { ChangeEvent, forwardRef, useImperativeHandle, useMemo, useState } from "react";
 import { Button, Input, ModalEnhanced, notification, Tooltip } from "@darwinia/ui";
-import { localeKeys, useAppTranslation } from "@darwinia/app-locale";
-import { isValidNumber, processTransactionError } from "@darwinia/app-utils";
+import { localeKeys, useAppTranslation } from "../../locale";
+import { getChainConfig, isEthersApi, isValidNumber, processTransactionError } from "../../utils";
 import helpIcon from "../../assets/images/help.svg";
-import { useDispatch, useWallet } from "@darwinia/app-providers";
-import { BigNumber as EthersBigNumber } from "@ethersproject/bignumber/lib/bignumber";
+import { useWallet, useStaking } from "../../hooks";
+import { BigNumber } from "@ethersproject/bignumber/lib/bignumber";
 import { TransactionResponse } from "@ethersproject/providers";
-import { MetaMaskError } from "@darwinia/app-types";
+import { MetaMaskError } from "../../types";
+import { Contract } from "ethers";
 
 export interface JoinCollatorRefs {
   show: () => void;
 }
 
-const JoinCollatorModal = forwardRef<JoinCollatorRefs>((props, ref) => {
+export const JoinCollatorModal = forwardRef<JoinCollatorRefs>((_, ref) => {
   const [isVisible, setIsVisible] = useState(false);
   const [commission, setCommission] = useState<string>("");
   const [commissionHasError, setCommissionHasError] = useState<boolean>(false);
@@ -20,8 +21,15 @@ const JoinCollatorModal = forwardRef<JoinCollatorRefs>((props, ref) => {
   const [sessionKeyHasError, setSessionKeyHasError] = useState<boolean>(false);
   const [isLoading, setLoading] = useState<boolean>(false);
   const { t } = useAppTranslation();
-  const { stakingContract, provider } = useWallet();
-  const { setCollatorSessionKey } = useDispatch();
+  const { currentChain, signerApi } = useWallet();
+  const { setCollatorSessionKey } = useStaking();
+
+  const chainConfig = useMemo(() => {
+    if (currentChain) {
+      return getChainConfig(currentChain) ?? null;
+    }
+    return null;
+  }, [currentChain]);
 
   const showModal = () => {
     setSessionKey("");
@@ -55,6 +63,15 @@ const JoinCollatorModal = forwardRef<JoinCollatorRefs>((props, ref) => {
   };
 
   const onSetCommission = async () => {
+    if (!chainConfig || !isEthersApi(signerApi)) {
+      return;
+    }
+    const stakingContract = new Contract(
+      chainConfig.contractAddresses.staking,
+      chainConfig.contractInterface.staking,
+      signerApi.getSigner()
+    );
+
     const isValidCommission = isValidNumber(commission);
     if (!isValidCommission) {
       notification.error({
@@ -75,9 +92,7 @@ const JoinCollatorModal = forwardRef<JoinCollatorRefs>((props, ref) => {
 
     try {
       setLoading(true);
-      const response = (await stakingContract?.collect(
-        EthersBigNumber.from(commission.toString())
-      )) as TransactionResponse;
+      const response = (await stakingContract.collect(BigNumber.from(commission))) as TransactionResponse;
       await response.wait(1);
       setLoading(false);
       setCommission("");
@@ -95,6 +110,10 @@ const JoinCollatorModal = forwardRef<JoinCollatorRefs>((props, ref) => {
   };
 
   const onSetSessionKey = async () => {
+    if (!isEthersApi(signerApi)) {
+      return;
+    }
+
     try {
       if (sessionKey.trim().length === 0) {
         setSessionKeyHasError(true);
@@ -105,7 +124,7 @@ const JoinCollatorModal = forwardRef<JoinCollatorRefs>((props, ref) => {
       }
 
       setLoading(true);
-      const isSuccessful = await setCollatorSessionKey(sessionKey, provider);
+      const isSuccessful = await setCollatorSessionKey(sessionKey, signerApi);
       setLoading(false);
       if (isSuccessful) {
         setSessionKey("");
@@ -194,5 +213,3 @@ const JoinCollatorModal = forwardRef<JoinCollatorRefs>((props, ref) => {
 });
 
 JoinCollatorModal.displayName = "JoinCollator";
-
-export default JoinCollatorModal;

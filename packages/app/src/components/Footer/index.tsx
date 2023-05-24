@@ -1,4 +1,4 @@
-import { useAppTranslation, localeKeys } from "@darwinia/app-locale";
+import { useAppTranslation, localeKeys } from "../../locale";
 import twitter from "../../assets/images/twitter.svg";
 import telegram from "../../assets/images/telegram.svg";
 import discord from "../../assets/images/discord.svg";
@@ -53,7 +53,7 @@ const socialNetworks: SocialNetwork[] = [
   },
 ];
 
-const Footer = () => {
+export const Footer = () => {
   const { t } = useAppTranslation();
 
   const getSocialNetworksJSX = () => {
@@ -87,5 +87,3 @@ const Footer = () => {
     </div>
   );
 };
-
-export default Footer;

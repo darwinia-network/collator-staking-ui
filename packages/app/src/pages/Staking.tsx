@@ -1,25 +1,40 @@
-import AccountOverview from "../components/AccountOverview";
+import { AccountOverview } from "../components/AccountOverview";
 import { Tab, Tabs } from "@darwinia/ui";
-import { useMemo, useState } from "react";
-import { localeKeys, useAppTranslation } from "@darwinia/app-locale";
-import StakingOverview from "../components/StakingOverview";
-import DepositOverview from "../components/DepositOverview";
+import { useCallback, useMemo, useState } from "react";
+import { localeKeys, useAppTranslation } from "../locale";
+import { StakingOverview } from "../components/StakingOverview";
+import { DepositOverview } from "../components/DepositOverview";
 import { CSSTransition } from "react-transition-group";
 import { Step, Steps } from "intro.js-react";
-import { getStore, prettifyNumber, setStore } from "@darwinia/app-utils";
-import { UserIntroValues } from "@darwinia/app-types";
-import BigNumber from "bignumber.js";
-import { useStorage, useWallet } from "@darwinia/app-providers";
+import { formatBalance, getChainConfig, getStore, prettifyNumber, setStore } from "../utils";
+import { UserIntroValues, Storage } from "../types";
+import { useStaking, useWallet } from "../hooks";
 import { renderToStaticMarkup } from "react-dom/server";
+import { ethers } from "ethers";
+
+const wasIntroShown = !!getStore<Storage["wasIntroShown"]>("wasIntroShown");
+const tabTransitionTimeout = 500;
 
 const Staking = () => {
-  const [activeTabId, setActiveTabId] = useState<string>("1");
   const { t } = useAppTranslation();
-  const tabTransitionTimeout = 500;
-  const [isIntroStepsEnabled, setIntroStepsEnabled] = useState(true);
-  const [introCurrentStep, setIntroCurrentStep] = useState(0);
-  const { newUserIntroStakingValues } = useStorage();
-  const wasIntroShownBefore = getStore<boolean>("wasIntroShown") ?? false;
+  const [enabledIntroSteps, setEnabledIntroSteps] = useState(!wasIntroShown);
+  const { newUserIntroStakingValues } = useStaking();
+
+  const tabs = useMemo(
+    () =>
+      [
+        {
+          id: "staking",
+          title: t(localeKeys.staking),
+        },
+        {
+          id: "deposit",
+          title: t(localeKeys.deposit),
+        },
+      ] as Tab[],
+    [t]
+  );
+  const [activeTab, setActiveTab] = useState(tabs[0].id);
 
   const steps: Step[] = useMemo(() => {
     const networkSelection: Step = {
@@ -81,71 +96,65 @@ const Staking = () => {
     return [networkSelection, stakedTokens, selectCollator, unbondAll];
   }, [t]);
 
-  const onBeforeNextStep = (nextIndex: number) => {
-    const introTooltip = document.querySelector(".introjs-tooltip");
-    if (!introTooltip || !newUserIntroStakingValues) {
-      return;
-    }
-    if (nextIndex === 1) {
-      const topSpace = 17;
-
-      const tooltipHeight = (introTooltip as HTMLDivElement).offsetHeight;
-      introTooltip.setAttribute("staked-items-intro", "add");
-      const customTip = document.createElement("div");
-      customTip.classList.add("staked-items-intro-custom-tip");
-      customTip.style.top = `${tooltipHeight + topSpace}px`;
-
-      const mutation = new MutationObserver(() => {
-        const tooltipHeight = (introTooltip as HTMLDivElement).offsetHeight;
-        customTip.style.top = `${tooltipHeight + topSpace}px`;
-      });
-
-      mutation.observe(introTooltip, {
-        childList: true,
-        attributes: true,
-        subtree: true,
-      });
-
-      const { ringAmount, ktonAmount, totalPower, depositAmount } = newUserIntroStakingValues;
-      const html = renderToStaticMarkup(
-        <CustomTip
-          ringAmount={ringAmount}
-          ktonAmount={ktonAmount}
-          depositAmount={depositAmount}
-          totalPower={totalPower}
-        />
-      );
-      customTip.innerHTML = `<div class="staked-wrapper">${html}</div>`;
-      introTooltip.appendChild(customTip);
-    } else {
-      const stakedCustomTip = document.querySelector(".staked-items-intro-custom-tip");
-      if (stakedCustomTip) {
-        stakedCustomTip.remove();
+  const handleBeforeNextStep = useCallback(
+    (nextIndex: number) => {
+      const introTooltip = document.querySelector(".introjs-tooltip");
+      if (!introTooltip || !newUserIntroStakingValues) {
+        return;
       }
-      introTooltip.removeAttribute("staked-items-intro");
-    }
-  };
 
-  const onTabChange = (selectedTab: Tab) => {
-    setActiveTabId(selectedTab.id);
-  };
+      if (nextIndex === 1) {
+        const topSpace = 17;
 
-  const tabs: Tab[] = [
-    {
-      id: "1",
-      title: t(localeKeys.staking),
+        const tooltipHeight = (introTooltip as HTMLDivElement).offsetHeight;
+        introTooltip.setAttribute("staked-items-intro", "add");
+        const customTip = document.createElement("div");
+        customTip.classList.add("staked-items-intro-custom-tip");
+        customTip.style.top = `${tooltipHeight + topSpace}px`;
+
+        const mutation = new MutationObserver(() => {
+          const tooltipHeight = (introTooltip as HTMLDivElement).offsetHeight;
+          customTip.style.top = `${tooltipHeight + topSpace}px`;
+        });
+
+        mutation.observe(introTooltip, {
+          childList: true,
+          attributes: true,
+          subtree: true,
+        });
+
+        const { ringAmount, ktonAmount, totalPower, depositAmount } = newUserIntroStakingValues;
+        const html = renderToStaticMarkup(
+          <CustomTip
+            ringAmount={ringAmount}
+            ktonAmount={ktonAmount}
+            depositAmount={depositAmount}
+            totalPower={totalPower}
+          />
+        );
+        customTip.innerHTML = `<div class="staked-wrapper">${html}</div>`;
+        introTooltip.appendChild(customTip);
+      } else {
+        const stakedCustomTip = document.querySelector(".staked-items-intro-custom-tip");
+        if (stakedCustomTip) {
+          stakedCustomTip.remove();
+        }
+        introTooltip.removeAttribute("staked-items-intro");
+      }
     },
-    {
-      id: "2",
-      title: t(localeKeys.deposit),
-    },
-  ];
+    [newUserIntroStakingValues]
+  );
+
+  const handleIntroExit = useCallback(() => {
+    setEnabledIntroSteps(false);
+    setStore("wasIntroShown", true);
+  }, []);
 
   return (
     <div className={"flex-1 flex flex-col gap-[30px]"}>
       <AccountOverview />
       <div className={"flex flex-col gap-[30px]"}>
-        <Tabs onChange={onTabChange} tabs={tabs} activeTabId={activeTabId} />
+        <Tabs onChange={({ id }) => setActiveTab(id)} tabs={tabs} activeTabId={activeTab} />
         <div className={"wrapper relative"}>
           {/*staking overview*/}
           <CSSTransition
@@ -155,8 +164,8 @@ const Staking = () => {
               enter: tabTransitionTimeout,
               exit: 0,
             }}
-            in={activeTabId === "1"}
-            key={1}
+            in={activeTab === tabs[0].id}
+            key={tabs[0].id}
           >
             <StakingOverview />
           </CSSTransition>
@@ -168,72 +177,71 @@ const Staking = () => {
               enter: tabTransitionTimeout,
               exit: 0,
             }}
-            in={activeTabId === "2"}
-            key={2}
+            in={activeTab === tabs[1].id}
+            key={tabs[1].id}
           >
             <DepositOverview />
           </CSSTransition>
         </div>
       </div>
-      {/*Intro*/}
-      {newUserIntroStakingValues && !wasIntroShownBefore && (
+
+      {newUserIntroStakingValues ? (
         <Steps
-          enabled={isIntroStepsEnabled}
+          enabled={enabledIntroSteps}
           steps={steps}
-          initialStep={introCurrentStep}
-          onExit={() => {
-            setStore("wasIntroShown", true);
-            setIntroStepsEnabled(false);
-          }}
-          onBeforeChange={onBeforeNextStep}
+          initialStep={0}
+          onExit={handleIntroExit}
+          onBeforeChange={handleBeforeNextStep}
           options={{
             showBullets: false,
             exitOnOverlayClick: false,
           }}
         />
-      )}
+      ) : null}
     </div>
   );
 };
 
 const CustomTip = ({ ktonAmount, ringAmount, depositAmount, totalPower }: UserIntroValues) => {
   const { t } = useAppTranslation();
-  const { selectedNetwork } = useWallet();
+  const { currentChain } = useWallet();
 
-  const bondJSX = (amount: BigNumber, isDeposit = false, symbol = "RING") => {
+  const bondJSX = (amount: ethers.BigNumber, isDeposit = false, symbol = "RING") => {
     return (
       <div className={`text-white`}>
-        {prettifyNumber({
-          number: amount,
-          shouldFormatToEther: true,
-        })}{" "}
-        {isDeposit ? t(localeKeys.deposit) : ""} {symbol.toUpperCase()}
+        {formatBalance(amount)} {isDeposit ? t(localeKeys.deposit) : ""} {symbol.toUpperCase()}
       </div>
     );
   };
 
-  return (
-    <div className={"flex"}>
-      <div className={"w-[250px] shrink-0 flex flex-col"}>
-        <div className={"py-[13.5px] px-[10px] border-b border-[rgba(255,255,255,0.2)]"}>{t(localeKeys.youStaked)}</div>
-        <div className={"flex flex-1 flex-col justify-center px-[10px]"}>
-          {prettifyNumber({
-            number: totalPower,
-            precision: 0,
-            shouldFormatToEther: false,
-          })}
+  if (currentChain) {
+    const chainConfig = getChainConfig(currentChain);
+    if (chainConfig) {
+      return (
+        <div className={"flex"}>
+          <div className={"w-[250px] shrink-0 flex flex-col"}>
+            <div className={"py-[13.5px] px-[10px] border-b border-[rgba(255,255,255,0.2)]"}>
+              {t(localeKeys.youStaked)}
+            </div>
+            <div className={"flex flex-1 flex-col justify-center px-[10px]"}>
+              {prettifyNumber(totalPower.toString())}
+            </div>
+          </div>
+          <div className={"flex-1 flex flex-col"}>
+            <div className={"py-[13.5px] px-[10px] border-b border-[rgba(255,255,255,0.2)]"}>
+              {t(localeKeys.youStaked)}
+            </div>
+            <div className={"flex flex-1 flex-col py-[13px] px-[10px]"}>
+              {bondJSX(ringAmount, false, chainConfig.ring.symbol)}
+              {bondJSX(depositAmount, true, chainConfig.ring.symbol)}
+              {bondJSX(ktonAmount, false, chainConfig.kton.symbol)}
+            </div>
+          </div>
         </div>
-      </div>
-      <div className={"flex-1 flex flex-col"}>
-        <div className={"py-[13.5px] px-[10px] border-b border-[rgba(255,255,255,0.2)]"}>{t(localeKeys.youStaked)}</div>
-        <div className={"flex flex-1 flex-col py-[13px] px-[10px]"}>
-          {bondJSX(ringAmount, false, selectedNetwork?.ring.symbol)}
-          {bondJSX(depositAmount, true, selectedNetwork?.ring.symbol)}
-          {bondJSX(ktonAmount, false, selectedNetwork?.kton.symbol)}
-        </div>
-      </div>
-    </div>
-  );
+      );
+    }
+  }
+  return null;
 };
 
 export default Staking;

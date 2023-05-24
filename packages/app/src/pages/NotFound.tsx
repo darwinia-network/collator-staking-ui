@@ -1,5 +1,5 @@
 import ErrorCatcher from "./ErrorCatcher";
-import { useAppTranslation, localeKeys } from "@darwinia/app-locale";
+import { useAppTranslation, localeKeys } from "../locale";
 
 const NotFound = () => {
   const { t } = useAppTranslation();

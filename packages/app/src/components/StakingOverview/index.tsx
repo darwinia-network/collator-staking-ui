@@ -1,41 +1,43 @@
-import { localeKeys, useAppTranslation } from "@darwinia/app-locale";
+import { localeKeys, useAppTranslation } from "../../locale";
 import { Button, CheckboxGroup, Dropdown, Input, notification, Tooltip } from "@darwinia/ui";
 import ringIcon from "../../assets/images/ring.svg";
 import ktonIcon from "../../assets/images/kton.svg";
 import crabIcon from "../../assets/images/crab.svg";
 import cktonIcon from "../../assets/images/ckton.svg";
-import { useDispatch, useStorage, useWallet } from "@darwinia/app-providers";
+import { useStaking, useWallet } from "../../hooks";
 import caretDownIcon from "../../assets/images/caret-down.svg";
 import JazzIcon from "../JazzIcon";
 import switchIcon from "../../assets/images/switch.svg";
-import StakingRecordsTable from "../StakingRecordsTable";
-import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
-import { Deposit, Collator, MetaMaskError } from "@darwinia/app-types";
-import SelectCollatorModal, { SelectCollatorRefs } from "../SelectCollatorModal";
+import { StakingRecords } from "../StakingRecords";
+import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Deposit, Collator, MetaMaskError, ChainID } from "../../types";
+import { SelectCollatorModal, SelectCollatorRefs } from "../SelectCollatorModal";
 import {
-  formatToWei,
+  formatBalance,
+  getChainConfig,
+  isEthersApi,
   isValidNumber,
+  parseBalance,
   prettifyNumber,
-  prettifyTooltipNumber,
   processTransactionError,
   secondsToHumanTime,
-} from "@darwinia/app-utils";
-import BigNumber from "bignumber.js";
-import { BigNumber as EthersBigNumber } from "@ethersproject/bignumber/lib/bignumber";
+} from "../../utils";
+import { BigNumber } from "@ethersproject/bignumber/lib/bignumber";
+import { BN_ZERO } from "../../config";
 
-const StakingOverview = () => {
+export const StakingOverview = () => {
   const { t } = useAppTranslation();
-  const { selectedNetwork, stakingContract, setTransactionStatus, provider } = useWallet();
+  const { currentChain, signerApi } = useWallet();
   const {
     deposits,
     stakedDepositsIds,
-    calculateExtraPower,
     balance,
     sessionDuration,
     unbondingDuration,
     stakedAssetDistribution,
     currentlyNominatedCollator,
-  } = useStorage();
+    calculateExtraPower,
+  } = useStaking();
   const selectCollatorModalRef = useRef<SelectCollatorRefs>(null);
   const [selectedCollator, setSelectedCollator] = useState<Collator>();
   const [stakeAbleDeposits, setStakeAbleDeposits] = useState<Deposit[]>([]);
@@ -44,17 +46,25 @@ const StakingOverview = () => {
   const [ktonToStake, setKtonToStake] = useState<string>("");
   const [ringHasError, setRingHasError] = useState<boolean>(false);
   const [ktonHasError, setKtonHasError] = useState<boolean>(false);
-  const [powerByRing, setPowerByRing] = useState(BigNumber(0));
-  const [powerByKton, setPowerByKton] = useState(BigNumber(0));
-  const [powerByDeposits, setPowerByDeposits] = useState(BigNumber(0));
+  const [powerByRing, setPowerByRing] = useState(BN_ZERO);
+  const [powerByKton, setPowerByKton] = useState(BN_ZERO);
+  const [powerByDeposits, setPowerByDeposits] = useState(BN_ZERO);
   const [accountIsStakingAlready, setAccountIsStakingAlready] = useState<boolean>(true);
-  const { stakeAndNominate } = useDispatch();
+  const { stakeAndNominate } = useStaking();
+
   /*This is the minimum Ring balance that should be left on the account
    * for gas fee */
   const minimumRingBalance = 0;
 
-  const ringTokenIcon = selectedNetwork?.name === "Crab" ? crabIcon : ringIcon;
-  const ktonTokenIcon = selectedNetwork?.name === "Crab" ? cktonIcon : ktonIcon;
+  const chainConfig = useMemo(() => {
+    if (currentChain) {
+      return getChainConfig(currentChain) ?? null;
+    }
+    return null;
+  }, [currentChain]);
+
+  const ringTokenIcon = chainConfig?.chainId === ChainID.CRAB ? crabIcon : ringIcon;
+  const ktonTokenIcon = chainConfig?.chainId === ChainID.CRAB ? cktonIcon : ktonIcon;
 
   const getRingValueErrorJSX = () => {
     return ringHasError ? <div /> : null;
@@ -76,12 +86,12 @@ const StakingOverview = () => {
     const isValidAmount = isValidNumber(value);
     if (isValidAmount) {
       const power = calculateExtraPower({
-        ring: BigNumber(formatToWei(value).toString()),
-        kton: BigNumber(0),
+        ring: parseBalance(value),
+        kton: BN_ZERO,
       });
       setPowerByRing(power);
     } else {
-      setPowerByRing(BigNumber(0));
+      setPowerByRing(BN_ZERO);
     }
     setRingToStake(value);
   };
@@ -92,12 +102,12 @@ const StakingOverview = () => {
     const isValidAmount = isValidNumber(value);
     if (isValidAmount) {
       const power = calculateExtraPower({
-        kton: BigNumber(formatToWei(value).toString()),
-        ring: BigNumber(0),
+        ring: BN_ZERO,
+        kton: parseBalance(value),
       });
       setPowerByKton(power);
     } else {
-      setPowerByKton(BigNumber(0));
+      setPowerByKton(BN_ZERO);
     }
     setKtonToStake(value);
   };
@@ -120,7 +130,7 @@ const StakingOverview = () => {
     const hasSomeStakingAmount =
       stakedAssetDistribution.ring.bonded.gt(0) ||
       (stakedAssetDistribution.ring.unbondingRing || []).length > 0 ||
-      (stakedAssetDistribution.ring.totalOfDepositsInStaking || BigNumber(0)).gt(0) ||
+      (stakedAssetDistribution.ring.totalOfDepositsInStaking || BN_ZERO).gt(0) ||
       (stakedAssetDistribution.ring.unbondingDeposits || []).length > 0 ||
       stakedAssetDistribution.kton.bonded.gt(0) ||
       (stakedAssetDistribution.kton.unbondingKton || []).length > 0;
@@ -137,10 +147,8 @@ const StakingOverview = () => {
       <div className={"flex justify-between"}>
         <div>ID#{option.id}</div>
         <div>
-          <Tooltip message={<div>{prettifyTooltipNumber(option.value)}</div>}>
-            {prettifyNumber({
-              number: option.value,
-            })}
+          <Tooltip message={<div>{formatBalance(option.value, { precision: 8 })}</div>}>
+            {formatBalance(option.value)}
           </Tooltip>
         </div>
       </div>
@@ -149,10 +157,10 @@ const StakingOverview = () => {
 
   const onDepositSelectionChange = (selectedItem: Deposit, allSelectedItems: Deposit[]) => {
     /*totalSelectedRing value is already in Wei*/
-    const totalSelectedRing = allSelectedItems.reduce((acc, deposit) => acc.plus(deposit.value), BigNumber(0));
+    const totalSelectedRing = allSelectedItems.reduce((acc, deposit) => acc.add(deposit.value), BN_ZERO);
     const power = calculateExtraPower({
-      kton: BigNumber(0),
-      ring: BigNumber(totalSelectedRing.toString()),
+      ring: totalSelectedRing,
+      kton: BN_ZERO,
     });
     setPowerByDeposits(power);
     setDepositsToStake(allSelectedItems);
@@ -163,13 +171,17 @@ const StakingOverview = () => {
   };
 
   const onStartStaking = async () => {
+    if (!isEthersApi(signerApi)) {
+      return;
+    }
+
     if (ringToStake.length > 0) {
       //user typed some ring value, validate it
       const isValidAmount = isValidNumber(ringToStake);
       if (!isValidAmount) {
         setRingHasError(true);
         notification.error({
-          message: <div>{t(localeKeys.invalidRingAmount, { ringSymbol: selectedNetwork?.ring.symbol })}</div>,
+          message: <div>{t(localeKeys.invalidRingAmount, { ringSymbol: chainConfig?.ring.symbol })}</div>,
         });
         return;
       }
@@ -180,18 +192,16 @@ const StakingOverview = () => {
       if (!isValidAmount) {
         setKtonHasError(true);
         notification.error({
-          message: <div>{t(localeKeys.invalidKtonAmount, { ktonSymbol: selectedNetwork?.kton.symbol })}</div>,
+          message: <div>{t(localeKeys.invalidKtonAmount, { ktonSymbol: chainConfig?.kton.symbol })}</div>,
         });
         return;
       }
     }
 
     /*Check if the balances are enough*/
-    const ringBigNumber =
-      ringToStake.trim().length > 0 ? BigNumber(formatToWei(ringToStake.trim()).toString()) : BigNumber(0);
-    const ktonBigNumber =
-      ktonToStake.trim().length > 0 ? BigNumber(formatToWei(ktonToStake.trim()).toString()) : BigNumber(0);
-    const ringThresholdBigNumber = BigNumber(formatToWei(minimumRingBalance.toString()).toString());
+    const ringBigNumber = ringToStake.trim().length > 0 ? parseBalance(ringToStake.trim()) : BN_ZERO;
+    const ktonBigNumber = ktonToStake.trim().length > 0 ? parseBalance(ktonToStake.trim()) : BN_ZERO;
+    const ringThresholdBigNumber = parseBalance(minimumRingBalance.toString());
 
     if (!balance) {
       return;
@@ -200,20 +210,20 @@ const StakingOverview = () => {
     if (ringBigNumber.gt(balance.ring)) {
       setRingHasError(true);
       notification.error({
-        message: <div>{t(localeKeys.amountGreaterThanRingBalance, { ringSymbol: selectedNetwork?.ring.symbol })}</div>,
+        message: <div>{t(localeKeys.amountGreaterThanRingBalance, { ringSymbol: chainConfig?.ring.symbol })}</div>,
       });
       return;
     }
 
     /*The user MUST leave some RING that he'll use for the gas fee */
-    if (balance.ring.minus(ringBigNumber).lt(ringThresholdBigNumber)) {
+    if (balance.ring.sub(ringBigNumber).lt(ringThresholdBigNumber)) {
       setRingHasError(true);
       notification.error({
         message: (
           <div>
             {t(localeKeys.leaveSomeGasFeeRing, {
               amount: minimumRingBalance,
-              ringSymbol: selectedNetwork?.ring.symbol,
+              ringSymbol: chainConfig?.ring.symbol,
             })}
           </div>
         ),
@@ -224,15 +234,13 @@ const StakingOverview = () => {
     if (ktonBigNumber.gt(balance.kton)) {
       setKtonHasError(true);
       notification.error({
-        message: <div>{t(localeKeys.amountGreaterThanKtonBalance, { ktonSymbol: selectedNetwork?.kton.symbol })}</div>,
+        message: <div>{t(localeKeys.amountGreaterThanKtonBalance, { ktonSymbol: chainConfig?.kton.symbol })}</div>,
       });
       return;
     }
 
-    const ringEthersBigNumber =
-      ringToStake.trim().length > 0 ? formatToWei(ringToStake.trim()) : EthersBigNumber.from(0);
-    const ktonEthersBigNumber =
-      ktonToStake.trim().length > 0 ? formatToWei(ktonToStake.trim()) : EthersBigNumber.from(0);
+    const ringEthersBigNumber = ringToStake.trim().length > 0 ? parseBalance(ringToStake.trim()) : BN_ZERO;
+    const ktonEthersBigNumber = ktonToStake.trim().length > 0 ? parseBalance(ktonToStake.trim()) : BN_ZERO;
 
     try {
       if (!selectedCollator?.accountAddress) {
@@ -241,17 +249,14 @@ const StakingOverview = () => {
         });
         return;
       }
-      const depositsIds = depositsToStake.map((item) => EthersBigNumber.from(item.id));
-      setTransactionStatus(true);
+      const depositsIds = depositsToStake.map((item) => BigNumber.from(item.id));
       const isSuccessful = await stakeAndNominate({
         ringAmount: ringEthersBigNumber,
         ktonAmount: ktonEthersBigNumber,
-        provider: provider,
+        provider: signerApi,
         collatorAddress: selectedCollator?.accountAddress,
         depositIds: depositsIds,
       });
-
-      setTransactionStatus(false);
 
       if (!isSuccessful) {
         notification.error({
@@ -263,16 +268,15 @@ const StakingOverview = () => {
       setDepositsToStake([]);
       setRingToStake("");
       setKtonToStake("");
-      setPowerByRing(BigNumber(0));
-      setPowerByKton(BigNumber(0));
-      setPowerByDeposits(BigNumber(0));
+      setPowerByRing(BN_ZERO);
+      setPowerByKton(BN_ZERO);
+      setPowerByDeposits(BN_ZERO);
       setSelectedCollator(undefined);
       notification.success({
         message: <div>{t(localeKeys.operationSuccessful)}</div>,
       });
     } catch (e) {
       const error = processTransactionError(e as MetaMaskError);
-      setTransactionStatus(false);
       notification.error({
         message: <div>{error.message}</div>,
       });
@@ -368,24 +372,15 @@ const StakingOverview = () => {
                   rightSlot={
                     <div className={"flex gap-[10px] items-center px-[10px]"}>
                       <img className={"w-[20px]"} src={ringTokenIcon} alt="image" />
-                      <div className={"uppercase"}>{selectedNetwork?.ring.symbol ?? "RING"}</div>
+                      <div className={"uppercase"}>{chainConfig?.ring.symbol ?? "RING"}</div>
                     </div>
                   }
                   placeholder={t(localeKeys.balanceAmount, {
-                    amount: prettifyNumber({
-                      number: balance?.ring ?? BigNumber(0),
-                      shouldFormatToEther: true,
-                    }),
+                    amount: formatBalance(balance?.ring ?? BN_ZERO),
                   })}
                 />
                 <div className={"text-12-bold text-primary pt-[10px]"}>
-                  +
-                  {prettifyNumber({
-                    number: powerByRing,
-                    precision: 0,
-                    shouldFormatToEther: false,
-                  })}{" "}
-                  {t(localeKeys.power)}
+                  +{prettifyNumber(powerByRing.toString())} {t(localeKeys.power)}
                 </div>
               </div>
               <div className={"flex-1 shrink-0"}>
@@ -398,24 +393,15 @@ const StakingOverview = () => {
                   rightSlot={
                     <div className={"flex gap-[10px] items-center px-[10px]"}>
                       <img className={"w-[20px]"} src={ktonTokenIcon} alt="image" />
-                      <div className={"uppercase"}>{selectedNetwork?.kton.symbol ?? "RING"}</div>
+                      <div className={"uppercase"}>{chainConfig?.kton.symbol ?? "RING"}</div>
                     </div>
                   }
                   placeholder={t(localeKeys.balanceAmount, {
-                    amount: prettifyNumber({
-                      number: balance?.kton ?? BigNumber(0),
-                      shouldFormatToEther: true,
-                    }),
+                    amount: formatBalance(balance?.kton ?? BN_ZERO),
                   })}
                 />
                 <div className={"text-12-bold text-primary pt-[10px]"}>
-                  +
-                  {prettifyNumber({
-                    number: powerByKton,
-                    precision: 0,
-                    shouldFormatToEther: false,
-                  })}{" "}
-                  {t(localeKeys.power)}
+                  +{prettifyNumber(powerByKton.toString())} {t(localeKeys.power)}
                 </div>
               </div>
               {/*use a deposit*/}
@@ -436,13 +422,7 @@ const StakingOverview = () => {
                     <img className={"w-[16px]"} src={caretDownIcon} alt="image" />
                   </div>
                   <div className={"text-12-bold text-primary pt-[10px]"}>
-                    +
-                    {prettifyNumber({
-                      number: powerByDeposits,
-                      precision: 0,
-                      shouldFormatToEther: false,
-                    })}{" "}
-                    {t(localeKeys.power)}
+                    +{prettifyNumber(powerByDeposits.toString())} {t(localeKeys.power)}
                   </div>
                 </div>
               </Dropdown>
@@ -462,9 +442,7 @@ const StakingOverview = () => {
           </div>
         </div>
       )}
-      <StakingRecordsTable />
+      <StakingRecords />
     </div>
   );
 };
-
-export default StakingOverview;

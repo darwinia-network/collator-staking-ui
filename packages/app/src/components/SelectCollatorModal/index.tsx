@@ -1,13 +1,13 @@
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { Button, Column, Input, ModalEnhanced, notification, Tab, Table, Tabs } from "@darwinia/ui";
-import { localeKeys, useAppTranslation } from "@darwinia/app-locale";
-import { Collator, MetaMaskError } from "@darwinia/app-types";
+import { localeKeys, useAppTranslation } from "../../locale";
+import { Collator, MetaMaskError } from "../../types";
 import JazzIcon from "../JazzIcon";
 import copyIcon from "../../assets/images/copy.svg";
-import { copyToClipboard, prettifyNumber, processTransactionError } from "@darwinia/app-utils";
-import { useStorage, useWallet } from "@darwinia/app-providers";
-import { BigNumber as EthersBigNumber } from "@ethersproject/bignumber/lib/bignumber";
+import { copyToClipboard, getChainConfig, isEthersApi, prettifyNumber, processTransactionError } from "../../utils";
+import { useStaking, useWallet } from "../../hooks";
 import { TransactionResponse } from "@ethersproject/providers";
+import { Contract } from "ethers";
 
 export interface SelectCollatorRefs {
   toggle: () => void;
@@ -19,18 +19,39 @@ interface SelectCollatorProps {
   selectedCollator?: Collator;
 }
 
-const SelectCollatorModal = forwardRef<SelectCollatorRefs, SelectCollatorProps>(
+export const SelectCollatorModal = forwardRef<SelectCollatorRefs, SelectCollatorProps>(
   ({ type, selectedCollator, onCollatorSelected }, ref) => {
     const [isVisible, setIsVisible] = useState(false);
-    const [activeTabId, setActiveTabId] = useState<string>("1");
     const [keywords, setKeywords] = useState<string>("");
     const [selectedRowsIds, setSelectedRowsIds] = useState<string[]>([]);
     const selectedCollatorsList = useRef<Collator[]>([]);
     const [isLoading, setLoading] = useState<boolean>(false);
     const updatedCollator = useRef<Collator>();
     const { t } = useAppTranslation();
-    const { collators } = useStorage();
-    const { stakingContract } = useWallet();
+    const { collators } = useStaking();
+    const { currentChain, signerApi } = useWallet();
+
+    const chainConfig = useMemo(() => {
+      if (currentChain) {
+        return getChainConfig(currentChain) ?? null;
+      }
+      return null;
+    }, [currentChain]);
+
+    const tabs = useMemo(
+      () => [
+        {
+          id: "1",
+          title: t(localeKeys.activePool),
+        },
+        {
+          id: "2",
+          title: t(localeKeys.waitingPool),
+        },
+      ],
+      [t]
+    );
+    const [activeTab, setActiveTab] = useState(tabs[0].id);
 
     useEffect(() => {
       if (selectedCollator) {
@@ -38,24 +59,13 @@ const SelectCollatorModal = forwardRef<SelectCollatorRefs, SelectCollatorProps>(
       }
     }, [selectedCollator]);
 
-    const tabs: Tab[] = [
-      {
-        id: "1",
-        title: t(localeKeys.activePool),
-      },
-      {
-        id: "2",
-        title: t(localeKeys.waitingPool),
-      },
-    ];
-
     const visibleCollators = useMemo(() => {
-      if (activeTabId !== "1" && activeTabId !== "2") {
+      if (activeTab !== tabs[0].id && activeTab !== tabs[1].id) {
         return [];
       }
-      const isActive = activeTabId === "1";
+
       let filteredCollators: Collator[] = [];
-      if (isActive) {
+      if (activeTab === tabs[0].id) {
         filteredCollators =
           collators?.filter((item) => {
             return (
@@ -75,17 +85,16 @@ const SelectCollatorModal = forwardRef<SelectCollatorRefs, SelectCollatorProps>(
           }) ?? [];
       }
       return filteredCollators;
-    }, [activeTabId, keywords, collators]);
+    }, [activeTab, keywords, collators, tabs]);
 
     useEffect(() => {
-      if (activeTabId === "1" || activeTabId === "2") {
+      if (activeTab === tabs[0].id || activeTab === tabs[1].id) {
         setKeywords("");
       }
-    }, [activeTabId]);
+    }, [activeTab, tabs]);
 
     const onCopyCollator = (item: Collator) => {
       copyToClipboard(item.accountAddress);
-      console.log(item);
     };
 
     const columns: Column<Collator>[] = [
@@ -125,15 +134,7 @@ const SelectCollatorModal = forwardRef<SelectCollatorRefs, SelectCollatorProps>(
         title: <div className={"w-[150px]"}>{t(localeKeys.totalStaked)}</div>,
         key: "totalStaked",
         render: (row) => {
-          return (
-            <div>
-              {prettifyNumber({
-                number: row.totalStaked,
-                shouldFormatToEther: false,
-                precision: 0,
-              })}
-            </div>
-          );
+          return <div>{prettifyNumber(row.totalStaked.toString())}</div>;
         },
         width: "190px",
       },
@@ -161,7 +162,7 @@ const SelectCollatorModal = forwardRef<SelectCollatorRefs, SelectCollatorProps>(
       if (type === "update") {
         setSelectedRowsIds([]);
       }
-      setActiveTabId("1");
+      setActiveTab(tabs[0].id);
       setLoading(false);
       updatedCollator.current = undefined;
       setIsVisible((oldStatus) => !oldStatus);
@@ -171,8 +172,8 @@ const SelectCollatorModal = forwardRef<SelectCollatorRefs, SelectCollatorProps>(
       setIsVisible(false);
     };
 
-    const onTabChange = (selectedTab: Tab) => {
-      setActiveTabId(selectedTab.id);
+    const onTabChange = ({ id }: Tab) => {
+      setActiveTab(id);
     };
 
     const onCollatorRowClick = (row: Collator) => {
@@ -193,6 +194,15 @@ const SelectCollatorModal = forwardRef<SelectCollatorRefs, SelectCollatorProps>(
     };
 
     const onConfirmCollator = async () => {
+      if (!chainConfig || !isEthersApi(signerApi)) {
+        return;
+      }
+      const stakingContract = new Contract(
+        chainConfig.contractAddresses.staking,
+        chainConfig.contractInterface.staking,
+        signerApi.getSigner()
+      );
+
       /*the user is trying to update the collator, call the contract API right away*/
       try {
         if (!updatedCollator.current) {
@@ -235,13 +245,13 @@ const SelectCollatorModal = forwardRef<SelectCollatorRefs, SelectCollatorProps>(
         isLoading={isLoading}
       >
         <div>
-          <Tabs onChange={onTabChange} tabs={tabs} activeTabId={activeTabId} />
+          <Tabs onChange={onTabChange} tabs={tabs} activeTabId={activeTab} />
           {/*Tabs content*/}
-          {(activeTabId === "1" || activeTabId === "2") && (
+          {activeTab === tabs[0].id || activeTab === tabs[1].id ? (
             <div className={"flex flex-col gap-[10px] pt-[10px]"}>
               <div className={"flex flex-col lg:flex-row gap-[10px] lg:gap-[5px] lg:items-center"}>
                 <div className={"flex-1 text-halfWhite text-12"}>
-                  {activeTabId === "1" ? t(localeKeys.activePoolInfo) : ""}
+                  {activeTab === tabs[0].id ? t(localeKeys.activePoolInfo) : ""}
                 </div>
                 <div className={"w-full lg:w-[205px]"}>
                   <Input
@@ -274,7 +284,7 @@ const SelectCollatorModal = forwardRef<SelectCollatorRefs, SelectCollatorProps>(
                 </div>
               )}
             </div>
-          )}
+          ) : null}
         </div>
       </ModalEnhanced>
     );
@@ -282,5 +292,3 @@ const SelectCollatorModal = forwardRef<SelectCollatorRefs, SelectCollatorProps>(
 );
 
 SelectCollatorModal.displayName = "SelectCollator";
-
-export default SelectCollatorModal;

@@ -1,32 +1,41 @@
-import { ChangeEvent, useEffect, useState } from "react";
-import { localeKeys, useAppTranslation } from "@darwinia/app-locale";
+import { ChangeEvent, useEffect, useMemo, useState } from "react";
+import { localeKeys, useAppTranslation } from "../../locale";
 import { Button, Input, OptionProps, Select, notification, Tooltip } from "@darwinia/ui";
 import ringIcon from "../../assets/images/ring.svg";
 import crabIcon from "../../assets/images/crab.svg";
-import { useStorage, useWallet } from "@darwinia/app-providers";
+import { useStaking, useWallet } from "../../hooks";
 import {
-  calculateKtonFromRingDeposit,
+  calcKtonFromRingDeposit,
+  getChainConfig,
+  isEthersApi,
   isValidNumber,
-  formatToWei,
-  prettifyNumber,
-  prettifyTooltipNumber,
+  parseBalance,
   processTransactionError,
-} from "@darwinia/app-utils";
-import DepositRecordsTable from "../DepositRecordsTable";
-import BigNumber from "bignumber.js";
-import { BigNumber as EthersBigNumber } from "ethers";
+} from "../../utils";
+import { DepositRecords } from "../DepositRecords";
+import { BigNumber, Contract } from "ethers";
 import { TransactionResponse } from "@ethersproject/providers";
-import { MetaMaskError } from "@darwinia/app-types";
+import { ChainID, MetaMaskError } from "../../types";
+import { formatBalance } from "../../utils";
+import { BN_ZERO } from "../../config";
 
-const DepositOverview = () => {
+export const DepositOverview = () => {
   const { t } = useAppTranslation();
-  const { selectedNetwork, depositContract, setTransactionStatus } = useWallet();
-  const { minimumDepositAmount, balance } = useStorage();
+  const { currentChain, signerApi } = useWallet();
+  const { minimumDepositAmount, balance } = useStaking();
   const [depositTerm, setDepositTerm] = useState<string>("1");
   const [amount, setAmount] = useState<string>("");
   const [amountHasError, setAmountHasError] = useState<boolean>(false);
-  const [rewardedKTON, setRewardedKTON] = useState<string>("0");
-  const ringTokenIcon = selectedNetwork?.name === "Crab" ? crabIcon : ringIcon;
+  const [rewardedKTON, setRewardedKTON] = useState(BN_ZERO);
+
+  const chainConfig = useMemo(() => {
+    if (currentChain) {
+      return getChainConfig(currentChain) ?? null;
+    }
+    return null;
+  }, [currentChain]);
+
+  const ringTokenIcon = chainConfig?.chainId === ChainID.CRAB ? crabIcon : ringIcon;
 
   useEffect(() => {
     setDepositTerm("1");
@@ -62,13 +71,11 @@ const DepositOverview = () => {
   };
 
   useEffect(() => {
-    const isNumber = isValidNumber(amount);
-
-    const kton = calculateKtonFromRingDeposit({
-      ringAmount: BigNumber(isNumber ? amount : 0),
-      depositMonths: Number(depositTerm),
-    });
-    setRewardedKTON(kton);
+    if (isValidNumber(amount) && isValidNumber(depositTerm)) {
+      setRewardedKTON(calcKtonFromRingDeposit(BigNumber.from(amount), Number(depositTerm)));
+    } else {
+      setRewardedKTON(BN_ZERO);
+    }
   }, [depositTerm, amount]);
 
   const onDepositTermChanged = (value: string) => {
@@ -81,6 +88,10 @@ const DepositOverview = () => {
   };
 
   const onDeposit = async () => {
+    if (!chainConfig || !isEthersApi(signerApi)) {
+      return;
+    }
+
     const isValidAmount = isValidNumber(amount);
     if (!isValidAmount) {
       setAmountHasError(true);
@@ -89,8 +100,8 @@ const DepositOverview = () => {
       });
       return;
     }
-    const userAmountInEther = BigNumber(amount);
-    const minimumAllowedAmount = minimumDepositAmount ?? BigNumber(1);
+    const userAmountInEther = BigNumber.from(amount);
+    const minimumAllowedAmount = minimumDepositAmount ?? BigNumber.from(1);
     /*Evaluate for the lowest possible amount that can be deposited */
     if (userAmountInEther.lt(minimumAllowedAmount)) {
       setAmountHasError(true);
@@ -99,7 +110,7 @@ const DepositOverview = () => {
           <div>
             {t(localeKeys.depositAmountError, {
               amount: minimumAllowedAmount.toString(),
-              ringSymbol: selectedNetwork?.ring.symbol,
+              ringSymbol: chainConfig?.ring.symbol,
             })}
           </div>
         ),
@@ -107,15 +118,15 @@ const DepositOverview = () => {
       return;
     }
     /*Deposit amount can not be more than balance */
-    const userAmountInWei = BigNumber(formatToWei(amount).toString());
-    if (userAmountInWei.gt(balance?.ring ?? BigNumber(0))) {
+    const userAmountInWei = parseBalance(amount);
+    if (userAmountInWei.gt(balance?.ring ?? BN_ZERO)) {
       setAmountHasError(true);
       notification.error({
         message: (
           <div>
             {t(localeKeys.depositAmountMaxError, {
-              amount: prettifyTooltipNumber(balance?.ring ?? BigNumber(0)),
-              tokenSymbol: selectedNetwork?.ring.symbol,
+              amount: formatBalance(balance?.ring ?? BN_ZERO, { precision: 8 }),
+              tokenSymbol: chainConfig?.ring.symbol,
             })}
           </div>
         ),
@@ -123,14 +134,17 @@ const DepositOverview = () => {
       return;
     }
     try {
-      const amountEthersBigNumber = formatToWei(amount.toString());
-      setTransactionStatus(true);
+      const amountEthersBigNumber = parseBalance(amount);
+      const depositContract = new Contract(
+        chainConfig.contractAddresses.deposit,
+        chainConfig.contractInterface.deposit,
+        signerApi.getSigner()
+      );
       const response = (await depositContract?.lock(
         amountEthersBigNumber,
-        EthersBigNumber.from(depositTerm)
+        BigNumber.from(depositTerm)
       )) as TransactionResponse;
       await response.wait(1);
-      setTransactionStatus(false);
       setDepositTerm("1");
       setAmount("");
       notification.success({
@@ -138,7 +152,6 @@ const DepositOverview = () => {
       });
     } catch (e) {
       const error = processTransactionError(e as MetaMaskError);
-      setTransactionStatus(false);
       notification.error({
         message: <div>{error.message}</div>,
       });
@@ -152,8 +165,8 @@ const DepositOverview = () => {
         <div className={"text-14-bold"}>{t(localeKeys.termDeposit)}</div>
         <div className={"text-halfWhite text-12 divider border-b pb-[10px]"}>
           {t(localeKeys.depositInfo, {
-            ringSymbol: selectedNetwork?.ring.symbol.toUpperCase(),
-            ktonSymbol: selectedNetwork?.kton.symbol.toUpperCase(),
+            ringSymbol: chainConfig?.ring.symbol.toUpperCase(),
+            ktonSymbol: chainConfig?.kton.symbol.toUpperCase(),
           })}
         </div>
         <div className={"flex flex-col gap-[10px]"}>
@@ -165,14 +178,11 @@ const DepositOverview = () => {
                 rightSlot={
                   <div className={"flex gap-[10px] items-center px-[10px]"}>
                     <img className={"w-[20px]"} src={ringTokenIcon} alt="image" />
-                    <div className={"uppercase"}>{(selectedNetwork?.ring.symbol ?? "RING").toUpperCase()}</div>
+                    <div className={"uppercase"}>{(chainConfig?.ring.symbol ?? "RING").toUpperCase()}</div>
                   </div>
                 }
                 placeholder={t(localeKeys.balanceAmount, {
-                  amount: prettifyNumber({
-                    number: balance?.ring ?? BigNumber(0),
-                    shouldFormatToEther: true,
-                  }),
+                  amount: formatBalance(balance?.ring ?? BN_ZERO),
                 })}
                 value={amount}
                 onChange={onAmountChange}
@@ -195,14 +205,11 @@ const DepositOverview = () => {
               <div className={"text-12"}>{t(localeKeys.rewardYouReceive)}</div>
               <div className={"h-[40px] px-[10px] bg-primary border-primary border flex items-center justify-between"}>
                 <div>
-                  <Tooltip message={<div>{prettifyTooltipNumber(BigNumber(rewardedKTON), false)}</div>}>
-                    {prettifyNumber({
-                      number: BigNumber(rewardedKTON),
-                      shouldFormatToEther: false,
-                    })}
+                  <Tooltip message={<div>{formatBalance(rewardedKTON, { precision: 8 })}</div>}>
+                    {formatBalance(rewardedKTON)}
                   </Tooltip>
                 </div>
-                <div className={"uppercase"}>{selectedNetwork?.kton.symbol}</div>
+                <div className={"uppercase"}>{chainConfig?.kton.symbol}</div>
               </div>
             </div>
           </div>
@@ -219,9 +226,7 @@ const DepositOverview = () => {
           </Button>
         </div>
       </div>
-      <DepositRecordsTable />
+      <DepositRecords />
     </div>
   );
 };
-
-export default DepositOverview;
