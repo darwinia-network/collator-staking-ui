@@ -19,7 +19,7 @@ const Tabs = ({ onChange, tabs, activeTabId }: TabsProps) => {
     return `tab-${index}`;
   };
 
-  const updateActiveTabUI = () => {
+  const updateActiveTabUI = useCallback(() => {
     if (tabsRef.current && railRef.current) {
       const dynamicClass = getDynamicTabClass(activeTabIndex);
       const tabDOM = tabsRef.current.querySelector(`.${dynamicClass}`);
@@ -32,7 +32,7 @@ const Tabs = ({ onChange, tabs, activeTabId }: TabsProps) => {
       railRef.current.style.width = `${width}px`;
       railRef.current.style.transform = `translate3d(${offsetLeft}px,0,0)`;
     }
-  };
+  }, [activeTabIndex]);
 
   /*Monitor Tabs changes in size*/
   useEffect(() => {
@@ -51,20 +51,20 @@ const Tabs = ({ onChange, tabs, activeTabId }: TabsProps) => {
     return () => {
       mutation.disconnect();
     };
-  }, [activeTabIndex]);
+  }, [activeTabIndex, updateActiveTabUI]);
 
   useEffect(() => {
     setTimeout(() => {
       updateActiveTabUI();
     }, 100);
-  }, [tabsRef.current, railRef.current, activeTabIndex]);
+  }, [updateActiveTabUI]);
 
   useEffect(() => {
     if (activeTabIndex === -1) {
       return;
     }
     updateActiveTabUI();
-  }, [activeTabIndex]);
+  }, [activeTabIndex, updateActiveTabUI]);
 
   useEffect(() => {
     setTimeout(() => {
@@ -73,7 +73,7 @@ const Tabs = ({ onChange, tabs, activeTabId }: TabsProps) => {
         setActiveTabIndex(tabIndex);
       }
     }, 200);
-  }, [activeTabId]);
+  }, [activeTabId, tabs]);
 
   const onTabClicked = (index: number, tab: Tab) => {
     setActiveTabIndex(index);

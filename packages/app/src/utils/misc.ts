@@ -24,16 +24,24 @@ export const prettifyNumber = utils.commify;
 export const formatBalance = (value: BigNumberish, options?: { precision?: number; keepZero?: boolean }) => {
   const precision = options?.precision ?? 4;
   const keepZero = options?.keepZero ?? true;
-
   const [integer, decimal] = utils.formatEther(value).split(".");
+
   if (decimal) {
-    const fixedDecimal = Number(decimal).toFixed(precision);
-    if (fixedDecimal.length < precision && keepZero) {
-      return `${integer}.${fixedDecimal.padEnd(precision, "0")}`;
+    const fixedDecimal = Number(`0.${decimal}`).toFixed(precision).split(".").at(1);
+    if (fixedDecimal) {
+      if (fixedDecimal.length < precision && keepZero) {
+        return `${utils.commify(integer)}.${fixedDecimal.padEnd(precision, "0")}`;
+      }
+
+      return `${utils.commify(integer)}.${fixedDecimal}`;
     }
-    return `${integer}.${fixedDecimal}`;
   }
-  return integer;
+
+  if (keepZero) {
+    return `${utils.commify(integer)}.${"0".padEnd(precision, "0")}`;
+  }
+
+  return utils.commify(integer);
 };
 
 export const parseBalance = utils.parseEther;
@@ -153,7 +161,7 @@ export const convertAmountToPower = (
    *  (ringAmount + (ktonAmount * (poolRingAmount / poolKtonAmount))) / (poolRingAmount * 2) * 1000000000
    *  */
   const divider = poolKtonAmount.isZero() ? BN_ZERO : poolRingAmount.div(poolKtonAmount);
-  return ringAmount.add(ktonAmount.mul(divider)).div(poolRingAmount.mul(2)).mul(MAX_POWER);
+  return ringAmount.add(ktonAmount.mul(divider)).mul(MAX_POWER).div(poolRingAmount.mul(2));
 };
 
 /*The original formula for calculating KTON comes from
@@ -168,7 +176,6 @@ export const calcKtonFromRingDeposit = (ringAmount: BigNumber, depositMonths: nu
   const quot = n.div(d);
   const remainder = n.mod(d);
   const precision = BigNumber.from(1000);
-  const someMagicNumber = BigNumber.from(1970000);
 
-  return precision.mul(quot.sub(1)).add(precision.mul(remainder).div(d)).mul(ringAmount).div(someMagicNumber);
+  return precision.mul(quot.sub(1)).add(precision.mul(remainder).div(d)).mul(ringAmount).div(1970000);
 };

@@ -13,7 +13,7 @@ const Home = () => {
         <div className="flex items-center justify-center gap-12">
           {getWallets().map(({ id, logo, name }) => {
             return (
-              <Spinner isLoading={isConnecting} size="small" key={id}>
+              <Spinner isLoading={isConnecting[id]} size="small" key={id}>
                 <button
                   className={`flex flex-col items-center justify-center gap-5 w-48 h-48 rounded-sm ${
                     isInstalled(id)

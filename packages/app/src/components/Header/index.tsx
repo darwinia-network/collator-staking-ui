@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import logoIcon from "../../assets/images/logo.png";
 import caretIcon from "../../assets/images/caret-down.svg";
+import walletIcon from "../../assets/images/wallet.svg";
 import { useMemo, useRef, useState } from "react";
 import { Button, Popover } from "@darwinia/ui";
 import { useAppTranslation, localeKeys } from "../../locale";
@@ -14,7 +15,7 @@ import { ManageCollatorModal, ManageCollatorRefs } from "../ManageCollatorModal"
 export const Header = () => {
   const [networkOptionsTrigger, setNetworkOptionsTrigger] = useState<HTMLDivElement | null>(null);
   const { t } = useAppTranslation();
-  const { currentChain, activeAccount, setCurrentChain } = useWallet();
+  const { currentChain, activeAccount, setCurrentChain, disconnect } = useWallet();
   const location = useLocation();
   const joinCollatorModalRef = useRef<JoinCollatorRefs>(null);
   const [moreOptionsTrigger, setMoreOptionsTrigger] = useState<HTMLDivElement | null>(null);
@@ -30,12 +31,14 @@ export const Header = () => {
   }, [currentChain]);
 
   const isUserACollator = () => {
-    return collators?.some((collator) => collator.accountAddress.toLowerCase() === activeAccount?.toLowerCase());
+    return collators?.some(
+      (collator) => collator.accountAddress.toLowerCase() === activeAccount?.address.toLowerCase()
+    );
   };
 
   const accountOptions = () => {
-    const joinCollatorClass = isUserACollator() ? "text-halfWhite cursor-no-drop" : "cursor-pointer  clickable";
-    const manageCollatorClass = isUserACollator() ? "cursor-pointer  clickable" : "text-halfWhite cursor-no-drop";
+    const joinCollatorClass = isUserACollator() ? "text-halfWhite cursor-no-drop" : "cursor-pointer clickable";
+    const manageCollatorClass = isUserACollator() ? "cursor-pointer clickable" : "text-halfWhite cursor-no-drop";
     return (
       <div className={"border bg-black flex flex-col gap-[10px] border-primary p-[20px] select-none"}>
         <div
@@ -60,6 +63,9 @@ export const Header = () => {
         >
           {t(localeKeys.manageCollator)}
         </div>
+        <div className="capitalize clickable" onClick={disconnect}>
+          {t("disconnect")}
+        </div>
       </div>
     );
   };
@@ -72,7 +78,7 @@ export const Header = () => {
             {/*Logo*/}
             {/*Logo will only show on the PC*/}
             <div className={"shrink-0 h-full hidden lg:flex"}>
-              <Link className={"h-full flex"} to={`/staking${location.search}`}>
+              <Link className={"h-full flex"} to={location.pathname}>
                 <img className={"self-center w-[146px]"} src={logoIcon} alt="image" />
               </Link>
             </div>
@@ -81,9 +87,9 @@ export const Header = () => {
               {activeAccount ? (
                 <div className={"border-primary border pl-[15px]"}>
                   <div className={"flex items-center gap-[10px]"}>
-                    <JazzIcon size={20} address={utils.getAddress(activeAccount)} />
+                    <JazzIcon size={20} address={utils.getAddress(activeAccount.address)} />
                     <div ref={setMoreOptionsTriggerMobile} className={"select-none pr-[15px] py-[7px] flex gap-[10px]"}>
-                      <div>{toShortAddress(utils.getAddress(activeAccount))}</div>
+                      <div>{toShortAddress(utils.getAddress(activeAccount.address))}</div>
                       <img className={"w-[16px]"} src={caretIcon} alt="image" />
                     </div>
                     <Popover offset={[0, 5]} triggerElementState={moreOptionsTriggerMobile} triggerEvent={"click"}>
@@ -118,12 +124,12 @@ export const Header = () => {
               {activeAccount ? (
                 <div className={"border-primary border pl-[15px]"}>
                   <div className={"flex items-center gap-[10px]"}>
-                    <JazzIcon size={20} address={utils.getAddress(activeAccount)} />
+                    <JazzIcon size={20} address={utils.getAddress(activeAccount.address)} />
                     <div
                       ref={setMoreOptionsTrigger}
                       className={"select-none cursor-pointer pr-[15px] py-[5px] flex gap-[10px]"}
                     >
-                      <div>{toShortAddress(utils.getAddress(activeAccount))}</div>
+                      <div>{toShortAddress(utils.getAddress(activeAccount.address))}</div>
                       <img className={"w-[16px]"} src={caretIcon} alt="image" />
                     </div>
                     <Popover offset={[0, 5]} triggerElementState={moreOptionsTrigger} triggerEvent={"click"}>
@@ -132,9 +138,7 @@ export const Header = () => {
                   </div>
                 </div>
               ) : (
-                <Button disabled className={"!h-[36px] !px-[15px]"} btnType={"secondary"}>
-                  {t(localeKeys.connectWallet)}
-                </Button>
+                <img alt="..." width={32} src={walletIcon} />
               )}
             </div>
             {/*network switch toggle*/}

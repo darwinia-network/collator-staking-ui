@@ -4,10 +4,18 @@ import { localeKeys, useAppTranslation } from "../../locale";
 import { Collator, MetaMaskError } from "../../types";
 import JazzIcon from "../JazzIcon";
 import copyIcon from "../../assets/images/copy.svg";
-import { copyToClipboard, getChainConfig, isEthersApi, prettifyNumber, processTransactionError } from "../../utils";
+import {
+  copyToClipboard,
+  getChainConfig,
+  isEthersApi,
+  isWalletClient,
+  prettifyNumber,
+  processTransactionError,
+} from "../../utils";
 import { useStaking, useWallet } from "../../hooks";
 import { TransactionResponse } from "@ethersproject/providers";
 import { Contract } from "ethers";
+import { waitForTransaction, writeContract } from "@wagmi/core";
 
 export interface SelectCollatorRefs {
   toggle: () => void;
@@ -93,10 +101,6 @@ export const SelectCollatorModal = forwardRef<SelectCollatorRefs, SelectCollator
       }
     }, [activeTab, tabs]);
 
-    const onCopyCollator = (item: Collator) => {
-      copyToClipboard(item.accountAddress);
-    };
-
     const columns: Column<Collator>[] = [
       {
         id: "1",
@@ -113,13 +117,14 @@ export const SelectCollatorModal = forwardRef<SelectCollatorRefs, SelectCollator
               >
                 <JazzIcon size={20} address={row.accountAddress} />
               </div>
-              <div className={"flex-1 cursor-default clickable"}>
+              <div className={"flex-1 cursor-pointer clickable uppercase"}>
                 {row.accountName ? row.accountName : row.accountAddress}
               </div>
               <div
                 onClick={(e) => {
                   e.stopPropagation();
-                  onCopyCollator(row);
+                  copyToClipboard(row.accountAddress);
+                  notification.success({ message: <span>{t("Copy successfully")}</span> });
                 }}
                 className={"shrink-0 clickable"}
               >
@@ -194,38 +199,70 @@ export const SelectCollatorModal = forwardRef<SelectCollatorRefs, SelectCollator
     };
 
     const onConfirmCollator = async () => {
-      if (!chainConfig || !isEthersApi(signerApi)) {
+      if (!updatedCollator.current) {
         return;
       }
-      const stakingContract = new Contract(
-        chainConfig.contractAddresses.staking,
-        chainConfig.contractInterface.staking,
-        signerApi.getSigner()
-      );
 
-      /*the user is trying to update the collator, call the contract API right away*/
-      try {
-        if (!updatedCollator.current) {
-          return;
+      if (chainConfig && isEthersApi(signerApi)) {
+        const stakingContract = new Contract(
+          chainConfig.contractAddresses.staking,
+          chainConfig.contractInterface.staking,
+          signerApi.getSigner()
+        );
+
+        /*the user is trying to update the collator, call the contract API right away*/
+        try {
+          setLoading(true);
+          const response = (await stakingContract?.nominate(
+            updatedCollator.current.accountAddress
+          )) as TransactionResponse;
+          await response.wait(1);
+          setLoading(false);
+          onCollatorSelected(updatedCollator.current);
+          onClose();
+          notification.success({
+            message: <div>{t(localeKeys.operationSuccessful)}</div>,
+          });
+        } catch (e) {
+          const error = processTransactionError(e as MetaMaskError);
+          setLoading(false);
+          notification.error({
+            message: <div>{error.message}</div>,
+          });
+          console.log(e);
         }
+      } else if (chainConfig && isWalletClient(signerApi)) {
         setLoading(true);
-        const response = (await stakingContract?.nominate(
-          updatedCollator.current.accountAddress
-        )) as TransactionResponse;
-        await response.wait(1);
-        setLoading(false);
-        onCollatorSelected(updatedCollator.current);
-        onClose();
-        notification.success({
-          message: <div>{t(localeKeys.operationSuccessful)}</div>,
-        });
-      } catch (e) {
-        const error = processTransactionError(e as MetaMaskError);
-        setLoading(false);
-        notification.error({
-          message: <div>{error.message}</div>,
-        });
-        console.log(e);
+
+        try {
+          const { hash } = await writeContract({
+            address: chainConfig.contractAddresses.staking,
+            abi: chainConfig.contractInterface.staking,
+            functionName: "nominate",
+            args: [updatedCollator.current.accountAddress],
+          });
+
+          const receipt = await waitForTransaction({ hash });
+          if (receipt.status === "success") {
+            setLoading(false);
+            onCollatorSelected(updatedCollator.current);
+            onClose();
+            notification.success({
+              message: <div>{t(localeKeys.operationSuccessful)}</div>,
+            });
+          } else {
+            setLoading(false);
+            notification.error({
+              message: <div>{receipt.status}</div>,
+            });
+          }
+        } catch (e) {
+          console.error(e);
+          setLoading(false);
+          notification.error({
+            message: <div>{(e as Error).message}</div>,
+          });
+        }
       }
     };
 

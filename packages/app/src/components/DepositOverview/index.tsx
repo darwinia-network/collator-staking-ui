@@ -9,6 +9,7 @@ import {
   getChainConfig,
   isEthersApi,
   isValidNumber,
+  isWalletClient,
   parseBalance,
   processTransactionError,
 } from "../../utils";
@@ -18,15 +19,17 @@ import { TransactionResponse } from "@ethersproject/providers";
 import { ChainID, MetaMaskError } from "../../types";
 import { formatBalance } from "../../utils";
 import { BN_ZERO } from "../../config";
+import { waitForTransaction, writeContract } from "@wagmi/core";
 
 export const DepositOverview = () => {
   const { t } = useAppTranslation();
   const { currentChain, signerApi } = useWallet();
-  const { minimumDepositAmount, balance } = useStaking();
+  const { minDeposit, balance } = useStaking();
   const [depositTerm, setDepositTerm] = useState<string>("1");
   const [amount, setAmount] = useState<string>("");
   const [amountHasError, setAmountHasError] = useState<boolean>(false);
   const [rewardedKTON, setRewardedKTON] = useState(BN_ZERO);
+  const [busy, setBusy] = useState(false);
 
   const chainConfig = useMemo(() => {
     if (currentChain) {
@@ -72,7 +75,7 @@ export const DepositOverview = () => {
 
   useEffect(() => {
     if (isValidNumber(amount) && isValidNumber(depositTerm)) {
-      setRewardedKTON(calcKtonFromRingDeposit(BigNumber.from(amount), Number(depositTerm)));
+      setRewardedKTON(calcKtonFromRingDeposit(parseBalance(amount), Number(depositTerm)));
     } else {
       setRewardedKTON(BN_ZERO);
     }
@@ -87,29 +90,24 @@ export const DepositOverview = () => {
     setAmount(event.target.value);
   };
 
-  const onDeposit = async () => {
-    if (!chainConfig || !isEthersApi(signerApi)) {
-      return;
-    }
-
-    const isValidAmount = isValidNumber(amount);
-    if (!isValidAmount) {
+  const handleDeposit = async () => {
+    if (!isValidNumber(amount)) {
       setAmountHasError(true);
       notification.error({
         message: <div>{t(localeKeys.depositAmountValueFormatError)}</div>,
       });
       return;
     }
-    const userAmountInEther = BigNumber.from(amount);
-    const minimumAllowedAmount = minimumDepositAmount ?? BigNumber.from(1);
-    /*Evaluate for the lowest possible amount that can be deposited */
-    if (userAmountInEther.lt(minimumAllowedAmount)) {
+
+    const amountInWei = parseBalance(amount);
+    const minimumDeposit = minDeposit ?? parseBalance("1");
+    if (amountInWei.lt(minimumDeposit)) {
       setAmountHasError(true);
       notification.error({
         message: (
           <div>
             {t(localeKeys.depositAmountError, {
-              amount: minimumAllowedAmount.toString(),
+              amount: formatBalance(minimumDeposit, { precision: 8 }),
               ringSymbol: chainConfig?.ring.symbol,
             })}
           </div>
@@ -117,9 +115,8 @@ export const DepositOverview = () => {
       });
       return;
     }
-    /*Deposit amount can not be more than balance */
-    const userAmountInWei = parseBalance(amount);
-    if (userAmountInWei.gt(balance?.ring ?? BN_ZERO)) {
+
+    if (amountInWei.gt(balance?.ring ?? BN_ZERO)) {
       setAmountHasError(true);
       notification.error({
         message: (
@@ -133,30 +130,62 @@ export const DepositOverview = () => {
       });
       return;
     }
-    try {
-      const amountEthersBigNumber = parseBalance(amount);
-      const depositContract = new Contract(
-        chainConfig.contractAddresses.deposit,
-        chainConfig.contractInterface.deposit,
-        signerApi.getSigner()
-      );
-      const response = (await depositContract?.lock(
-        amountEthersBigNumber,
-        BigNumber.from(depositTerm)
-      )) as TransactionResponse;
-      await response.wait(1);
-      setDepositTerm("1");
-      setAmount("");
-      notification.success({
-        message: <div>{t(localeKeys.operationSuccessful)}</div>,
-      });
-    } catch (e) {
-      const error = processTransactionError(e as MetaMaskError);
-      notification.error({
-        message: <div>{error.message}</div>,
-      });
-      console.log(e);
+
+    if (chainConfig && isEthersApi(signerApi)) {
+      setBusy(true);
+
+      try {
+        const depositContract = new Contract(
+          chainConfig.contractAddresses.deposit,
+          chainConfig.contractInterface.deposit,
+          signerApi.getSigner()
+        );
+        const response = (await depositContract.lock(amountInWei, BigNumber.from(depositTerm))) as TransactionResponse;
+        await response.wait(1);
+        setDepositTerm("1");
+        setAmount("");
+        notification.success({
+          message: <div>{t(localeKeys.operationSuccessful)}</div>,
+        });
+      } catch (e) {
+        console.log(e);
+        const error = processTransactionError(e as MetaMaskError);
+        notification.error({
+          message: <div>{error.message}</div>,
+        });
+      }
+    } else if (chainConfig && isWalletClient(signerApi)) {
+      setBusy(true);
+
+      try {
+        const { hash } = await writeContract({
+          address: chainConfig.contractAddresses.deposit,
+          abi: chainConfig.contractInterface.deposit,
+          functionName: "lock",
+          args: [amountInWei.toBigInt(), BigNumber.from(depositTerm).toBigInt()],
+        });
+
+        const receipt = await waitForTransaction({ hash });
+        if (receipt.status === "success") {
+          setDepositTerm("1");
+          setAmount("");
+          notification.success({
+            message: <div>{t(localeKeys.operationSuccessful)}</div>,
+          });
+        } else {
+          notification.error({
+            message: <div>{receipt.status}</div>,
+          });
+        }
+      } catch (e) {
+        console.error(e);
+        notification.error({
+          message: <div>{(e as Error).message}</div>,
+        });
+      }
     }
+
+    setBusy(false);
   };
 
   return (
@@ -217,9 +246,8 @@ export const DepositOverview = () => {
         <div className={"w-full flex flex-col lg:flex-row gap-[10px]"}>
           <Button
             disabled={amount.length === 0}
-            onClick={() => {
-              onDeposit();
-            }}
+            onClick={handleDeposit}
+            isLoading={busy}
             className={"w-full lg:w-auto !px-[55px]"}
           >
             {t(localeKeys.deposit)}

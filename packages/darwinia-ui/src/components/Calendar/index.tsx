@@ -77,16 +77,25 @@ const Calendar = ({
         setEndDate(passedInEndDate);
       }
     }
-  }, [isVisible]);
+  }, [isVisible, passedInEndDate, passedInStartDate]);
 
   useEffect(() => {
-    reportDatePicking();
-  }, [startDate, endDate]);
+    if (startDate && endDate) {
+      const startDateString = moment(startDate).clone().format(format);
+      const endDateString = moment(endDate).clone().format(format);
+      onDateChange({
+        startDate: startDate,
+        endDate: endDate,
+        startDateString,
+        endDateString,
+      });
+    }
+  }, [startDate, endDate, format, onDateChange]);
 
   useEffect(() => {
     const months = getCalendar(initialDate, monthsToShow);
     setMonthDates(months);
-  }, [initialDate]);
+  }, [initialDate, monthsToShow]);
 
   const goToNextMonth = () => {
     const currentSelectedMoment = moment(initialDate).clone();
@@ -98,21 +107,6 @@ const Calendar = ({
     const currentSelectedMoment = moment(initialDate).clone();
     const previous = currentSelectedMoment.subtract(1, "month");
     setInitialDate(previous.toDate());
-  };
-
-  const reportDatePicking = () => {
-    if (!startDate || !endDate) {
-      return;
-    }
-
-    const startDateString = moment(startDate).clone().format(format);
-    const endDateString = moment(endDate).clone().format(format);
-    onDateChange({
-      startDate: startDate,
-      endDate: endDate,
-      startDateString,
-      endDateString,
-    });
   };
 
   const onChooseDate = (date: Date) => {

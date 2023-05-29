@@ -134,7 +134,8 @@ const Notification = ({ message, id, closeNotification, duration }: Notification
     timerRef.current = setTimeout(() => {
       setVisible(false);
     }, duration - 600);
-  }, []);
+  }, [duration]);
+
   return (
     <CSSTransition
       in={isVisible}

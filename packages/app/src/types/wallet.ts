@@ -6,3 +6,8 @@ export interface WalletCofig {
   name: string;
   disable?: boolean;
 }
+
+export interface Account {
+  address: string;
+  source: "wallet" | "read-only";
+}

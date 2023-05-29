@@ -18,11 +18,12 @@ import minusIcon from "../../assets/images/minus-square.svg";
 import helpIcon from "../../assets/images/help.svg";
 import infoIcon from "../../assets/images/info.svg";
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
-import { Deposit, Delegate, UnbondingAsset, MetaMaskError } from "../../types";
+import { Deposit, Delegate, UnbondingInfo, MetaMaskError } from "../../types";
 import {
   getChainConfig,
   isEthersApi,
   isValidNumber,
+  isWalletClient,
   parseBalance,
   prettifyNumber,
   processTransactionError,
@@ -33,6 +34,7 @@ import { TransactionResponse } from "@ethersproject/providers";
 import { SelectCollatorModal, SelectCollatorRefs } from "../SelectCollatorModal";
 import { formatBalance } from "../../utils";
 import { BN_ZERO } from "../../config";
+import { waitForTransaction, writeContract } from "@wagmi/core";
 
 interface RestakeParams {
   ringEthersBigNumber: BigNumber;
@@ -46,10 +48,10 @@ export const StakingRecords = () => {
   const { currentChain, signerApi } = useWallet();
   const {
     stakedAssetDistribution,
-    isLoadingLedger,
+    isLedgerLoading,
     deposits,
     stakedDepositsIds,
-    currentlyNominatedCollator,
+    currentNominatedCollator,
     calculatePower,
     setNewUserIntroStakingValues,
   } = useStaking();
@@ -105,34 +107,63 @@ export const StakingRecords = () => {
   };
 
   const onUnbondAll = async () => {
-    if (!chainConfig || !isEthersApi(signerApi)) {
-      return;
-    }
-    const stakingContract = new Contract(
-      chainConfig.contractAddresses.staking,
-      chainConfig.contractInterface.staking,
-      signerApi.getSigner()
-    );
+    const ringBigNumber = stakedAssetDistribution?.ring.bonded
+      ? BigNumber.from(stakedAssetDistribution?.ring.bonded)
+      : BN_ZERO;
+    const ktonBigNumber = stakedAssetDistribution?.kton.bonded
+      ? BigNumber.from(stakedAssetDistribution?.kton.bonded)
+      : BN_ZERO;
+    const depositsIds = stakedDepositsIds?.map((id) => BigNumber.from(id)) ?? [];
 
-    try {
-      const ringBigNumber = stakedAssetDistribution?.ring.bonded ?? BN_ZERO;
-      const ktonBigNumber = stakedAssetDistribution?.kton.bonded ?? BN_ZERO;
-      const depositsIds = stakedDepositsIds?.map((id) => BigNumber.from(id)) ?? [];
-      const response = (await stakingContract?.unstake(
-        ringBigNumber,
-        ktonBigNumber,
-        depositsIds
-      )) as TransactionResponse;
-      await response.wait(1);
-      notification.success({
-        message: <div>{t(localeKeys.operationSuccessful)}</div>,
-      });
-    } catch (e) {
-      const error = processTransactionError(e as MetaMaskError);
-      notification.error({
-        message: <div>{error.message}</div>,
-      });
-      console.log(e);
+    if (chainConfig && isEthersApi(signerApi)) {
+      const stakingContract = new Contract(
+        chainConfig.contractAddresses.staking,
+        chainConfig.contractInterface.staking,
+        signerApi.getSigner()
+      );
+
+      try {
+        const response = (await stakingContract?.unstake(
+          ringBigNumber,
+          ktonBigNumber,
+          depositsIds
+        )) as TransactionResponse;
+        await response.wait(1);
+        notification.success({
+          message: <div>{t(localeKeys.operationSuccessful)}</div>,
+        });
+      } catch (e) {
+        const error = processTransactionError(e as MetaMaskError);
+        notification.error({
+          message: <div>{error.message}</div>,
+        });
+        console.log(e);
+      }
+    } else if (chainConfig && isWalletClient(signerApi)) {
+      try {
+        const { hash } = await writeContract({
+          address: chainConfig.contractAddresses.staking,
+          abi: chainConfig.contractInterface.staking,
+          functionName: "unstake",
+          args: [ringBigNumber.toBigInt(), ktonBigNumber.toBigInt(), depositsIds.map((item) => item.toBigInt())],
+        });
+
+        const receipt = await waitForTransaction({ hash });
+        if (receipt.status === "success") {
+          notification.success({
+            message: <div>{t(localeKeys.operationSuccessful)}</div>,
+          });
+        } else {
+          notification.error({
+            message: <div>{receipt.status}</div>,
+          });
+        }
+      } catch (e) {
+        console.error(e);
+        notification.error({
+          message: <div>{(e as Error).message}</div>,
+        });
+      }
     }
   };
 
@@ -149,31 +180,59 @@ export const StakingRecords = () => {
   };
 
   const reStake = async ({ ringEthersBigNumber, ktonEthersBigNumber, depositsIds }: RestakeParams) => {
-    if (!chainConfig || !isEthersApi(signerApi)) {
-      return;
-    }
-    const stakingContract = new Contract(
-      chainConfig.contractAddresses.staking,
-      chainConfig.contractInterface.staking,
-      signerApi.getSigner()
-    );
+    if (chainConfig && isEthersApi(signerApi)) {
+      const stakingContract = new Contract(
+        chainConfig.contractAddresses.staking,
+        chainConfig.contractInterface.staking,
+        signerApi.getSigner()
+      );
 
-    try {
-      const response = (await stakingContract?.restake(
-        ringEthersBigNumber,
-        ktonEthersBigNumber,
-        depositsIds
-      )) as TransactionResponse;
-      await response.wait(1);
-      notification.success({
-        message: <div>{t(localeKeys.operationSuccessful)}</div>,
-      });
-    } catch (e) {
-      const error = processTransactionError(e as MetaMaskError);
-      notification.error({
-        message: <div>{error.message}</div>,
-      });
-      // console.log(e);
+      try {
+        const response = (await stakingContract?.restake(
+          ringEthersBigNumber,
+          ktonEthersBigNumber,
+          depositsIds
+        )) as TransactionResponse;
+        await response.wait(1);
+        notification.success({
+          message: <div>{t(localeKeys.operationSuccessful)}</div>,
+        });
+      } catch (e) {
+        const error = processTransactionError(e as MetaMaskError);
+        notification.error({
+          message: <div>{error.message}</div>,
+        });
+        // console.log(e);
+      }
+    } else if (chainConfig && isWalletClient(signerApi)) {
+      try {
+        const { hash } = await writeContract({
+          address: chainConfig.contractAddresses.staking,
+          abi: chainConfig.contractInterface.staking,
+          functionName: "restake",
+          args: [
+            ringEthersBigNumber.toBigInt(),
+            ktonEthersBigNumber.toBigInt(),
+            depositsIds.map((Item) => Item.toBigInt()),
+          ],
+        });
+
+        const receipt = await waitForTransaction({ hash });
+        if (receipt.status === "success") {
+          notification.success({
+            message: <div>{t(localeKeys.operationSuccessful)}</div>,
+          });
+        } else {
+          notification.error({
+            message: <div>{receipt.status}</div>,
+          });
+        }
+      } catch (e) {
+        console.error(e);
+        notification.error({
+          message: <div>{(e as Error).message}</div>,
+        });
+      }
     }
   };
 
@@ -194,27 +253,50 @@ export const StakingRecords = () => {
   };
 
   const onReleaseTokenOrDeposit = async () => {
-    if (!chainConfig || !isEthersApi(signerApi)) {
-      return;
-    }
-    const stakingContract = new Contract(
-      chainConfig.contractAddresses.staking,
-      chainConfig.contractInterface.staking,
-      signerApi.getSigner()
-    );
+    if (chainConfig && isEthersApi(signerApi)) {
+      const stakingContract = new Contract(
+        chainConfig.contractAddresses.staking,
+        chainConfig.contractInterface.staking,
+        signerApi.getSigner()
+      );
 
-    try {
-      const response = (await stakingContract?.claim()) as TransactionResponse;
-      await response.wait(1);
-      notification.success({
-        message: <div>{t(localeKeys.operationSuccessful)}</div>,
-      });
-    } catch (e) {
-      const error = processTransactionError(e as MetaMaskError);
-      notification.error({
-        message: <div>{error.message}</div>,
-      });
-      // console.log(e);
+      try {
+        const response = (await stakingContract?.claim()) as TransactionResponse;
+        await response.wait(1);
+        notification.success({
+          message: <div>{t(localeKeys.operationSuccessful)}</div>,
+        });
+      } catch (e) {
+        const error = processTransactionError(e as MetaMaskError);
+        notification.error({
+          message: <div>{error.message}</div>,
+        });
+        // console.log(e);
+      }
+    } else if (chainConfig && isWalletClient(signerApi)) {
+      try {
+        const { hash } = await writeContract({
+          address: chainConfig.contractAddresses.staking,
+          abi: chainConfig.contractInterface.staking,
+          functionName: "claim",
+        });
+
+        const receipt = await waitForTransaction({ hash });
+        if (receipt.status === "success") {
+          notification.success({
+            message: <div>{t(localeKeys.operationSuccessful)}</div>,
+          });
+        } else {
+          notification.error({
+            message: <div>{receipt.status}</div>,
+          });
+        }
+      } catch (e) {
+        console.error(e);
+        notification.error({
+          message: <div>{(e as Error).message}</div>,
+        });
+      }
     }
   };
 
@@ -253,12 +335,12 @@ export const StakingRecords = () => {
       (stakedAssetDistribution.ring.unbondingDeposits || []).length > 0 ||
       (stakedAssetDistribution.kton.unbondingKton || []).length > 0;
 
-    if (!hasSomeStakingAmount && !currentlyNominatedCollator) {
+    if (!hasSomeStakingAmount && !currentNominatedCollator) {
       setDataSource([]);
       return;
     }
 
-    const accountNeedsACollator = hasSomeStakingAmount && !currentlyNominatedCollator;
+    const accountNeedsACollator = hasSomeStakingAmount && !currentNominatedCollator;
 
     if (accountNeedsACollator) {
       /* This will be used to show the staked values in the introduction layout */
@@ -274,10 +356,10 @@ export const StakingRecords = () => {
 
     setDataSource([
       {
-        id: currentlyNominatedCollator?.accountAddress ?? "1",
-        collator: currentlyNominatedCollator?.accountName || currentlyNominatedCollator?.accountAddress,
+        id: currentNominatedCollator?.accountAddress ?? "1",
+        collator: currentNominatedCollator?.accountName || currentNominatedCollator?.accountAddress,
         staked: totalStakedPower,
-        isActive: currentlyNominatedCollator?.isActive,
+        isActive: currentNominatedCollator?.isActive,
         accountNeedsACollator: accountNeedsACollator,
         canUnbondAll: !hasSomeUnbondingAmount,
         bondedTokens: [
@@ -302,7 +384,7 @@ export const StakingRecords = () => {
         ],
       },
     ]);
-  }, [stakedAssetDistribution, currentlyNominatedCollator, chainConfig, calculatePower, setNewUserIntroStakingValues]);
+  }, [stakedAssetDistribution, currentNominatedCollator, chainConfig, calculatePower, setNewUserIntroStakingValues]);
 
   const columns: Column<Delegate>[] = [
     {
@@ -326,7 +408,7 @@ export const StakingRecords = () => {
         return (
           <div className={"flex gap-[5px] items-center"}>
             <JazzIcon size={30} address={row.collator ?? ""} />
-            <div className={"flex-ellipsis"}>
+            <div className={"flex-ellipsis uppercase"}>
               <div>{row.collator}</div>
             </div>
             {row.isActive ? null : (
@@ -427,7 +509,7 @@ export const StakingRecords = () => {
                 );
               } else {
                 /*Create the message JSX for RINGs and KTONs that are ready to be released and the ones that aren't ready to be released */
-                let unbondingAsset: UnbondingAsset[] = [];
+                let unbondingAsset: UnbondingInfo[] = [];
                 if (item.isRingBonding) {
                   unbondingAsset = item?.unbondingRing ?? [];
                   hasSomeUnbondingItems = !!item?.unbondingRing?.length;
@@ -497,14 +579,14 @@ export const StakingRecords = () => {
                       {hasAnyUnbondingItem ? (
                         <>
                           {/*Don't show a tool tip since there will be another tooltip */}
-                          {prettifyNumber(item.amount.toString())}
+                          {formatBalance(item.amount)}
                         </>
                       ) : (
                         <Tooltip
                           className={"inline-block"}
                           message={<div>{formatBalance(item.amount, { precision: 8 })}</div>}
                         >
-                          <>{prettifyNumber(item.amount.toString())}</>
+                          <>{formatBalance(item.amount)}</>
                         </Tooltip>
                       )}{" "}
                       {item.isDeposit ? t(localeKeys.deposit) : ""} {item.symbol.toUpperCase()}
@@ -613,7 +695,7 @@ export const StakingRecords = () => {
     <div className={"flex flex-col"}>
       <div className={"flex flex-col"}>
         <Table
-          isLoading={isLoadingLedger}
+          isLoading={isLedgerLoading}
           headerSlot={<div className={"text-14-bold pb-[10px]"}>{t(localeKeys.stakingDelegation)}</div>}
           noDataText={t(localeKeys.noDelegation)}
           dataSource={dataSource}
@@ -747,17 +829,7 @@ const BondTokenModal = ({
   };
 
   const onConfirmBonding = async () => {
-    if (!chainConfig || !isEthersApi(signerApi)) {
-      return;
-    }
-    const stakingContract = new Contract(
-      chainConfig.contractAddresses.staking,
-      chainConfig.contractInterface.staking,
-      signerApi.getSigner()
-    );
-
-    const isValidAmount = isValidNumber(value);
-    if (!isValidAmount) {
+    if (!isValidNumber(value)) {
       if (isUpdatingRing) {
         notification.error({
           message: <div>{t(localeKeys.invalidRingAmount, { ringSymbol: chainConfig?.ring.symbol })}</div>,
@@ -770,6 +842,7 @@ const BondTokenModal = ({
       setHasError(true);
       return;
     }
+
     let ringEthersBigNumber = BN_ZERO;
     let ktonEthersBigNumber = BN_ZERO;
     const depositsIds: BigNumber[] = [];
@@ -848,27 +921,72 @@ const BondTokenModal = ({
       }
     }
 
-    try {
+    if (chainConfig && isEthersApi(signerApi)) {
+      const stakingContract = new Contract(
+        chainConfig.contractAddresses.staking,
+        chainConfig.contractInterface.staking,
+        signerApi.getSigner()
+      );
+
+      try {
+        setLoading(true);
+        const promise = (
+          type === "bondMore"
+            ? stakingContract?.stake(ringEthersBigNumber, ktonEthersBigNumber, depositsIds)
+            : stakingContract?.unstake(ringEthersBigNumber, ktonEthersBigNumber, depositsIds)
+        ) as Promise<TransactionResponse>;
+        const response = await promise;
+        await response.wait(1);
+        setLoading(false);
+        onConfirm();
+        notification.success({
+          message: <div>{t(localeKeys.operationSuccessful)}</div>,
+        });
+      } catch (e) {
+        const error = processTransactionError(e as MetaMaskError);
+        setLoading(false);
+        notification.error({
+          message: <div>{error.message}</div>,
+        });
+        // console.log(e);
+      }
+    } else if (chainConfig && isWalletClient(signerApi)) {
       setLoading(true);
-      const promise = (
-        type === "bondMore"
-          ? stakingContract?.stake(ringEthersBigNumber, ktonEthersBigNumber, depositsIds)
-          : stakingContract?.unstake(ringEthersBigNumber, ktonEthersBigNumber, depositsIds)
-      ) as Promise<TransactionResponse>;
-      const response = await promise;
-      await response.wait(1);
-      setLoading(false);
-      onConfirm();
-      notification.success({
-        message: <div>{t(localeKeys.operationSuccessful)}</div>,
-      });
-    } catch (e) {
-      const error = processTransactionError(e as MetaMaskError);
-      setLoading(false);
-      notification.error({
-        message: <div>{error.message}</div>,
-      });
-      // console.log(e);
+
+      try {
+        const functionName = type === "bondMore" ? "stake" : "unstake";
+
+        const { hash } = await writeContract({
+          address: chainConfig.contractAddresses.staking,
+          abi: chainConfig.contractInterface.staking,
+          functionName,
+          args: [
+            ringEthersBigNumber.toBigInt(),
+            ktonEthersBigNumber.toBigInt(),
+            depositsIds.map((item) => item.toBigInt()),
+          ],
+        });
+
+        const receipt = await waitForTransaction({ hash });
+        if (receipt.status === "success") {
+          setLoading(false);
+          onConfirm();
+          notification.success({
+            message: <div>{t(localeKeys.operationSuccessful)}</div>,
+          });
+        } else {
+          setLoading(false);
+          notification.error({
+            message: <div>{receipt.status}</div>,
+          });
+        }
+      } catch (e) {
+        console.error(e);
+        setLoading(false);
+        notification.error({
+          message: <div>{(e as Error).message}</div>,
+        });
+      }
     }
   };
 
@@ -955,28 +1073,29 @@ const BondDepositModal = ({
   }, [currentChain]);
 
   useEffect(() => {
-    setSelectedDeposit([]);
-    setLoading(false);
-    setPowerByDeposits(BN_ZERO);
-    setSelectedDeposit([]);
-    let deposits: Deposit[] = [];
-    if (type === "bondMore") {
-      /* filter out all deposits that have already been bonded, only take the unbonded deposits */
-      deposits = allDeposits.filter((item) => {
-        /* only take the deposit if it is not in use, this is the right way to evaluate since the unstaking/unbonding
-        deposits are also in use. This will avoid showing the unbonding deposits for rebonding them */
-        return !item.inUse;
-      });
-    } else {
-      /*show bonded deposits so that the user can check them to unbond them, this is the right way to evaluate since if
-       * we use the inUse property we may end up with some deposits that are unbonding. DO NOT allow
-       * users to re-unbond the deposits that are already unbonding */
-      deposits = allDeposits.filter((item) => {
-        return bondedDeposits.includes(item.id);
-      });
+    if (!isLoading) {
+      setSelectedDeposit([]);
+      setPowerByDeposits(BN_ZERO);
+      setSelectedDeposit([]);
+      let deposits: Deposit[] = [];
+      if (type === "bondMore") {
+        /* filter out all deposits that have already been bonded, only take the unbonded deposits */
+        deposits = allDeposits.filter((item) => {
+          /* only take the deposit if it is not in use, this is the right way to evaluate since the unstaking/unbonding
+          deposits are also in use. This will avoid showing the unbonding deposits for rebonding them */
+          return !item.inUse;
+        });
+      } else {
+        /*show bonded deposits so that the user can check them to unbond them, this is the right way to evaluate since if
+         * we use the inUse property we may end up with some deposits that are unbonding. DO NOT allow
+         * users to re-unbond the deposits that are already unbonding */
+        deposits = allDeposits.filter((item) => {
+          return bondedDeposits.includes(item.id);
+        });
+      }
+      setRenderDeposits(deposits);
     }
-    setRenderDeposits(deposits);
-  }, [isVisible, allDeposits, bondedDeposits, type]);
+  }, [allDeposits, bondedDeposits, type, isLoading]);
 
   const depositRenderer = (option: Deposit) => {
     return (
@@ -984,7 +1103,7 @@ const BondDepositModal = ({
         <div>ID#{option.id}</div>
         <div>
           <Tooltip message={<div>{formatBalance(option.value, { precision: 8 })}</div>}>
-            {prettifyNumber(option.value.toString())}
+            {formatBalance(option.value)}
           </Tooltip>
         </div>
       </div>
@@ -1003,40 +1122,73 @@ const BondDepositModal = ({
   };
 
   const onConfirmBonding = async () => {
-    if (!chainConfig || !isEthersApi(signerApi)) {
-      return;
-    }
-    const stakingContract = new Contract(
-      chainConfig.contractAddresses.staking,
-      chainConfig.contractInterface.staking,
-      signerApi.getSigner()
-    );
-
     const ringEthersBigNumber = BN_ZERO;
     const ktonEthersBigNumber = BN_ZERO;
     const depositsIds = selectedDeposits.map((item) => BigNumber.from(item.id));
 
-    try {
+    if (chainConfig && isEthersApi(signerApi)) {
       setLoading(true);
-      const promise = (
-        type === "bondMore"
-          ? stakingContract?.stake(ringEthersBigNumber, ktonEthersBigNumber, depositsIds)
-          : stakingContract?.unstake(ringEthersBigNumber, ktonEthersBigNumber, depositsIds)
-      ) as Promise<TransactionResponse>;
-      const response = await promise;
-      await response.wait(1);
-      setLoading(false);
-      onConfirm();
-      notification.success({
-        message: <div>{t(localeKeys.operationSuccessful)}</div>,
-      });
-    } catch (e) {
-      setLoading(false);
-      const error = processTransactionError(e as MetaMaskError);
-      notification.error({
-        message: <div>{error.message}</div>,
-      });
+
+      const stakingContract = new Contract(
+        chainConfig.contractAddresses.staking,
+        chainConfig.contractInterface.staking,
+        signerApi.getSigner()
+      );
+
+      try {
+        const promise = (
+          type === "bondMore"
+            ? stakingContract?.stake(ringEthersBigNumber, ktonEthersBigNumber, depositsIds)
+            : stakingContract?.unstake(ringEthersBigNumber, ktonEthersBigNumber, depositsIds)
+        ) as Promise<TransactionResponse>;
+        const response = await promise;
+        await response.wait(1);
+        onConfirm();
+        notification.success({
+          message: <div>{t(localeKeys.operationSuccessful)}</div>,
+        });
+      } catch (e) {
+        const error = processTransactionError(e as MetaMaskError);
+        notification.error({
+          message: <div>{error.message}</div>,
+        });
+      }
+    } else if (chainConfig && isWalletClient(signerApi)) {
+      setLoading(true);
+
+      try {
+        const functionName = type === "bondMore" ? "stake" : "unstake";
+        const { hash } = await writeContract({
+          address: chainConfig.contractAddresses.staking,
+          abi: chainConfig.contractInterface.staking,
+          functionName,
+          args: [
+            ringEthersBigNumber.toBigInt(),
+            ktonEthersBigNumber.toBigInt(),
+            depositsIds.map((item) => item.toBigInt()),
+          ],
+        });
+
+        const receipt = await waitForTransaction({ hash });
+        if (receipt.status === "success") {
+          onConfirm();
+          notification.success({
+            message: <div>{t(localeKeys.operationSuccessful)}</div>,
+          });
+        } else {
+          notification.error({
+            message: <div>{receipt.status}</div>,
+          });
+        }
+      } catch (e) {
+        console.error(e);
+        notification.error({
+          message: <div>{(e as Error).message}</div>,
+        });
+      }
     }
+
+    setLoading(false);
   };
 
   return (
@@ -1110,31 +1262,60 @@ const UndelegationModal = ({ isVisible, onClose, onConfirm, onCancel }: Undelega
   }, [isVisible]);
 
   const onConfirmUndelegation = async () => {
-    if (!chainConfig || !isEthersApi(signerApi)) {
-      return;
-    }
-    const stakingContract = new Contract(
-      chainConfig.contractAddresses.staking,
-      chainConfig.contractInterface.staking,
-      signerApi.getSigner()
-    );
+    if (chainConfig && isEthersApi(signerApi)) {
+      const stakingContract = new Contract(
+        chainConfig.contractAddresses.staking,
+        chainConfig.contractInterface.staking,
+        signerApi.getSigner()
+      );
 
-    try {
+      try {
+        setLoading(true);
+        const response = (await stakingContract?.chill()) as TransactionResponse;
+        await response.wait(1);
+        setLoading(false);
+        onConfirm();
+        notification.success({
+          message: <div>{t(localeKeys.operationSuccessful)}</div>,
+        });
+      } catch (e) {
+        const error = processTransactionError(e as MetaMaskError);
+        setLoading(false);
+        notification.error({
+          message: <div>{error.message}</div>,
+        });
+        // console.log(e);
+      }
+    } else if (chainConfig && isWalletClient(signerApi)) {
       setLoading(true);
-      const response = (await stakingContract?.chill()) as TransactionResponse;
-      await response.wait(1);
-      setLoading(false);
-      onConfirm();
-      notification.success({
-        message: <div>{t(localeKeys.operationSuccessful)}</div>,
-      });
-    } catch (e) {
-      const error = processTransactionError(e as MetaMaskError);
-      setLoading(false);
-      notification.error({
-        message: <div>{error.message}</div>,
-      });
-      // console.log(e);
+
+      try {
+        const { hash } = await writeContract({
+          address: chainConfig.contractAddresses.staking,
+          abi: chainConfig.contractInterface.staking,
+          functionName: "chill",
+        });
+
+        const receipt = await waitForTransaction({ hash });
+        if (receipt.status === "success") {
+          setLoading(false);
+          onConfirm();
+          notification.success({
+            message: <div>{t(localeKeys.operationSuccessful)}</div>,
+          });
+        } else {
+          setLoading(false);
+          notification.error({
+            message: <div>{receipt.status}</div>,
+          });
+        }
+      } catch (e) {
+        console.error(e);
+        setLoading(false);
+        notification.error({
+          message: <div>{(e as Error).message}</div>,
+        });
+      }
     }
   };
 

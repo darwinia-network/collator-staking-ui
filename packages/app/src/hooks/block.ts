@@ -1,47 +1,39 @@
 import { useEffect, useState } from "react";
 import { ApiPromise } from "@polkadot/api";
-import { Header } from "@polkadot/types/interfaces";
+import { UnSubscription } from "../types";
 
 interface CurrentBlock {
   number: number;
   timestamp: number;
 }
 
-export const useBlock = (apiPromise: ApiPromise | undefined) => {
+export const useBlock = (polkadotApi: ApiPromise | undefined) => {
   const [currentBlock, setCurrentBlock] = useState<CurrentBlock | undefined>();
 
   useEffect(() => {
-    let unsubscription: (() => void) | undefined;
-    const listenToBlocks = async () => {
-      if (!apiPromise) {
-        return;
-      }
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      unsubscription = await apiPromise.rpc.chain.subscribeNewHeads(async (header: Header) => {
-        try {
-          const timestamp = await apiPromise.query.timestamp.now();
-          setCurrentBlock({
-            number: header.number.toNumber(),
-            timestamp: Number(timestamp.toString()),
-          });
-        } catch (e) {
-          //ignore
-        }
-      });
-    };
+    let unsubscription: UnSubscription = () => undefined;
 
-    listenToBlocks().catch(() => {
-      //ignore
-    });
+    if (polkadotApi) {
+      polkadotApi.rpc.chain
+        .subscribeNewHeads(async (header) => {
+          try {
+            const timestamp = await polkadotApi.query.timestamp.now();
+            setCurrentBlock({
+              number: header.number.toNumber(),
+              timestamp: Number(timestamp.toString()),
+            });
+          } catch (e) {
+            // ignore
+          }
+        })
+        .then((unsub) => (unsubscription = unsub))
+        .catch(console.error);
+    }
+
     return () => {
-      if (unsubscription) {
-        unsubscription();
-      }
+      unsubscription();
     };
-  }, [apiPromise]);
+  }, [polkadotApi]);
 
-  return {
-    currentBlock,
-  };
+  return { currentBlock };
 };

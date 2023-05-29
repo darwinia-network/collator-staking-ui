@@ -1,13 +1,14 @@
 import { ChangeEvent, forwardRef, useImperativeHandle, useMemo, useState } from "react";
 import { Button, Input, ModalEnhanced, notification, Tooltip } from "@darwinia/ui";
 import { localeKeys, useAppTranslation } from "../../locale";
-import { getChainConfig, isEthersApi, isValidNumber, processTransactionError } from "../../utils";
+import { getChainConfig, isEthersApi, isValidNumber, isWalletClient, processTransactionError } from "../../utils";
 import helpIcon from "../../assets/images/help.svg";
 import { useWallet, useStaking } from "../../hooks";
 import { BigNumber } from "@ethersproject/bignumber/lib/bignumber";
 import { TransactionResponse } from "@ethersproject/providers";
 import { MetaMaskError } from "../../types";
 import { Contract } from "ethers";
+import { waitForTransaction, writeContract } from "@wagmi/core";
 
 export interface JoinCollatorRefs {
   show: () => void;
@@ -63,17 +64,7 @@ export const JoinCollatorModal = forwardRef<JoinCollatorRefs>((_, ref) => {
   };
 
   const onSetCommission = async () => {
-    if (!chainConfig || !isEthersApi(signerApi)) {
-      return;
-    }
-    const stakingContract = new Contract(
-      chainConfig.contractAddresses.staking,
-      chainConfig.contractInterface.staking,
-      signerApi.getSigner()
-    );
-
-    const isValidCommission = isValidNumber(commission);
-    if (!isValidCommission) {
+    if (!isValidNumber(commission)) {
       notification.error({
         message: <div>{t(localeKeys.invalidCommission)}</div>,
       });
@@ -90,30 +81,65 @@ export const JoinCollatorModal = forwardRef<JoinCollatorRefs>((_, ref) => {
       return;
     }
 
-    try {
+    if (chainConfig && isEthersApi(signerApi)) {
+      const stakingContract = new Contract(
+        chainConfig.contractAddresses.staking,
+        chainConfig.contractInterface.staking,
+        signerApi.getSigner()
+      );
+
+      try {
+        setLoading(true);
+        const response = (await stakingContract.collect(BigNumber.from(commission))) as TransactionResponse;
+        await response.wait(1);
+        setLoading(false);
+        setCommission("");
+        notification.success({
+          message: <div>{t(localeKeys.operationSuccessful)}</div>,
+        });
+      } catch (e) {
+        const error = processTransactionError(e as MetaMaskError);
+        setLoading(false);
+        notification.error({
+          message: <div>{error.message}</div>,
+        });
+        console.log(e);
+      }
+    } else if (chainConfig && isWalletClient(signerApi)) {
       setLoading(true);
-      const response = (await stakingContract.collect(BigNumber.from(commission))) as TransactionResponse;
-      await response.wait(1);
-      setLoading(false);
-      setCommission("");
-      notification.success({
-        message: <div>{t(localeKeys.operationSuccessful)}</div>,
-      });
-    } catch (e) {
-      const error = processTransactionError(e as MetaMaskError);
-      setLoading(false);
-      notification.error({
-        message: <div>{error.message}</div>,
-      });
-      console.log(e);
+
+      try {
+        const { hash } = await writeContract({
+          address: chainConfig.contractAddresses.staking,
+          abi: chainConfig.contractInterface.staking,
+          functionName: "collect",
+          args: [BigNumber.from(commission).toBigInt()],
+        });
+
+        const receipt = await waitForTransaction({ hash });
+        if (receipt.status === "success") {
+          setLoading(false);
+          setCommission("");
+          notification.success({
+            message: <div>{t(localeKeys.operationSuccessful)}</div>,
+          });
+        } else {
+          setLoading(false);
+          notification.error({
+            message: <div>{receipt.status}</div>,
+          });
+        }
+      } catch (e) {
+        console.error(e);
+        setLoading(false);
+        notification.error({
+          message: <div>{(e as Error).message}</div>,
+        });
+      }
     }
   };
 
   const onSetSessionKey = async () => {
-    if (!isEthersApi(signerApi)) {
-      return;
-    }
-
     try {
       if (sessionKey.trim().length === 0) {
         setSessionKeyHasError(true);
@@ -124,7 +150,7 @@ export const JoinCollatorModal = forwardRef<JoinCollatorRefs>((_, ref) => {
       }
 
       setLoading(true);
-      const isSuccessful = await setCollatorSessionKey(sessionKey, signerApi);
+      const isSuccessful = await setCollatorSessionKey(sessionKey);
       setLoading(false);
       if (isSuccessful) {
         setSessionKey("");

@@ -22,7 +22,7 @@ interface StakingStashQuery {
 export const AccountOverview = () => {
   const { t } = useAppTranslation();
   const { currentChain, activeAccount } = useWallet();
-  const { power, stakedAssetDistribution, isLoadingLedger } = useStaking();
+  const { power, stakedAssetDistribution, isLedgerLoading } = useStaking();
 
   const chainConfig = useMemo(() => {
     if (currentChain) {
@@ -37,7 +37,7 @@ export const AccountOverview = () => {
     error,
   } = useQuery<{ stakingRecord: StakingRecord }, StakingStashQuery>(GET_LATEST_STAKING_REWARDS, {
     variables: {
-      accountAddress: activeAccount ? ethers.utils.getAddress(activeAccount) : "",
+      accountAddress: activeAccount ? ethers.utils.getAddress(activeAccount.address) : "",
       itemsCount: 3,
     },
   });
@@ -94,7 +94,7 @@ export const AccountOverview = () => {
       <Spinner
         size={"small"}
         className={"card flex flex-col justify-center lg:w-[32.25%] shrink-0"}
-        isLoading={!!isLoadingLedger}
+        isLoading={!!isLedgerLoading}
       >
         <div>
           <div className={"divider border-b pb-[20px] text-18-bold"}>{t(localeKeys.reservedInStaking)}</div>

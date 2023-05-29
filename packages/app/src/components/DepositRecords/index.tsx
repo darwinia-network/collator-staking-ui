@@ -3,19 +3,20 @@ import { localeKeys, useAppTranslation } from "../../locale";
 import { useStaking, useWallet } from "../../hooks";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Deposit, MetaMaskError } from "../../types";
-import { formatDate, getChainConfig, isEthersApi, processTransactionError } from "../../utils";
+import { formatDate, getChainConfig, isEthersApi, isWalletClient, processTransactionError } from "../../utils";
 import { BigNumber } from "@ethersproject/bignumber/lib/bignumber";
 import { TransactionResponse } from "@ethersproject/providers";
 import { formatBalance } from "../../utils";
 import { BN_ZERO } from "../../config";
 import { Contract } from "ethers";
+import { waitForTransaction, writeContract } from "@wagmi/core";
 
 export const DepositRecords = () => {
   const { t } = useAppTranslation();
   const { currentChain } = useWallet();
-  /*All deposits list are available in the ledger, so listening to isLoadingLedger will
+  /*All deposits list are available in the ledger, so listening to isLedgerLoading will
    * allow adding the loading listener */
-  const { deposits, isLoadingLedger } = useStaking();
+  const { deposits, isLedgerLoading } = useStaking();
   const [showWithdrawModal, setShowWithdrawModal] = useState<boolean>(false);
   const depositToWithdraw = useRef<Deposit | null>(null);
   const withdrawType = useRef<WithdrawModalType>("early");
@@ -180,7 +181,7 @@ export const DepositRecords = () => {
     <div className={"flex flex-col"}>
       <div className={"flex flex-col mt-[20px]"}>
         <Table
-          isLoading={isLoadingLedger}
+          isLoading={isLedgerLoading}
           headerSlot={<div className={"text-14-bold pb-[10px]"}>{t(localeKeys.activeDepositRecords)}</div>}
           noDataText={t(localeKeys.noDepositRecords)}
           dataSource={dataSource}
@@ -237,58 +238,117 @@ const WithdrawModal = ({ isVisible, onClose, onConfirm, onCancel, deposit, type 
   }, [isVisible]);
 
   const regularWithdraw = async () => {
-    if (!chainConfig || !isEthersApi(signerApi)) {
-      return;
-    }
-    const depositContract = new Contract(
-      chainConfig.contractAddresses.deposit,
-      chainConfig.contractInterface.deposit,
-      signerApi.getSigner()
-    );
-    try {
+    if (chainConfig && isEthersApi(signerApi)) {
+      const depositContract = new Contract(
+        chainConfig.contractAddresses.deposit,
+        chainConfig.contractInterface.deposit,
+        signerApi.getSigner()
+      );
+
+      try {
+        setLoading(true);
+        const response = (await depositContract?.claim()) as TransactionResponse;
+        await response.wait(1);
+        setLoading(false);
+        onConfirm();
+        notification.success({
+          message: <div>{t(localeKeys.operationSuccessful)}</div>,
+        });
+      } catch (e) {
+        const error = processTransactionError(e as MetaMaskError);
+        setLoading(false);
+        notification.error({
+          message: <div>{error.message}</div>,
+        });
+        console.log(e);
+      }
+    } else if (chainConfig && isWalletClient(signerApi)) {
       setLoading(true);
-      const response = (await depositContract?.claim()) as TransactionResponse;
-      await response.wait(1);
-      setLoading(false);
-      onConfirm();
-      notification.success({
-        message: <div>{t(localeKeys.operationSuccessful)}</div>,
-      });
-    } catch (e) {
-      const error = processTransactionError(e as MetaMaskError);
-      setLoading(false);
-      notification.error({
-        message: <div>{error.message}</div>,
-      });
-      console.log(e);
+
+      try {
+        const { hash } = await writeContract({
+          address: chainConfig.contractAddresses.deposit,
+          abi: chainConfig.contractInterface.deposit,
+          functionName: "claim",
+        });
+
+        const receipt = await waitForTransaction({ hash });
+        if (receipt.status === "success") {
+          setLoading(false);
+          onConfirm();
+          notification.success({
+            message: <div>{t(localeKeys.operationSuccessful)}</div>,
+          });
+        } else {
+          notification.error({
+            message: <div>{receipt.status}</div>,
+          });
+        }
+      } catch (e) {
+        console.error(e);
+        notification.error({
+          message: <div>{(e as Error).message}</div>,
+        });
+      }
     }
   };
 
   const withdrawEarly = async () => {
-    if (!chainConfig || !isEthersApi(signerApi)) {
-      return;
-    }
-    const depositContract = new Contract(
-      chainConfig.contractAddresses.deposit,
-      chainConfig.contractInterface.deposit,
-      signerApi.getSigner()
-    );
-    try {
+    if (chainConfig && isEthersApi(signerApi)) {
+      const depositContract = new Contract(
+        chainConfig.contractAddresses.deposit,
+        chainConfig.contractInterface.deposit,
+        signerApi.getSigner()
+      );
+      try {
+        setLoading(true);
+        const response = (await depositContract?.claim_with_penalty(
+          BigNumber.from(deposit?.id)
+        )) as TransactionResponse;
+        await response.wait(1);
+        setLoading(false);
+        onConfirm();
+        notification.success({
+          message: <div>{t(localeKeys.operationSuccessful)}</div>,
+        });
+      } catch (e) {
+        const error = processTransactionError(e as MetaMaskError);
+        setLoading(false);
+        notification.error({
+          message: <div>{error.message}</div>,
+        });
+        console.log(e);
+      }
+    } else if (chainConfig && isWalletClient(signerApi)) {
       setLoading(true);
-      const response = (await depositContract?.claim_with_penalty(BigNumber.from(deposit?.id))) as TransactionResponse;
-      await response.wait(1);
-      setLoading(false);
-      onConfirm();
-      notification.success({
-        message: <div>{t(localeKeys.operationSuccessful)}</div>,
-      });
-    } catch (e) {
-      const error = processTransactionError(e as MetaMaskError);
-      setLoading(false);
-      notification.error({
-        message: <div>{error.message}</div>,
-      });
-      console.log(e);
+      try {
+        const { hash } = await writeContract({
+          address: chainConfig.contractAddresses.deposit,
+          abi: chainConfig.contractInterface.deposit,
+          functionName: "claim_with_penalty",
+          args: [BigNumber.from(deposit?.id).toBigInt()],
+        });
+
+        const receipt = await waitForTransaction({ hash });
+        if (receipt.status === "success") {
+          setLoading(false);
+          onConfirm();
+          notification.success({
+            message: <div>{t(localeKeys.operationSuccessful)}</div>,
+          });
+        } else {
+          setLoading(false);
+          notification.error({
+            message: <div>{receipt.status}</div>,
+          });
+        }
+      } catch (e) {
+        console.error(e);
+        setLoading(false);
+        notification.error({
+          message: <div>{(e as Error).message}</div>,
+        });
+      }
     }
   };
 

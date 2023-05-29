@@ -1,38 +1,47 @@
 import { createContext, PropsWithChildren, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AssetBalance, ChainID, Collator, StakingAsset, UserIntroValues } from "../types";
+import { AssetBalance, ChainID, Collator, StakingAmount, UserIntroValues } from "../types";
 import { useWallet } from "../hooks";
 import { WsProvider, ApiPromise } from "@polkadot/api";
+import { HexString } from "@polkadot/util/types";
 import { BigNumber } from "ethers";
 import { usePower } from "../hooks/power";
 import { useLedger } from "../hooks/ledger";
 import { useSession } from "../hooks/session";
 import { useCollators } from "../hooks/collators";
+import { useBalance } from "../hooks/balance";
 import { keyring } from "@polkadot/ui-keyring";
-import { AssetDistribution, Deposit, StakeAndNominateParams, FrameSystemAccountInfo } from "../types";
+import { AssetDistribution, Deposit } from "../types";
 import { BaseProvider } from "@ethersproject/providers";
 import { BN_ZERO } from "../config";
-import { getChainConfig } from "../utils";
+import { getChainConfig, isEthersApi, isWalletClient } from "../utils";
 import { clientBuilder as sdkClientBuilder } from "darwinia-js-sdk";
+import { clientBuilder as libClientBuilder } from "../libs";
+import { getPublicClient } from "@wagmi/core";
 
 interface StakingCtx {
   power: BigNumber | undefined;
   stakedAssetDistribution: AssetDistribution | undefined;
   deposits: Deposit[] | undefined;
   stakedDepositsIds: number[] | undefined;
-  isLoadingLedger: boolean | undefined;
-  isLoadingPool: boolean | undefined;
+  isLedgerLoading: boolean | undefined;
+  isPoolLoading: boolean | undefined;
   collators: Collator[] | undefined;
   balance: AssetBalance | undefined;
-  currentlyNominatedCollator: Collator | undefined | null;
+  currentNominatedCollator: Collator | undefined | null;
   newUserIntroStakingValues: UserIntroValues | undefined;
   sessionDuration: number | undefined;
   unbondingDuration: number | undefined;
-  minimumDepositAmount: BigNumber | undefined;
-  calculatePower: (stakingAsset: StakingAsset) => BigNumber;
-  calculateExtraPower: (stakingAsset: StakingAsset) => BigNumber;
+  minDeposit: BigNumber | undefined;
+  calculatePower: (stakingAmount: StakingAmount) => BigNumber;
+  calculateExtraPower: (stakingAmount: StakingAmount) => BigNumber;
   setNewUserIntroStakingValues: (values: UserIntroValues | undefined) => void;
-  setCollatorSessionKey: (sessionKey: string, provider: BaseProvider) => Promise<boolean>;
-  stakeAndNominate: (params: StakeAndNominateParams) => Promise<boolean>;
+  setCollatorSessionKey: (sessionKey: string) => Promise<boolean>;
+  stakeAndNominate: (
+    collatorAddress: string,
+    ringAmount: BigNumber,
+    ktonAmount: BigNumber,
+    depositIds: BigNumber[]
+  ) => Promise<boolean>;
 }
 
 const defaultValue: StakingCtx = {
@@ -40,12 +49,12 @@ const defaultValue: StakingCtx = {
   stakedAssetDistribution: undefined,
   stakedDepositsIds: undefined,
   deposits: undefined,
-  isLoadingLedger: undefined,
-  isLoadingPool: undefined,
+  isLedgerLoading: undefined,
+  isPoolLoading: undefined,
   collators: undefined,
   balance: undefined,
-  currentlyNominatedCollator: undefined,
-  minimumDepositAmount: undefined,
+  currentNominatedCollator: undefined,
+  minDeposit: undefined,
   newUserIntroStakingValues: undefined,
   sessionDuration: undefined,
   unbondingDuration: undefined,
@@ -56,45 +65,35 @@ const defaultValue: StakingCtx = {
   stakeAndNominate: async () => false,
 };
 
-export type UnSubscription = () => void;
-
 export const StakingContext = createContext(defaultValue);
 
 export const StakingProvider = ({ children }: PropsWithChildren) => {
-  const { currentChain, activeAccount } = useWallet();
-  const [apiPromise, setApiPromise] = useState<ApiPromise>();
-  /* These will be used to show the staked values in the introduction layout */
-  const [newUserIntroStakingValues, setNewUserIntroStakingValues] = useState<UserIntroValues | undefined>();
-  /* Balance will be formed by manually combining data, ktonBalance from useLedger() hook and
-   * and useEffect from storageProvider */
-  const [balance, setBalance] = useState<AssetBalance>({
-    kton: BN_ZERO,
-    ring: BN_ZERO,
-  });
+  const isKeyringInitialized = useRef<boolean>(false);
+  const { currentChain, activeAccount, signerApi } = useWallet();
   const chainConfig = useMemo(() => {
     if (currentChain) {
       return getChainConfig(currentChain) ?? null;
     }
     return null;
   }, [currentChain]);
-  const [minimumDepositAmount, setMinimumDepositAmount] = useState<BigNumber>(BN_ZERO);
 
-  const { stakingAsset, isLoadingLedger, deposits, stakedDepositsIds, stakedAssetDistribution, ktonBalance } =
-    useLedger({
-      apiPromise,
-      activeAccount,
-      secondsPerBlock: chainConfig?.secondsPerBlock,
-    });
-  const { isLoadingPool, power, calculateExtraPower, calculatePower } = usePower({
-    apiPromise,
-    stakingAsset,
-  });
+  const [polkadotApi, setPolkadotApi] = useState<ApiPromise>();
+  const [newUserIntroStakingValues, setNewUserIntroStakingValues] = useState<UserIntroValues | undefined>();
+  const [minDeposit, setMinDeposit] = useState<BigNumber>(BN_ZERO);
+  const [currentNominatedCollator, setCurrentNominatedCollator] = useState<Collator | null>();
 
+  const { collators } = useCollators(polkadotApi);
   const { sessionDuration, unbondingDuration } = useSession();
-
-  const isKeyringInitialized = useRef<boolean>(false);
-  const { collators } = useCollators(apiPromise);
-  const [currentlyNominatedCollator, setCurrentlyNominatedCollator] = useState<Collator | null>();
+  const { stakingAmount, isLedgerLoading, deposits, stakedDepositsIds, stakedAssetDistribution } = useLedger({
+    polkadotApi,
+    address: activeAccount?.address,
+    secondsPerBlock: chainConfig?.secondsPerBlock,
+  });
+  const { isPoolLoading, power, calculateExtraPower, calculatePower } = usePower({
+    polkadotApi,
+    stakingAmount,
+  });
+  const { balance } = useBalance(polkadotApi, activeAccount?.address);
 
   const getSdkClient = useCallback(
     (provider: BaseProvider) => {
@@ -113,118 +112,147 @@ export const StakingProvider = ({ children }: PropsWithChildren) => {
     [chainConfig]
   );
 
-  const setCollatorSessionKey = useCallback(async () => {
-    return false;
-  }, []);
-
-  const stakeAndNominate = useCallback(async () => {
-    return false;
-  }, []);
-
-  useEffect(() => {
-    if (!activeAccount) {
-      return;
+  const getLibClient = useCallback(() => {
+    const publicClient = getPublicClient();
+    switch (chainConfig?.chainId) {
+      case ChainID.PANGOLIN:
+        return libClientBuilder.buildPangolinClient(publicClient);
+      case ChainID.PANGORO:
+        return libClientBuilder.buildPangoroClient(publicClient);
+      case ChainID.DARWINIA:
+        return libClientBuilder.buildDarwiniaClient(publicClient);
+      case ChainID.CRAB:
+      default:
+        return libClientBuilder.buildCrabClient(publicClient);
     }
-    const collator = collators.find((item) =>
-      item.nominators.map((nominator) => nominator.toLowerCase()).includes(activeAccount.toLowerCase())
-    );
-    setCurrentlyNominatedCollator(collator ?? null);
-  }, [collators, activeAccount]);
+  }, [chainConfig]);
+
+  const setCollatorSessionKey = useCallback(
+    async (sessionKey: string) => {
+      /* We appended 00 to the session key to represent that we don't need any proof. Originally the setKeys method
+       * required two params which are session key and proof but here we append both values into one param */
+      const proof = `${sessionKey}00` as HexString;
+
+      if (isEthersApi(signerApi)) {
+        try {
+          await getSdkClient(signerApi).calls.session.setKeysH(signerApi.getSigner(), proof);
+          return true;
+        } catch (error) {
+          console.error(error);
+          return false;
+        }
+      } else if (isWalletClient(signerApi)) {
+        try {
+          await getLibClient().calls.session.setKeysH(signerApi, proof);
+          return true;
+        } catch (error) {
+          console.error(error);
+          return false;
+        }
+      }
+
+      return false;
+    },
+    [signerApi, getSdkClient, getLibClient]
+  );
+
+  const stakeAndNominate = useCallback(
+    async (collatorAddress: string, ringAmount: BigNumber, ktonAmount: BigNumber, depositIds: BigNumber[]) => {
+      if (isEthersApi(signerApi)) {
+        const nominateCall = getSdkClient(signerApi).calls.darwiniaStaking.buildNominateCall(collatorAddress);
+        const stakeCall = getSdkClient(signerApi).calls.darwiniaStaking.buildStakeCall(
+          ringAmount.toString(),
+          ktonAmount.toString(),
+          depositIds.map((item) => item.toString())
+        );
+
+        try {
+          await getSdkClient(signerApi).calls.utility.batchAll(signerApi.getSigner(), [stakeCall, nominateCall]);
+          return true;
+        } catch (error) {
+          console.error(error);
+          return false;
+        }
+      } else if (isWalletClient(signerApi)) {
+        const nominateCall = getLibClient().calls.darwiniaStaking.buildNominateCall(collatorAddress);
+        const stakeCall = getLibClient().calls.darwiniaStaking.buildStakeCall(
+          ringAmount.toString(),
+          ktonAmount.toString(),
+          depositIds.map((item) => item.toString())
+        );
+
+        try {
+          await getLibClient().calls.utility.batchAll(signerApi, [stakeCall, nominateCall]);
+          return true;
+        } catch (error) {
+          console.error(error);
+          return false;
+        }
+      }
+
+      return false;
+    },
+    [signerApi, getSdkClient, getLibClient]
+  );
 
   useEffect(() => {
-    setBalance((old) => {
-      return {
-        ...old,
-        kton: ktonBalance,
-      };
-    });
-  }, [ktonBalance]);
+    if (activeAccount) {
+      const collator = collators.find((item) =>
+        item.nominators.map((nominator) => nominator.toLowerCase()).includes(activeAccount.address.toLowerCase())
+      );
+      setCurrentNominatedCollator(collator ?? null);
+    }
+  }, [collators, activeAccount]);
 
   /* This will help us to extract pretty names from the chain test accounts such as Alith,etc */
   useEffect(() => {
     try {
       if (chainConfig && !isKeyringInitialized.current) {
-        isKeyringInitialized.current = true;
         keyring.loadAll({
           type: "ethereum",
           isDevelopment: !!chainConfig?.isTestNet,
         });
+        isKeyringInitialized.current = true;
       }
     } catch (e) {
       //ignore
     }
   }, [chainConfig]);
 
-  const initStorageNetwork = async (rpcURL: string) => {
-    try {
-      const provider = new WsProvider(rpcURL);
-      const api = new ApiPromise({
-        provider,
-      });
-
-      api.on("connected", async () => {
-        const readyAPI = await api.isReady;
-        setApiPromise(readyAPI);
-      });
-      api.on("disconnected", () => {
-        // console.log("disconnected");
-      });
-      api.on("error", () => {
-        // console.log("error");
-      });
-    } catch (e) {
-      //ignore
-    }
-  };
-
-  /*Get the minimum deposit amount*/
   useEffect(() => {
-    if (!apiPromise) {
-      return;
+    if (polkadotApi) {
+      setMinDeposit(BigNumber.from(polkadotApi.consts.deposit.minLockingAmount.toString()));
     }
-    const amount = apiPromise.consts.deposit.minLockingAmount;
-    setMinimumDepositAmount(BigNumber.from(amount));
-  }, [apiPromise]);
+  }, [polkadotApi]);
 
-  /*Monitor account ring balance*/
+  // init & update polkadotApi
   useEffect(() => {
-    let unsubscription: UnSubscription | undefined;
-    const getBalance = async () => {
-      if (!activeAccount || !apiPromise) {
-        return;
-      }
-      try {
-        const res = await apiPromise?.query.system.account(activeAccount, (accountInfo: FrameSystemAccountInfo) => {
-          setBalance((old) => {
-            return {
-              ...old,
-              ring: BigNumber.from(accountInfo.data.free),
-            };
-          });
-        });
-        unsubscription = res as unknown as UnSubscription;
-      } catch (e) {
-        console.log(e);
-        // ignore
-      }
+    let api: ApiPromise | undefined = undefined;
+
+    const errorHandler = () => {
+      setPolkadotApi(undefined);
+    };
+    const readyHandler = () => {
+      setPolkadotApi((prev) => prev ?? api);
+    };
+    const disconnectedHandler = () => {
+      setPolkadotApi(undefined);
     };
 
-    getBalance().catch(() => {
-      //do nothing
-    });
+    if (chainConfig) {
+      const provider = new WsProvider(chainConfig.substrate.rpc.wss);
+      api = new ApiPromise({ provider });
+      api.on("error", errorHandler);
+      api.on("ready", readyHandler);
+      api.on("disconnected", disconnectedHandler);
+    }
 
     return () => {
-      if (unsubscription) {
-        unsubscription();
-      }
+      api?.off("error", errorHandler);
+      api?.off("ready", readyHandler);
+      api?.off("disconnected", disconnectedHandler);
+      setPolkadotApi(undefined);
     };
-  }, [apiPromise, activeAccount]);
-
-  useEffect(() => {
-    if (!chainConfig) {
-      return;
-    }
-    initStorageNetwork(chainConfig.substrate.rpc.wss);
   }, [chainConfig]);
 
   return (
@@ -235,14 +263,14 @@ export const StakingProvider = ({ children }: PropsWithChildren) => {
         stakedAssetDistribution,
         deposits,
         stakedDepositsIds,
-        isLoadingPool,
-        isLoadingLedger,
+        isPoolLoading,
+        isLedgerLoading,
         collators,
-        currentlyNominatedCollator,
+        currentNominatedCollator,
         newUserIntroStakingValues,
         sessionDuration,
         unbondingDuration,
-        minimumDepositAmount,
+        minDeposit,
         calculatePower,
         calculateExtraPower,
         setNewUserIntroStakingValues,

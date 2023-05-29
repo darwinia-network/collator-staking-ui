@@ -52,6 +52,7 @@ export function getCallMeta(metadata: Metadata, palletName: string, callName: st
 
 export type CallAsParam = {
   callIndex: [number, number];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   args: any;
 };
 

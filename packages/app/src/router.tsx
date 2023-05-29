@@ -1,5 +1,5 @@
 import { lazy } from "react";
-import { createBrowserRouter } from "react-router-dom";
+import { createHashRouter } from "react-router-dom";
 import { Suspense } from "react";
 import Root from "./Root";
 import NotFound from "./pages/NotFound";
@@ -17,7 +17,7 @@ const LazyLoader = ({ fileName }: { fileName: string }) => {
   );
 };
 
-export const router = createBrowserRouter([
+export const router = createHashRouter([
   {
     path: "/",
     element: <Root />,

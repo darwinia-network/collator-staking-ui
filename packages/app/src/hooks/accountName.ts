@@ -14,7 +14,7 @@ const KNOWN: [AccountId, string][] = [
 ];
 
 /*This code needs a double check with Polkadot JS apps */
-export const useAccountName = (apiPromise: ApiPromise | undefined) => {
+export const useAccountName = (polkadotApi: ApiPromise | undefined) => {
   const extractName = (accountAddress: string, defaultName?: string) => {
     const known = KNOWN.find(([address]) => address.eq(accountAddress));
     if (known) {
@@ -42,32 +42,25 @@ export const useAccountName = (apiPromise: ApiPromise | undefined) => {
 
   const getPrettyName = useCallback(
     async (accountAddress: string): Promise<string | undefined> => {
-      if (!apiPromise) {
-        return;
+      if (polkadotApi) {
+        const queryInfo = async () => {
+          const accountInfo = await polkadotApi.derive.accounts.info(accountAddress);
+          const { nickname, identity } = accountInfo;
+          if (typeof polkadotApi.query.identity?.identityOf === "function") {
+            return identity.display ? extractIdentity(accountAddress, identity) : extractName(accountAddress);
+          } else if (nickname) {
+            return nickname;
+          }
+          return extractName(accountAddress);
+        };
+
+        return (await queryInfo().catch())?.toLowerCase();
       }
 
-      const queryInfo = async () => {
-        const accountInfo = await apiPromise.derive.accounts.info(accountAddress);
-        const { nickname, identity } = accountInfo;
-        if (typeof apiPromise.query.identity?.identityOf === "function") {
-          const name = identity.display ? extractIdentity(accountAddress, identity) : extractName(accountAddress);
-          return Promise.resolve(name);
-        } else if (nickname) {
-          return Promise.resolve(nickname);
-        }
-        const name = extractName(accountAddress);
-        return Promise.resolve(name);
-      };
-
-      const res = await queryInfo().catch(() => {
-        //ignore
-      });
-      return Promise.resolve(res ? res.toUpperCase() : undefined);
+      return undefined;
     },
-    [apiPromise]
+    [polkadotApi]
   );
 
-  return {
-    getPrettyName,
-  };
+  return { getPrettyName };
 };

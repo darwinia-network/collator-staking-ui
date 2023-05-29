@@ -1,5 +1,5 @@
 import "./styles.scss";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import checkedIcon from "../../assets/images/checkbox-checked.svg";
 import uncheckedIcon from "../../assets/images/checkbox-unchecked.svg";
 

@@ -60,7 +60,9 @@ export interface DepositEncoded extends Struct {
   // @ts-ignore
   id: u128;
   value: u128;
+  startTime: u128;
   expiredTime: u128;
+  inUse: bool;
 }
 
 export interface PalletAssetsAssetAccountEncoded extends Struct {
@@ -70,5 +72,5 @@ export interface PalletAssetsAssetAccountEncoded extends Struct {
 
 export interface PalletAssetsAssetAccount extends Struct {
   balance: u128;
-  isFrozen: boolean;
+  isFrozen: bool;
 }

@@ -3,6 +3,7 @@ import { StakeAndNominateParams } from "./staking";
 
 export interface Storage {
   wasIntroShown?: boolean;
+  network: string;
 }
 
 interface ErrorEntity {
@@ -19,3 +20,5 @@ export interface DispatchCtx {
   setCollatorSessionKey: (sessionKey: string, provider: Provider | undefined) => Promise<boolean>;
   stakeAndNominate: (params: StakeAndNominateParams) => Promise<boolean>;
 }
+
+export type UnSubscription = () => void;

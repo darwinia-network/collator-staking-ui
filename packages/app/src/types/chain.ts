@@ -23,8 +23,8 @@ interface ContractABI {
 }
 
 interface ContractAddress {
-  staking: string;
-  deposit: string;
+  staking: `0x${string}`;
+  deposit: `0x${string}`;
 }
 
 export enum ChainID {

@@ -1,7 +1,7 @@
 import { Metadata } from "@polkadot/types";
 import { camelToSnakeCase } from "./utils";
 import { encodeCall, getCallMeta } from "./helpers";
-import { PublicClient, WalletClient } from "@wagmi/core";
+import { PublicClient, WalletClient, sendTransaction } from "@wagmi/core";
 import { Hex, concat, toHex } from "viem";
 
 async function doDispatch(publicClient: PublicClient, walletClient: WalletClient, data: Hex | Uint8Array) {
@@ -14,11 +14,12 @@ async function doDispatch(publicClient: PublicClient, walletClient: WalletClient
   };
 
   await publicClient.call(tx);
-  const hash = await walletClient.sendTransaction(tx);
+  const { hash } = await sendTransaction(tx);
   return publicClient.waitForTransactionReceipt({ hash });
 }
 
 export function dispatch(publicClient: PublicClient, metadata: Metadata) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return async (walletClient: WalletClient, palletName: string, callName: string, argsEncoded: boolean, args?: any) => {
     let callData: Uint8Array | Hex;
     if (argsEncoded) {

@@ -29,14 +29,14 @@ export interface StakingRecord {
   rewards: RewardNode;
 }
 
-export interface StakingAsset {
+export interface StakingAmount {
   ring: BigNumber;
   kton: BigNumber;
 }
 
 export interface DarwiniaStakingLedger {
-  stakedRing: BigNumber;
-  stakedKton: BigNumber;
+  stakedRing: string;
+  stakedKton: string;
   stakedDeposits?: number[];
   unstakingDeposits?: [number, number][];
   unstakingRing?: [number, number][];
@@ -60,9 +60,9 @@ export interface Bond {
   isDeposit?: boolean;
   isRingBonding?: boolean;
   isKtonBonding?: boolean;
-  unbondingRing?: UnbondingAsset[];
-  unbondingKton?: UnbondingAsset[];
-  unbondingDeposits?: UnbondingAsset[];
+  unbondingRing?: UnbondingInfo[];
+  unbondingKton?: UnbondingInfo[];
+  unbondingDeposits?: UnbondingInfo[];
 }
 
 export interface Delegate {
@@ -91,7 +91,7 @@ export interface StakeAndNominateParams {
   provider: Provider | undefined;
 }
 
-export interface UnbondingAsset {
+export interface UnbondingInfo {
   depositId?: number;
   amount: BigNumber;
   expiredAtBlock: number;
@@ -102,9 +102,9 @@ export interface UnbondingAsset {
 export interface AssetDetail {
   bonded: BigNumber;
   totalOfDepositsInStaking?: BigNumber;
-  unbondingRing?: UnbondingAsset[];
-  unbondingKton?: UnbondingAsset[];
-  unbondingDeposits?: UnbondingAsset[];
+  unbondingRing?: UnbondingInfo[];
+  unbondingKton?: UnbondingInfo[];
+  unbondingDeposits?: UnbondingInfo[];
 }
 
 export interface AssetDistribution {

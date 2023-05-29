@@ -1,164 +1,171 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { ApiPromise } from "@polkadot/api";
-import { Collator } from "../types";
+import { UnSubscription, Collator } from "../types";
 import { BigNumber } from "ethers";
 import { Option, StorageKey } from "@polkadot/types";
 import type { AnyTuple, Codec } from "@polkadot/types/types";
 import { useAccountName } from "././accountName";
-import { useBlock } from "./block";
 import { BN_ZERO } from "../config";
 
-type UnSubscription = () => void;
+export const useCollators = (polkadotApi: ApiPromise | undefined) => {
+  const { getPrettyName } = useAccountName(polkadotApi);
 
-export const useCollators = (apiPromise: ApiPromise | undefined) => {
   const [collators, setCollators] = useState<Collator[]>([]);
-  const { currentBlock } = useBlock(apiPromise);
-  const { getPrettyName } = useAccountName(apiPromise);
-  /*allCollatorsStakedPowersMap contains all the collators with their total powers*/
-  const allCollatorsStakedPowersMap = useRef<Map<string, BigNumber>>(new Map<string, BigNumber>());
-  const allCollatorsNominatorsMap = useRef<Map<string, string[]>>(new Map<string, string[]>());
-  /*Calculate collators' last session blocks */
-  const allCollatorsLastSessionBlocksMap = useRef<Map<string, number>>(new Map<string, number>());
-  const activeCollatorsAddresses = useRef<string[]>([]);
+  const [activeCollators, setActiveCollators] = useState<string[]>([]); // addresses
+  const [collatorsStakedPower, setCollatorsStakedPower] = useState<{ [address: string]: BigNumber }>({}); // { address: power }
+  const [collatorsNominators, setCollatorsNominators] = useState<{ [address: string]: string[] }>({}); // { collator: nominators }
+  const [collatorsLastSessionBlocks, setCollatorsLastSessionBlocks] = useState<{ [address: string]: number }>({}); // { collator: blockNumber }
 
+  // subscribe to update activeCollators
   useEffect(() => {
-    let exposureUnsubscription: UnSubscription | undefined;
-    let collatorsUnsubscription: UnSubscription | undefined;
-    let rewardsUnsubscription: UnSubscription | undefined;
-    let allCollatorUnsubscription: UnSubscription | undefined;
-    let nominatorsUnsubscription: UnSubscription | undefined;
+    let unsubscription: UnSubscription = () => undefined;
 
-    const listenToCollators = async () => {
-      if (!apiPromise) {
-        return;
-      }
+    if (polkadotApi) {
+      polkadotApi.query.session
+        .validators((addresses: Codec) => {
+          // these are the collators that are active in this session
+          setActiveCollators(addresses.toJSON() as string[]);
+        })
+        .then((unsub) => (unsubscription = unsub as unknown as UnSubscription))
+        .catch(console.error);
+    }
 
-      const updateCollators = async () => {
-        if (allCollatorUnsubscription) {
-          allCollatorUnsubscription();
-        }
+    return () => {
+      unsubscription();
+    };
+  }, [polkadotApi]);
 
-        /* apiPromise.query.darwiniaStaking.collators and apiPromise.query.darwiniaStaking.exposures.entries return almost the same
-         * kind of data (both active and waiting collators), the ONLY difference is that staking.collators contains commission percentage which staking.exposures.entries
-         * doesn't. Here we have to call staking.collators since we need commission percentage */
-        allCollatorUnsubscription = (await apiPromise.query.darwiniaStaking.collators.entries(
-          async (allCollatorEntries: [StorageKey<AnyTuple>, Codec][]) => {
-            const allCollators = [];
-            for (let i = 0; i < allCollatorEntries.length; i++) {
-              const [key, result] = allCollatorEntries[i];
-              const accountAddress = key.args.map((item) => item.toHuman())[0] as unknown as string;
-              const commission = `${result.toHuman()}`;
-              const totalStaked = allCollatorsStakedPowersMap.current.get(accountAddress) ?? BN_ZERO;
-              const blocksLastSession = allCollatorsLastSessionBlocksMap.current.get(accountAddress) ?? 0;
-              const nominators = allCollatorsNominatorsMap.current.get(accountAddress) ?? [];
+  // subscribe to update collatorsStakedPower
+  useEffect(() => {
+    let unsubscription: UnSubscription = () => undefined;
 
-              const prettyName = await getPrettyName(accountAddress);
-
-              const collator: Collator = {
-                id: accountAddress,
-                accountAddress: accountAddress,
-                isActive: activeCollatorsAddresses.current.includes(accountAddress),
-                lastSessionBlocks: blocksLastSession,
-                commission: commission,
-                totalStaked: totalStaked,
-                accountName: prettyName,
-                nominators: nominators,
-              };
-              allCollators.push(collator);
-            }
-
-            setCollators(allCollators);
-          }
-        )) as unknown as UnSubscription;
-      };
-
-      nominatorsUnsubscription = (await apiPromise.query.darwiniaStaking.nominators.entries(
-        (nominatorsEntries: [StorageKey<AnyTuple>, Option<Codec>][]) => {
-          allCollatorsNominatorsMap.current.clear();
-          nominatorsEntries.forEach(([key, result]) => {
-            const nominator = key.args.map((item) => item.toHuman())[0] as unknown as string;
-            if (result.isSome) {
-              const collator = result.unwrap().toHuman() as unknown as string;
-              const previousNominators = allCollatorsNominatorsMap.current.get(collator) ?? [];
-              allCollatorsNominatorsMap.current.set(collator, [...new Set([...previousNominators, nominator])]);
-            }
-          });
-
-          updateCollators();
-        }
-      )) as unknown as UnSubscription;
-
-      /* apiPromise.query.darwiniaStaking.collators and apiPromise.query.darwiniaStaking.exposures.entries return almost the same
+    if (polkadotApi) {
+      /* polkadotApi.query.darwiniaStaking.collators and polkadotApi.query.darwiniaStaking.exposures.entries return almost the same
        * kind of data (both active and waiting collators), but staking.exposures.entries has some other properties
        * that staking.collators doesn't have */
-      exposureUnsubscription = (await apiPromise.query.darwiniaStaking.exposures.entries(
-        (exposureEntries: [StorageKey<AnyTuple>, Codec][]) => {
-          allCollatorsStakedPowersMap.current.clear();
+      polkadotApi.query.darwiniaStaking.exposures
+        .entries((entries: [StorageKey<AnyTuple>, Codec][]) => {
           /*Get all the collators and the total powers staked to them */
-          exposureEntries.forEach(([key, result]) => {
-            const accountAddress = key.args.map((item) => item.toHuman())[0] as unknown as string;
-            const exposureObj = result.toHuman() as unknown as {
-              total: string;
-            };
-            allCollatorsStakedPowersMap.current.set(
-              accountAddress,
-              BigNumber.from(exposureObj.total.toString().replaceAll(",", ""))
-            );
-          });
+          setCollatorsStakedPower(
+            entries.reduce((acc, cur) => {
+              const [key, result] = cur;
+              const collator = key.args[0].toHuman() as string;
+              const exposure = result.toJSON() as {
+                total: number;
+              };
+              return { ...acc, [collator]: BigNumber.from(exposure.total) };
+            }, {})
+          );
+        })
+        .then((unsub) => (unsubscription = unsub as unknown as UnSubscription))
+        .catch(console.error);
+    }
 
-          updateCollators();
-        }
-      )) as unknown as UnSubscription;
-
-      collatorsUnsubscription = (await apiPromise.query.session.validators((activeCollatorsAddressesEncoded: Codec) => {
-        /*These are the collators that are active in this session */
-        activeCollatorsAddresses.current = activeCollatorsAddressesEncoded.toHuman() as unknown as string[];
-
-        updateCollators();
-      })) as unknown as UnSubscription;
-
-      rewardsUnsubscription = (await apiPromise.query.darwiniaStaking.rewardPoints((rewardPointsEncoded: Codec) => {
-        const rewardPoints = rewardPointsEncoded.toHuman() as unknown as [string, { [key: string]: string }];
-        if (rewardPoints.length >= 2) {
-          const collatorsPoints = rewardPoints[1];
-          allCollatorsLastSessionBlocksMap.current.clear();
-          Object.keys(collatorsPoints).forEach((key) => {
-            const singleCollatorPoints = Number(collatorsPoints[key].toString().replaceAll(",", ""));
-            /*This staticNumber = 20 was given by the backend */
-            const staticNumber = 20;
-            const blocksNumber = singleCollatorPoints / staticNumber;
-            allCollatorsLastSessionBlocksMap.current.set(key, blocksNumber);
-          });
-
-          updateCollators();
-        }
-      })) as unknown as UnSubscription;
-    };
-
-    listenToCollators().catch((e) => {
-      // console.log(e);
-      //ignore
-    });
     return () => {
-      if (exposureUnsubscription) {
-        exposureUnsubscription();
-      }
-      if (collatorsUnsubscription) {
-        collatorsUnsubscription();
-      }
-      if (rewardsUnsubscription) {
-        rewardsUnsubscription();
-      }
-      if (allCollatorUnsubscription) {
-        allCollatorUnsubscription();
-      }
-      if (nominatorsUnsubscription) {
-        nominatorsUnsubscription();
-      }
+      unsubscription();
     };
-  }, [apiPromise, currentBlock?.number, getPrettyName]);
+  }, [polkadotApi]);
 
-  return {
-    collators,
-  };
+  // subscribe to update collatorsNominators
+  useEffect(() => {
+    let unsubscription: UnSubscription = () => undefined;
+
+    if (polkadotApi) {
+      polkadotApi.query.darwiniaStaking.nominators
+        .entries((entries: [StorageKey<AnyTuple>, Option<Codec>][]) => {
+          setCollatorsNominators(
+            entries.reduce((acc, cur) => {
+              const [key, result] = cur;
+              const nominator = key.args[0].toHuman() as string;
+              if (result.isSome) {
+                const collator = result.unwrap().toHuman() as string;
+                return { ...acc, [collator]: [...new Set([...(acc[collator] || []), nominator])] };
+              }
+              return acc;
+            }, {} as { [address: string]: string[] })
+          );
+        })
+        .then((unsub) => (unsubscription = unsub as unknown as UnSubscription))
+        .catch(console.error);
+    }
+
+    return () => {
+      unsubscription();
+    };
+  }, [polkadotApi]);
+
+  // subscribe to update collatorsLastSessionBlocks
+  useEffect(() => {
+    let unsubscription: UnSubscription = () => undefined;
+
+    if (polkadotApi) {
+      polkadotApi.query.darwiniaStaking
+        .rewardPoints((points: Codec) => {
+          const rewardPoints = points.toJSON() as [number, { [address: string]: number }]; // [totalPoint, { collator: collatorPoint }]
+          if (rewardPoints.length >= 2) {
+            const collatorsPoints = rewardPoints[1];
+            setCollatorsLastSessionBlocks(
+              Object.keys(collatorsPoints).reduce((acc, cur) => {
+                const collatorPoints = collatorsPoints[cur];
+                const staticNumber = 20; // this staticNumber = 20 was given by the backend
+                const blocksNumber = collatorPoints / staticNumber;
+                return { ...acc, [cur]: blocksNumber };
+              }, {})
+            );
+          }
+        })
+        .then((unsub) => (unsubscription = unsub as unknown as UnSubscription))
+        .catch(console.error);
+    }
+
+    return () => {
+      unsubscription();
+    };
+  }, [polkadotApi]);
+
+  // subscribe to update collators
+  useEffect(() => {
+    let unsubscription: UnSubscription = () => undefined;
+
+    if (polkadotApi) {
+      /* polkadotApi.query.darwiniaStaking.collators and polkadotApi.query.darwiniaStaking.exposures.entries return almost the same
+       * kind of data (both active and waiting collators), the ONLY difference is that staking.collators contains commission percentage which staking.exposures.entries
+       * doesn't. Here we have to call staking.collators since we need commission percentage */
+      polkadotApi.query.darwiniaStaking.collators
+        .entries(async (entries: [StorageKey<AnyTuple>, Codec][]) => {
+          const allCollators = [];
+          for (const entry of entries) {
+            const [key, result] = entry;
+            const accountAddress = key.args[0].toHuman() as string;
+            allCollators.push({
+              id: accountAddress,
+              accountAddress: accountAddress,
+              isActive: activeCollators.includes(accountAddress),
+              lastSessionBlocks: collatorsLastSessionBlocks[accountAddress] ?? 0,
+              commission: `${result.toHuman()}`,
+              totalStaked: collatorsStakedPower[accountAddress] ?? BN_ZERO,
+              accountName: await getPrettyName(accountAddress),
+              nominators: collatorsNominators[accountAddress] ?? [],
+            });
+          }
+
+          setCollators(allCollators);
+        })
+        .then((unsub) => (unsubscription = unsub as unknown as UnSubscription))
+        .catch(console.error);
+    }
+
+    return () => {
+      unsubscription();
+    };
+  }, [
+    polkadotApi,
+    activeCollators,
+    collatorsLastSessionBlocks,
+    collatorsNominators,
+    collatorsStakedPower,
+    getPrettyName,
+  ]);
+
+  return { collators };
 };

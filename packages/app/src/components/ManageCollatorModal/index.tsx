@@ -2,12 +2,13 @@ import { ChangeEvent, forwardRef, useImperativeHandle, useMemo, useRef, useState
 import { Button, Input, ModalEnhanced, notification, Tab, Tabs, Tooltip } from "@darwinia/ui";
 import { localeKeys, useAppTranslation } from "../../locale";
 import { Collator, MetaMaskError } from "../../types";
-import { getChainConfig, isEthersApi, isValidNumber, processTransactionError } from "../../utils";
+import { getChainConfig, isEthersApi, isValidNumber, isWalletClient, processTransactionError } from "../../utils";
 import helpIcon from "../../assets/images/help.svg";
 import { useStaking, useWallet } from "../../hooks";
-import { BigNumber as EthersBigNumber } from "@ethersproject/bignumber/lib/bignumber";
+import { BigNumber } from "@ethersproject/bignumber/lib/bignumber";
 import { TransactionResponse } from "@ethersproject/providers";
 import { Contract } from "ethers";
+import { waitForTransaction, writeContract } from "@wagmi/core";
 
 export interface ManageCollatorRefs {
   show: () => void;
@@ -94,15 +95,6 @@ export const ManageCollatorModal = forwardRef<ManageCollatorRefs>((_, ref) => {
   };
 
   const onSetCommission = async () => {
-    if (!chainConfig || !isEthersApi(signerApi)) {
-      return;
-    }
-    const stakingContract = new Contract(
-      chainConfig.contractAddresses.staking,
-      chainConfig.contractInterface.staking,
-      signerApi.getSigner()
-    );
-
     const isValidCommission = isValidNumber(commission);
     if (!isValidCommission) {
       notification.error({
@@ -121,32 +113,72 @@ export const ManageCollatorModal = forwardRef<ManageCollatorRefs>((_, ref) => {
       return;
     }
 
-    try {
+    if (chainConfig && isEthersApi(signerApi)) {
+      const stakingContract = new Contract(
+        chainConfig.contractAddresses.staking,
+        chainConfig.contractInterface.staking,
+        signerApi.getSigner()
+      );
+
+      try {
+        setLoading(true);
+        const response = (await stakingContract?.collect(BigNumber.from(commission.toString()))) as TransactionResponse;
+        await response.wait(1);
+        setLoading(false);
+        setCommission("");
+        notification.success({
+          message: <div>{t(localeKeys.operationSuccessful)}</div>,
+        });
+      } catch (e) {
+        const error = processTransactionError(e as MetaMaskError);
+        setLoading(false);
+        notification.error({
+          message: <div>{error.message}</div>,
+        });
+        console.log(e);
+      }
+    } else if (chainConfig && isWalletClient(signerApi)) {
       setLoading(true);
-      const response = (await stakingContract?.collect(
-        EthersBigNumber.from(commission.toString())
-      )) as TransactionResponse;
-      await response.wait(1);
-      setLoading(false);
-      setCommission("");
-      notification.success({
-        message: <div>{t(localeKeys.operationSuccessful)}</div>,
-      });
-    } catch (e) {
-      const error = processTransactionError(e as MetaMaskError);
-      setLoading(false);
-      notification.error({
-        message: <div>{error.message}</div>,
-      });
-      console.log(e);
+
+      try {
+        try {
+          const { hash } = await writeContract({
+            address: chainConfig.contractAddresses.staking,
+            abi: chainConfig.contractInterface.staking,
+            functionName: "collect",
+            args: [BigNumber.from(commission).toBigInt()],
+          });
+
+          const receipt = await waitForTransaction({ hash });
+          if (receipt.status === "success") {
+            setLoading(false);
+            setCommission("");
+            notification.success({
+              message: <div>{t(localeKeys.operationSuccessful)}</div>,
+            });
+          } else {
+            setLoading(false);
+            notification.error({
+              message: <div>{receipt.status}</div>,
+            });
+          }
+        } catch (e) {
+          console.error(e);
+          setLoading(false);
+          notification.error({
+            message: <div>{(e as Error).message}</div>,
+          });
+        }
+      } catch (e) {
+        console.error(e);
+        notification.error({
+          message: <div>{(e as Error).message}</div>,
+        });
+      }
     }
   };
 
   const onSetSessionKey = async () => {
-    if (!isEthersApi(signerApi)) {
-      return;
-    }
-
     try {
       if (sessionKey.trim().length === 0) {
         setSessionKeyHasError(true);
@@ -156,7 +188,7 @@ export const ManageCollatorModal = forwardRef<ManageCollatorRefs>((_, ref) => {
         return;
       }
       setLoading(true);
-      const isSuccessful = await setCollatorSessionKey(sessionKey, signerApi);
+      const isSuccessful = await setCollatorSessionKey(sessionKey);
       setLoading(false);
       if (isSuccessful) {
         setSessionKey("");
@@ -166,7 +198,6 @@ export const ManageCollatorModal = forwardRef<ManageCollatorRefs>((_, ref) => {
         return;
       }
 
-      console.log("up======");
       notification.error({
         message: <div>{t(localeKeys.sessionSettingUnsuccessful)}</div>,
       });
@@ -179,30 +210,59 @@ export const ManageCollatorModal = forwardRef<ManageCollatorRefs>((_, ref) => {
   };
 
   const onStopCollating = async () => {
-    if (!chainConfig || !isEthersApi(signerApi)) {
-      return;
-    }
-    const stakingContract = new Contract(
-      chainConfig.contractAddresses.staking,
-      chainConfig.contractInterface.staking,
-      signerApi.getSigner()
-    );
+    if (chainConfig && isEthersApi(signerApi)) {
+      const stakingContract = new Contract(
+        chainConfig.contractAddresses.staking,
+        chainConfig.contractInterface.staking,
+        signerApi.getSigner()
+      );
 
-    try {
+      try {
+        setLoading(true);
+        const response = (await stakingContract?.chill()) as TransactionResponse;
+        await response.wait(1);
+        setLoading(false);
+        onClose();
+        notification.success({
+          message: <div>{t(localeKeys.operationSuccessful)}</div>,
+        });
+      } catch (e) {
+        const error = processTransactionError(e as MetaMaskError);
+        setLoading(false);
+        notification.error({
+          message: <div>{error.message}</div>,
+        });
+      }
+    } else if (chainConfig && isWalletClient(signerApi)) {
       setLoading(true);
-      const response = (await stakingContract?.chill()) as TransactionResponse;
-      await response.wait(1);
-      setLoading(false);
-      onClose();
-      notification.success({
-        message: <div>{t(localeKeys.operationSuccessful)}</div>,
-      });
-    } catch (e) {
-      const error = processTransactionError(e as MetaMaskError);
-      setLoading(false);
-      notification.error({
-        message: <div>{error.message}</div>,
-      });
+
+      try {
+        const { hash } = await writeContract({
+          address: chainConfig.contractAddresses.staking,
+          abi: chainConfig.contractInterface.staking,
+          functionName: "chill",
+        });
+
+        const receipt = await waitForTransaction({ hash });
+        if (receipt.status === "success") {
+          setLoading(false);
+          onClose();
+          notification.success({
+            message: <div>{t(localeKeys.operationSuccessful)}</div>,
+          });
+        } else {
+          setLoading(false);
+          notification.error({
+            message: <div>{receipt.status}</div>,
+          });
+        }
+      } catch (e) {
+        console.error(e);
+        setLoading(false);
+        notification.error({
+          message: <div>{(e as Error).message}</div>,
+        });
+      }
     }
   };
 

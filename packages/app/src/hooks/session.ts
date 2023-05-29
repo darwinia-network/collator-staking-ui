@@ -5,8 +5,5 @@ export const useSession = () => {
   const [sessionDuration] = useState<number>(24 * 60 * 60);
   const [unbondingDuration] = useState<number>(14 * 24 * 60 * 60);
 
-  return {
-    sessionDuration,
-    unbondingDuration,
-  };
+  return { sessionDuration, unbondingDuration };
 };

@@ -35,7 +35,7 @@ export const StakingOverview = () => {
     sessionDuration,
     unbondingDuration,
     stakedAssetDistribution,
-    currentlyNominatedCollator,
+    currentNominatedCollator,
     calculateExtraPower,
   } = useStaking();
   const selectCollatorModalRef = useRef<SelectCollatorRefs>(null);
@@ -124,7 +124,7 @@ export const StakingOverview = () => {
   }, [deposits, stakedDepositsIds]);
 
   useEffect(() => {
-    if (typeof stakedAssetDistribution === "undefined" || typeof currentlyNominatedCollator === "undefined") {
+    if (typeof stakedAssetDistribution === "undefined" || typeof currentNominatedCollator === "undefined") {
       return;
     }
     const hasSomeStakingAmount =
@@ -135,12 +135,12 @@ export const StakingOverview = () => {
       stakedAssetDistribution.kton.bonded.gt(0) ||
       (stakedAssetDistribution.kton.unbondingKton || []).length > 0;
 
-    if (hasSomeStakingAmount || currentlyNominatedCollator) {
+    if (hasSomeStakingAmount || currentNominatedCollator) {
       setAccountIsStakingAlready(true);
     } else {
       setAccountIsStakingAlready(false);
     }
-  }, [stakedAssetDistribution, currentlyNominatedCollator]);
+  }, [stakedAssetDistribution, currentNominatedCollator]);
 
   const depositRenderer = (option: Deposit) => {
     return (
@@ -171,10 +171,6 @@ export const StakingOverview = () => {
   };
 
   const onStartStaking = async () => {
-    if (!isEthersApi(signerApi)) {
-      return;
-    }
-
     if (ringToStake.length > 0) {
       //user typed some ring value, validate it
       const isValidAmount = isValidNumber(ringToStake);
@@ -239,9 +235,6 @@ export const StakingOverview = () => {
       return;
     }
 
-    const ringEthersBigNumber = ringToStake.trim().length > 0 ? parseBalance(ringToStake.trim()) : BN_ZERO;
-    const ktonEthersBigNumber = ktonToStake.trim().length > 0 ? parseBalance(ktonToStake.trim()) : BN_ZERO;
-
     try {
       if (!selectedCollator?.accountAddress) {
         notification.error({
@@ -250,13 +243,12 @@ export const StakingOverview = () => {
         return;
       }
       const depositsIds = depositsToStake.map((item) => BigNumber.from(item.id));
-      const isSuccessful = await stakeAndNominate({
-        ringAmount: ringEthersBigNumber,
-        ktonAmount: ktonEthersBigNumber,
-        provider: signerApi,
-        collatorAddress: selectedCollator?.accountAddress,
-        depositIds: depositsIds,
-      });
+      const isSuccessful = await stakeAndNominate(
+        selectedCollator.accountAddress,
+        ringBigNumber,
+        ktonBigNumber,
+        depositsIds
+      );
 
       if (!isSuccessful) {
         notification.error({
