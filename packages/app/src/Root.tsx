@@ -1,133 +1,65 @@
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { useCallback, useEffect, useState } from "react";
-import { Button, notification, enhancedNotification, Spinner } from "@darwinia/ui";
-import { useWallet } from "@darwinia/app-providers";
-import Header from "./components/Header";
-import Footer from "./components/Footer";
-import { getStore, setStore } from "@darwinia/app-utils";
-import { localeKeys, useAppTranslation } from "@darwinia/app-locale";
+import App from "./App";
+import { WalletProvider, StakingProvider, GraphQLProvider } from "./providers";
+import { getChainsConfig } from "./utils";
+import { i18nTranslationInit } from "./locale";
+import "intro.js/introjs.css";
 
-const Root = () => {
-  const {
-    isRequestingWalletConnection,
-    error,
-    connectWallet,
-    isWalletConnected,
-    selectedNetwork,
-    isLoadingTransaction,
-    selectedWalletConfig,
-  } = useWallet();
-  const [loading, setLoading] = useState<boolean | undefined>(false);
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { t } = useAppTranslation();
+import { EthereumClient, w3mConnectors, w3mProvider } from "@web3modal/ethereum";
+import { Web3Modal } from "@web3modal/react";
+import { configureChains, createConfig, WagmiConfig } from "wagmi";
+import type { Chain } from "wagmi";
 
-  useEffect(() => {
-    setLoading(isRequestingWalletConnection || isLoadingTransaction);
-  }, [isRequestingWalletConnection, isWalletConnected, isLoadingTransaction]);
+const chains = getChainsConfig().map(({ chainId, name, displayName, ring, rpc, explorer }) => ({
+  id: chainId,
+  name: displayName,
+  network: name.toLowerCase().split(" ").join("-"),
+  nativeCurrency: {
+    name: ring.name,
+    symbol: ring.symbol,
+    decimals: ring.decimals,
+  },
+  rpcUrls: {
+    default: {
+      http: rpc.startsWith("http") ? [rpc] : [],
+      webSocket: rpc.startsWith("ws") ? [rpc] : [],
+    },
+    public: {
+      http: rpc.startsWith("http") ? [rpc] : [],
+      webSocket: rpc.startsWith("ws") ? [rpc] : [],
+    },
+  },
+  blockExplorers: {
+    default: {
+      url: explorer.url,
+      name: explorer.name,
+    },
+  },
+})) as Chain[];
+const projectId = "12c48c2a9521b1447d902c9e06ddfe79";
 
-  const redirect = useCallback(() => {
-    setStore("isConnectedToWallet", true);
-    if (location.pathname === "/") {
-      navigate(`/staking${location.search}`, { replace: true });
-      return;
-    }
+const { publicClient } = configureChains(chains, [w3mProvider({ projectId })]);
+const wagmiConfig = createConfig({
+  autoConnect: true,
+  connectors: w3mConnectors({ projectId, version: 1, chains }),
+  publicClient,
+});
+const ethereumClient = new EthereumClient(wagmiConfig, chains);
 
-    /* only navigate if the user is supposed to be redirected to another URL */
-    if (location.state && location.state.from) {
-      const nextPath = location.state.from.pathname ? location.state.from.pathname : "/staking";
-      navigate(`${nextPath}${location.search}`, { replace: true });
-    }
-  }, [location, navigate]);
+i18nTranslationInit();
 
-  /*Monitor wallet connection and redirect to the required location */
-  useEffect(() => {
-    if (isWalletConnected) {
-      redirect();
-    }
-  }, [isWalletConnected]);
-
-  useEffect(() => {
-    if (error) {
-      switch (error.code) {
-        case 0: {
-          /*The user has not installed the wallet*/
-          notification.error({
-            message: (
-              <div
-                dangerouslySetInnerHTML={{
-                  __html: t(localeKeys.installWalletReminder, {
-                    walletName: selectedWalletConfig?.name,
-                    downloadURL: selectedWalletConfig?.extensions[0].downloadURL,
-                  }),
-                }}
-              />
-            ),
-            duration: 10000,
-          });
-          break;
-        }
-        case 1: {
-          /*The user rejected adding the network configurations*/
-          const myNotification = enhancedNotification.success({
-            message: (
-              <div className={"flex flex-col gap-[5px]"}>
-                <div>{t(localeKeys.chainAdditionRejected)}</div>
-                <Button
-                  onClick={() => {
-                    myNotification.close();
-                    connectWallet();
-                  }}
-                >
-                  {t(localeKeys.switchToNetwork, { network: selectedNetwork?.displayName })}
-                </Button>
-              </div>
-            ),
-            duration: 15000,
-          });
-          break;
-        }
-        case 4: {
-          /*Configurations were added but the user rejected the account access permission*/
-          notification.error({
-            message: <div>{t(localeKeys.accountPermissionRejected)}</div>,
-          });
-          break;
-        }
-        default: {
-          notification.error({
-            message: <div>{error.message}</div>,
-          });
-        }
-      }
-    }
-  }, [error]);
-
-  //check if it should auto connect to wallet or wait for the user to click the connect wallet button
-  useEffect(() => {
-    const shouldAutoConnect = getStore<boolean>("isConnectedToWallet");
-    if (shouldAutoConnect) {
-      connectWallet();
-    }
-  }, [selectedNetwork]);
-
+export default function Root() {
   return (
-    <Spinner isLoading={!!loading} maskClassName={"!fixed !z-[99]"}>
-      <div className={"w-full"}>
-        <Header />
-        <div className={"flex flex-col min-h-screen justify-center flex-1 pt-[80px] lg:pt-[90px]"}>
-          {/*apply padding*/}
-          <div className={"flex flex-1 flex-col wrapper-padding items-center"}>
-            {/*apply max-width*/}
-            <div className={"flex flex-col flex-1 app-container w-full"}>
-              <Outlet />
-            </div>
-          </div>
-          <Footer />
-        </div>
-      </div>
-    </Spinner>
+    <>
+      <WagmiConfig config={wagmiConfig}>
+        <WalletProvider>
+          <GraphQLProvider>
+            <StakingProvider>
+              <App />
+            </StakingProvider>
+          </GraphQLProvider>
+        </WalletProvider>
+      </WagmiConfig>
+      <Web3Modal projectId={projectId} ethereumClient={ethereumClient} />
+    </>
   );
-};
-
-export default Root;
+}

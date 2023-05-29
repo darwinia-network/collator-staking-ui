@@ -1,22 +1,24 @@
-import Root from "./Root";
-import { WalletProvider, StorageProvider, GraphQLProvider, DispatchProvider } from "@darwinia/app-providers";
-import { i18nTranslationInit } from "@darwinia/app-locale";
-import "intro.js/introjs.css";
+import { Outlet } from "react-router-dom";
+import { Spinner } from "@darwinia/ui";
+import { Header } from "./components/Header";
+import { Footer } from "./components/Footer";
 
-i18nTranslationInit();
-
-const App = () => {
+export default function App() {
   return (
-    <WalletProvider>
-      <GraphQLProvider>
-        <StorageProvider>
-          <DispatchProvider>
-            <Root />
-          </DispatchProvider>
-        </StorageProvider>
-      </GraphQLProvider>
-    </WalletProvider>
+    <Spinner isLoading={false} maskClassName={"!fixed !z-[99]"}>
+      <div className={"w-full"}>
+        <Header />
+        <div className={"flex flex-col min-h-screen justify-center flex-1 pt-[80px] lg:pt-[90px]"}>
+          {/*apply padding*/}
+          <div className={"flex flex-1 flex-col wrapper-padding items-center"}>
+            {/*apply max-width*/}
+            <div className={"flex flex-col flex-1 app-container w-full"}>
+              <Outlet />
+            </div>
+          </div>
+          <Footer />
+        </div>
+      </div>
+    </Spinner>
   );
-};
-
-export default App;
+}

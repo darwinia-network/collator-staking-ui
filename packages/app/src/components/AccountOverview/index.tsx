@@ -1,28 +1,35 @@
 import powerIcon from "../../assets/images/power.svg";
-import { localeKeys, useAppTranslation } from "@darwinia/app-locale";
-import BigNumber from "bignumber.js";
+import { localeKeys, useAppTranslation } from "../../locale";
 import ringIcon from "../../assets/images/ring.svg";
 import ktonIcon from "../../assets/images/kton.svg";
 import crabIcon from "../../assets/images/crab.svg";
 import cktonIcon from "../../assets/images/ckton.svg";
-import { useStorage, useWallet } from "@darwinia/app-providers";
-import { StakingRecord } from "@darwinia/app-types";
-import { prettifyNumber, prettifyTooltipNumber, toTimeAgo } from "@darwinia/app-utils";
+import { useStaking, useWallet } from "../../hooks";
+import { ChainID, StakingRecord } from "../../types";
+import { getChainConfig, prettifyNumber, toTimeAgo } from "../../utils";
 import { useQuery } from "@apollo/client";
-import { GET_LATEST_STAKING_REWARDS } from "@darwinia/app-config";
+import { BN_ZERO, GET_LATEST_STAKING_REWARDS } from "../../config";
 import { Spinner, Tooltip } from "@darwinia/ui";
 import { ethers } from "ethers";
-import helpIcon from "../../assets/images/help.svg";
+import { formatBalance } from "../../utils";
+import { useMemo } from "react";
 
 interface StakingStashQuery {
   accountAddress: string;
   itemsCount: number;
 }
 
-const AccountOverview = () => {
+export const AccountOverview = () => {
   const { t } = useAppTranslation();
-  const { selectedNetwork, selectedAccount } = useWallet();
-  const { power, stakedAssetDistribution, isLoadingLedger } = useStorage();
+  const { currentChain, activeAccount } = useWallet();
+  const { power, stakedAssetDistribution, isLedgerLoading } = useStaking();
+
+  const chainConfig = useMemo(() => {
+    if (currentChain) {
+      return getChainConfig(currentChain) || null;
+    }
+    return null;
+  }, [currentChain]);
 
   const {
     loading: isLoadingStakingData,
@@ -30,13 +37,13 @@ const AccountOverview = () => {
     error,
   } = useQuery<{ stakingRecord: StakingRecord }, StakingStashQuery>(GET_LATEST_STAKING_REWARDS, {
     variables: {
-      accountAddress: selectedAccount ? ethers.utils.getAddress(selectedAccount) : "",
+      accountAddress: activeAccount ? ethers.utils.getAddress(activeAccount.address) : "",
       itemsCount: 3,
     },
   });
 
-  const ringTokenIcon = selectedNetwork?.name === "Crab" ? crabIcon : ringIcon;
-  const ktonTokenIcon = selectedNetwork?.name === "Crab" ? cktonIcon : ktonIcon;
+  const ringTokenIcon = chainConfig?.chainId === ChainID.CRAB ? crabIcon : ringIcon;
+  const ktonTokenIcon = chainConfig?.chainId === ChainID.CRAB ? cktonIcon : ktonIcon;
 
   return (
     <div className={"flex gap-[20px] lg:gap-0 justify-between flex-col lg:flex-row"}>
@@ -47,13 +54,7 @@ const AccountOverview = () => {
             <img className={"w-[30px] lg:w-[44px]"} src={powerIcon} alt="image" />
             <div className={"text-24-bold text-[30px]"}>{t(localeKeys.power)}</div>
           </div>
-          <div className={"text-24-bold text-[30px]"}>
-            {prettifyNumber({
-              number: power ?? BigNumber(0),
-              shouldFormatToEther: false,
-              precision: 0,
-            })}
-          </div>
+          <div className={"text-24-bold text-[30px]"}>{prettifyNumber(power?.toString() ?? 0)}</div>
         </div>
         <Spinner isLoading={isLoadingStakingData} size={"small"} className={"card"}>
           <div className={"flex gap-[10px] flex-col"}>
@@ -65,12 +66,9 @@ const AccountOverview = () => {
                     return (
                       <div className={"flex justify-between"} key={item.id}>
                         <div>
-                          <Tooltip message={<div>{prettifyTooltipNumber(BigNumber(item.amount))}</div>}>
+                          <Tooltip message={<div>{formatBalance(item.amount, { precision: 8 })}</div>}>
                             <div>
-                              {prettifyNumber({
-                                number: BigNumber(item.amount),
-                              })}{" "}
-                              {selectedNetwork?.ring.symbol}
+                              {formatBalance(item.amount)} {chainConfig?.ring.symbol}
                             </div>
                           </Tooltip>
                         </div>
@@ -87,13 +85,8 @@ const AccountOverview = () => {
         </Spinner>
         <div className={"flex lg:justify-center text-12 gap-[8px]"}>
           <div className={"text-halfWhite"}>{t(localeKeys.seeDetailed)}</div>
-          <a
-            className={"clickable underline"}
-            target="_blank"
-            href={`${selectedNetwork?.explorerURLs[0]}`}
-            rel="noreferrer"
-          >
-            Subscan→
+          <a className={"clickable underline"} target="_blank" href={chainConfig?.explorer.url} rel="noreferrer">
+            {chainConfig?.explorer.name}→
           </a>
         </div>
       </div>
@@ -101,7 +94,7 @@ const AccountOverview = () => {
       <Spinner
         size={"small"}
         className={"card flex flex-col justify-center lg:w-[32.25%] shrink-0"}
-        isLoading={!!isLoadingLedger}
+        isLoading={!!isLedgerLoading}
       >
         <div>
           <div className={"divider border-b pb-[20px] text-18-bold"}>{t(localeKeys.reservedInStaking)}</div>
@@ -110,7 +103,7 @@ const AccountOverview = () => {
             <div className={"divider border-b pb-[20px] gap-[20px] flex flex-col"}>
               <div className={"flex gap-[5px] items-center"}>
                 <img className={"w-[30px]"} src={ringTokenIcon} alt="image" />
-                <div className={"uppercase text-18-bold"}>{selectedNetwork?.ring.symbol ?? "RING"}</div>
+                <div className={"uppercase text-18-bold"}>{chainConfig?.ring.symbol ?? "RING"}</div>
               </div>
               <div className={"flex flex-col gap-[2px]"}>
                 <div className={"flex justify-between"}>
@@ -121,19 +114,20 @@ const AccountOverview = () => {
                     <Tooltip
                       message={
                         <div>
-                          {prettifyTooltipNumber(
-                            (stakedAssetDistribution?.ring.bonded ?? BigNumber(0)).plus(
-                              stakedAssetDistribution?.ring.totalOfDepositsInStaking ?? BigNumber(0)
-                            )
+                          {formatBalance(
+                            (stakedAssetDistribution?.ring.bonded ?? BN_ZERO).add(
+                              stakedAssetDistribution?.ring.totalOfDepositsInStaking ?? BN_ZERO
+                            ),
+                            { precision: 8 }
                           )}
                         </div>
                       }
                     >
-                      {prettifyNumber({
-                        number: (stakedAssetDistribution?.ring.bonded ?? BigNumber(0)).plus(
-                          stakedAssetDistribution?.ring.totalOfDepositsInStaking ?? BigNumber(0)
-                        ),
-                      })}
+                      {formatBalance(
+                        (stakedAssetDistribution?.ring.bonded ?? BN_ZERO).add(
+                          stakedAssetDistribution?.ring.totalOfDepositsInStaking ?? BN_ZERO
+                        )
+                      )}
                     </Tooltip>
                   </div>
                 </div>
@@ -143,18 +137,18 @@ const AccountOverview = () => {
             <div className={"gap-[20px] flex flex-col"}>
               <div className={"flex gap-[5px] items-center"}>
                 <img className={"w-[30px]"} src={ktonTokenIcon} alt="image" />
-                <div className={"uppercase text-18-bold"}>{selectedNetwork?.kton.symbol ?? "KTON"}</div>
+                <div className={"uppercase text-18-bold"}>{chainConfig?.kton.symbol ?? "KTON"}</div>
               </div>
               <div className={"flex flex-col gap-[2px]"}>
                 <div className={"flex justify-between"}>
                   <div>{t(localeKeys.bonded)}</div>
                   <div className={"text-14-bold"}>
                     <Tooltip
-                      message={<div>{prettifyTooltipNumber(stakedAssetDistribution?.kton.bonded ?? BigNumber(0))}</div>}
+                      message={
+                        <div>{formatBalance(stakedAssetDistribution?.kton.bonded ?? BN_ZERO, { precision: 8 })}</div>
+                      }
                     >
-                      {prettifyNumber({
-                        number: stakedAssetDistribution?.kton.bonded ?? BigNumber(0),
-                      })}
+                      {formatBalance(stakedAssetDistribution?.kton.bonded ?? BN_ZERO)}
                     </Tooltip>
                   </div>
                 </div>
@@ -166,5 +160,3 @@ const AccountOverview = () => {
     </div>
   );
 };
-
-export default AccountOverview;

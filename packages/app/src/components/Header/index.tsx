@@ -1,93 +1,51 @@
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import logoIcon from "../../assets/images/logo.png";
 import caretIcon from "../../assets/images/caret-down.svg";
-import { useEffect, useRef, useState } from "react";
+import walletIcon from "../../assets/images/wallet.svg";
+import { useMemo, useRef, useState } from "react";
 import { Button, Popover } from "@darwinia/ui";
-import { useAppTranslation, localeKeys } from "@darwinia/app-locale";
-import { useStorage, useWallet } from "@darwinia/app-providers";
-import { supportedNetworks } from "@darwinia/app-config";
-import { ChainConfig } from "@darwinia/app-types";
-import { toShortAddress } from "@darwinia/app-utils";
+import { useAppTranslation, localeKeys } from "../../locale";
+import { useStaking, useWallet } from "../../hooks";
+import { getChainConfig, getChainsConfig, toShortAddress } from "../../utils";
 import JazzIcon from "../JazzIcon";
-import { ethers } from "ethers";
-import JoinCollatorModal, { JoinCollatorRefs } from "../JoinCollatorModal";
-import ManageCollatorModal, { ManageCollatorRefs } from "../ManageCollatorModal";
+import { utils } from "ethers";
+import { JoinCollatorModal, JoinCollatorRefs } from "../JoinCollatorModal";
+import { ManageCollatorModal, ManageCollatorRefs } from "../ManageCollatorModal";
 
-const Header = () => {
+export const Header = () => {
   const [networkOptionsTrigger, setNetworkOptionsTrigger] = useState<HTMLDivElement | null>(null);
   const { t } = useAppTranslation();
-  const { selectedNetwork, changeSelectedNetwork, selectedAccount, connectWallet, forceSetAccountAddress } =
-    useWallet();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const { currentChain, activeAccount, setCurrentChain, disconnect } = useWallet();
   const location = useLocation();
   const joinCollatorModalRef = useRef<JoinCollatorRefs>(null);
   const [moreOptionsTrigger, setMoreOptionsTrigger] = useState<HTMLDivElement | null>(null);
   const [moreOptionsTriggerMobile, setMoreOptionsTriggerMobile] = useState<HTMLDivElement | null>(null);
   const manageCollatorModalRef = useRef<ManageCollatorRefs>(null);
-  const { collators } = useStorage();
+  const { collators } = useStaking();
 
-  /* set the wallet network accordingly */
-  useEffect(() => {
-    const searchString = window.location.href.split("?")[1];
-    if (searchString) {
-      const searchParams = new URLSearchParams(searchString);
-      const network = searchParams.get("network");
-      const account = searchParams.get("account");
-      if (network) {
-        // the URL contains the network param
-        const foundNetwork = supportedNetworks.find((item) => item.name.toLowerCase() === network.toLowerCase());
-        if (foundNetwork) {
-          changeConnectedNetwork(foundNetwork);
-        }
-      }
-      if (account) {
-        forceSetAccountAddress(account);
-      }
-    } else {
-      /* use Crab network by default */
-      const index = supportedNetworks.findIndex((network) => network.name === "Darwinia");
-      changeConnectedNetwork(supportedNetworks[index]);
+  const chainConfig = useMemo(() => {
+    if (currentChain) {
+      return getChainConfig(currentChain) ?? null;
     }
-  }, []);
-
-  useEffect(() => {
-    if (!selectedNetwork) {
-      return;
-    }
-
-    searchParams.set("network", selectedNetwork.name);
-    setSearchParams(searchParams);
-  }, [selectedNetwork]);
-
-  const changeConnectedNetwork = (network: ChainConfig) => {
-    //close any popover
-    document.body.click();
-    changeSelectedNetwork(network);
-  };
-
-  const onShowJoinCollatorModal = () => {
-    document.body.click();
-    joinCollatorModalRef.current?.show();
-  };
-
-  const onShowManageCollatorModal = () => {
-    document.body.click();
-    manageCollatorModalRef.current?.show();
-  };
+    return null;
+  }, [currentChain]);
 
   const isUserACollator = () => {
-    return collators?.some((collator) => collator.accountAddress.toLowerCase() === selectedAccount?.toLowerCase());
+    return collators?.some(
+      (collator) => collator.accountAddress.toLowerCase() === activeAccount?.address.toLowerCase()
+    );
   };
 
   const accountOptions = () => {
-    const joinCollatorClass = isUserACollator() ? "text-halfWhite cursor-no-drop" : "cursor-pointer  clickable";
-    const manageCollatorClass = isUserACollator() ? "cursor-pointer  clickable" : "text-halfWhite cursor-no-drop";
+    const joinCollatorClass = isUserACollator() ? "text-halfWhite cursor-no-drop" : "cursor-pointer clickable";
+    const manageCollatorClass = isUserACollator() ? "cursor-pointer clickable" : "text-halfWhite cursor-no-drop";
     return (
       <div className={"border bg-black flex flex-col gap-[10px] border-primary p-[20px] select-none"}>
         <div
           onClick={() => {
             if (!isUserACollator()) {
-              onShowJoinCollatorModal();
+              document.body.click();
+              joinCollatorModalRef.current?.show();
             }
           }}
           className={`capitalize ${joinCollatorClass}`}
@@ -97,12 +55,16 @@ const Header = () => {
         <div
           onClick={() => {
             if (isUserACollator()) {
-              onShowManageCollatorModal();
+              document.body.click();
+              manageCollatorModalRef.current?.show();
             }
           }}
           className={`capitalize ${manageCollatorClass}`}
         >
           {t(localeKeys.manageCollator)}
+        </div>
+        <div className="capitalize clickable" onClick={disconnect}>
+          {t("disconnect")}
         </div>
       </div>
     );
@@ -116,18 +78,18 @@ const Header = () => {
             {/*Logo*/}
             {/*Logo will only show on the PC*/}
             <div className={"shrink-0 h-full hidden lg:flex"}>
-              <Link className={"h-full flex"} to={`/staking${location.search}`}>
+              <Link className={"h-full flex"} to={location.pathname}>
                 <img className={"self-center w-[146px]"} src={logoIcon} alt="image" />
               </Link>
             </div>
             {/*This connect wallet button / selected account info will only be shown on mobile phones*/}
             <div className={"shrink-0 h-full flex items-center lg:hidden"}>
-              {selectedAccount ? (
+              {activeAccount ? (
                 <div className={"border-primary border pl-[15px]"}>
                   <div className={"flex items-center gap-[10px]"}>
-                    <JazzIcon size={20} address={ethers.utils.getAddress(selectedAccount)} />
+                    <JazzIcon size={20} address={utils.getAddress(activeAccount.address)} />
                     <div ref={setMoreOptionsTriggerMobile} className={"select-none pr-[15px] py-[7px] flex gap-[10px]"}>
-                      <div>{toShortAddress(ethers.utils.getAddress(selectedAccount))}</div>
+                      <div>{toShortAddress(utils.getAddress(activeAccount.address))}</div>
                       <img className={"w-[16px]"} src={caretIcon} alt="image" />
                     </div>
                     <Popover offset={[0, 5]} triggerElementState={moreOptionsTriggerMobile} triggerEvent={"click"}>
@@ -136,13 +98,7 @@ const Header = () => {
                   </div>
                 </div>
               ) : (
-                <Button
-                  onClick={() => {
-                    connectWallet();
-                  }}
-                  className={"!px-[15px]"}
-                  btnType={"secondary"}
-                >
+                <Button disabled className={"!px-[15px]"} btnType={"secondary"}>
                   {t(localeKeys.connectWallet)}
                 </Button>
               )}
@@ -150,13 +106,12 @@ const Header = () => {
             {/*PC network switch and wallet connection*/}
             <div className={"hidden lg:flex items-center gap-[40px]"}>
               <div className={"pc-network-selector flex items-center  gap-[40px]"}>
-                {supportedNetworks.map((network) => {
-                  const activeNetworkClass =
-                    network.name.toLowerCase() === selectedNetwork?.name.toLowerCase() ? `after:block` : `after:hidden`;
+                {getChainsConfig().map((network) => {
+                  const activeNetworkClass = network.chainId === currentChain ? `after:block` : `after:hidden`;
                   return (
                     <div
                       onClick={() => {
-                        changeConnectedNetwork(network);
+                        setCurrentChain(network.chainId);
                       }}
                       className={`cursor-pointer relative h-[36px] flex items-center after:absolute after:left-0 after:right-0 after:h-[2px] after:bottom-0 after:bg-primary ${activeNetworkClass}`}
                       key={`${network.name}-${network.displayName}`}
@@ -166,15 +121,15 @@ const Header = () => {
                   );
                 })}
               </div>
-              {selectedAccount ? (
+              {activeAccount ? (
                 <div className={"border-primary border pl-[15px]"}>
                   <div className={"flex items-center gap-[10px]"}>
-                    <JazzIcon size={20} address={ethers.utils.getAddress(selectedAccount)} />
+                    <JazzIcon size={20} address={utils.getAddress(activeAccount.address)} />
                     <div
                       ref={setMoreOptionsTrigger}
                       className={"select-none cursor-pointer pr-[15px] py-[5px] flex gap-[10px]"}
                     >
-                      <div>{toShortAddress(ethers.utils.getAddress(selectedAccount))}</div>
+                      <div>{toShortAddress(utils.getAddress(activeAccount.address))}</div>
                       <img className={"w-[16px]"} src={caretIcon} alt="image" />
                     </div>
                     <Popover offset={[0, 5]} triggerElementState={moreOptionsTrigger} triggerEvent={"click"}>
@@ -183,15 +138,7 @@ const Header = () => {
                   </div>
                 </div>
               ) : (
-                <Button
-                  onClick={() => {
-                    connectWallet();
-                  }}
-                  className={"!h-[36px] !px-[15px]"}
-                  btnType={"secondary"}
-                >
-                  {t(localeKeys.connectWallet)}
-                </Button>
+                <img alt="..." width={32} src={walletIcon} />
               )}
             </div>
             {/*network switch toggle*/}
@@ -201,18 +148,18 @@ const Header = () => {
             >
               <div className={"border-primary border px-[15px] py-[7px]"}>
                 <div className={"flex items-center gap-[10px]"}>
-                  <div>{selectedNetwork?.displayName}</div>
+                  <div>{chainConfig?.displayName}</div>
                   <img src={caretIcon} alt="image" />
                 </div>
               </div>
             </div>
             <Popover offset={[-10, -7]} triggerElementState={networkOptionsTrigger} triggerEvent={"click"}>
               <div className={"border border-primary p-[15px] flex flex-col gap-[15px] bg-black"}>
-                {supportedNetworks.map((network) => {
+                {getChainsConfig().map((network) => {
                   return (
                     <div
                       onClick={() => {
-                        changeConnectedNetwork(network);
+                        setCurrentChain(network.chainId);
                       }}
                       key={`${network.name}-${network.displayName}`}
                     >
@@ -230,5 +177,3 @@ const Header = () => {
     </div>
   );
 };
-
-export default Header;

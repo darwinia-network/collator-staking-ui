@@ -1,18 +1,20 @@
-import { ChangeEvent, forwardRef, useImperativeHandle, useState } from "react";
+import { ChangeEvent, forwardRef, useImperativeHandle, useMemo, useState } from "react";
 import { Button, Input, ModalEnhanced, notification, Tooltip } from "@darwinia/ui";
-import { localeKeys, useAppTranslation } from "@darwinia/app-locale";
-import { isValidNumber, processTransactionError } from "@darwinia/app-utils";
+import { localeKeys, useAppTranslation } from "../../locale";
+import { getChainConfig, isEthersApi, isValidNumber, isWalletClient, processTransactionError } from "../../utils";
 import helpIcon from "../../assets/images/help.svg";
-import { useDispatch, useWallet } from "@darwinia/app-providers";
-import { BigNumber as EthersBigNumber } from "@ethersproject/bignumber/lib/bignumber";
+import { useWallet, useStaking } from "../../hooks";
+import { BigNumber } from "@ethersproject/bignumber/lib/bignumber";
 import { TransactionResponse } from "@ethersproject/providers";
-import { MetaMaskError } from "@darwinia/app-types";
+import { MetaMaskError } from "../../types";
+import { Contract } from "ethers";
+import { waitForTransaction, writeContract } from "@wagmi/core";
 
 export interface JoinCollatorRefs {
   show: () => void;
 }
 
-const JoinCollatorModal = forwardRef<JoinCollatorRefs>((props, ref) => {
+export const JoinCollatorModal = forwardRef<JoinCollatorRefs>((_, ref) => {
   const [isVisible, setIsVisible] = useState(false);
   const [commission, setCommission] = useState<string>("");
   const [commissionHasError, setCommissionHasError] = useState<boolean>(false);
@@ -20,8 +22,15 @@ const JoinCollatorModal = forwardRef<JoinCollatorRefs>((props, ref) => {
   const [sessionKeyHasError, setSessionKeyHasError] = useState<boolean>(false);
   const [isLoading, setLoading] = useState<boolean>(false);
   const { t } = useAppTranslation();
-  const { stakingContract, provider } = useWallet();
-  const { setCollatorSessionKey } = useDispatch();
+  const { currentChain, signerApi } = useWallet();
+  const { setCollatorSessionKey } = useStaking();
+
+  const chainConfig = useMemo(() => {
+    if (currentChain) {
+      return getChainConfig(currentChain) ?? null;
+    }
+    return null;
+  }, [currentChain]);
 
   const showModal = () => {
     setSessionKey("");
@@ -55,8 +64,7 @@ const JoinCollatorModal = forwardRef<JoinCollatorRefs>((props, ref) => {
   };
 
   const onSetCommission = async () => {
-    const isValidCommission = isValidNumber(commission);
-    if (!isValidCommission) {
+    if (!isValidNumber(commission)) {
       notification.error({
         message: <div>{t(localeKeys.invalidCommission)}</div>,
       });
@@ -73,24 +81,61 @@ const JoinCollatorModal = forwardRef<JoinCollatorRefs>((props, ref) => {
       return;
     }
 
-    try {
+    if (chainConfig && isEthersApi(signerApi)) {
+      const stakingContract = new Contract(
+        chainConfig.contractAddresses.staking,
+        chainConfig.contractInterface.staking,
+        signerApi.getSigner()
+      );
+
+      try {
+        setLoading(true);
+        const response = (await stakingContract.collect(BigNumber.from(commission))) as TransactionResponse;
+        await response.wait(1);
+        setLoading(false);
+        setCommission("");
+        notification.success({
+          message: <div>{t(localeKeys.operationSuccessful)}</div>,
+        });
+      } catch (e) {
+        const error = processTransactionError(e as MetaMaskError);
+        setLoading(false);
+        notification.error({
+          message: <div>{error.message}</div>,
+        });
+        console.log(e);
+      }
+    } else if (chainConfig && isWalletClient(signerApi)) {
       setLoading(true);
-      const response = (await stakingContract?.collect(
-        EthersBigNumber.from(commission.toString())
-      )) as TransactionResponse;
-      await response.wait(1);
-      setLoading(false);
-      setCommission("");
-      notification.success({
-        message: <div>{t(localeKeys.operationSuccessful)}</div>,
-      });
-    } catch (e) {
-      const error = processTransactionError(e as MetaMaskError);
-      setLoading(false);
-      notification.error({
-        message: <div>{error.message}</div>,
-      });
-      console.log(e);
+
+      try {
+        const { hash } = await writeContract({
+          address: chainConfig.contractAddresses.staking,
+          abi: chainConfig.contractInterface.staking,
+          functionName: "collect",
+          args: [BigNumber.from(commission).toBigInt()],
+        });
+
+        const receipt = await waitForTransaction({ hash });
+        if (receipt.status === "success") {
+          setLoading(false);
+          setCommission("");
+          notification.success({
+            message: <div>{t(localeKeys.operationSuccessful)}</div>,
+          });
+        } else {
+          setLoading(false);
+          notification.error({
+            message: <div>{receipt.status}</div>,
+          });
+        }
+      } catch (e) {
+        console.error(e);
+        setLoading(false);
+        notification.error({
+          message: <div>{(e as Error).message}</div>,
+        });
+      }
     }
   };
 
@@ -105,7 +150,7 @@ const JoinCollatorModal = forwardRef<JoinCollatorRefs>((props, ref) => {
       }
 
       setLoading(true);
-      const isSuccessful = await setCollatorSessionKey(sessionKey, provider);
+      const isSuccessful = await setCollatorSessionKey(sessionKey);
       setLoading(false);
       if (isSuccessful) {
         setSessionKey("");
@@ -194,5 +239,3 @@ const JoinCollatorModal = forwardRef<JoinCollatorRefs>((props, ref) => {
 });
 
 JoinCollatorModal.displayName = "JoinCollator";
-
-export default JoinCollatorModal;

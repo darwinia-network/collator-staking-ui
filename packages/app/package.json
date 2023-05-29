@@ -4,22 +4,19 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --port 3030 --open --host",
+    "dev": "vite --port 3030 --host",
     "build": "tsc && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
     "@apollo/client": "^3.7.2",
-    "@darwinia/app-config": "^1.0.0",
-    "@darwinia/app-locale": "^1.0.0",
-    "@darwinia/app-providers": "^1.0.0",
-    "@darwinia/app-types": "^1.0.0",
-    "@darwinia/app-utils": "^1.0.0",
     "@darwinia/ui": "^0.0.1",
-    "@ethersproject/providers": "^5.7.2",
+    "@polkadot/api": "^10.7.2",
+    "@polkadot/ui-keyring": "^3.4.1",
     "@types/react-transition-group": "^4.4.5",
-    "bignumber.js": "^9.1.1",
-    "darwinia-js-sdk": "^1.2.18",
+    "@web3modal/ethereum": "^2.4.1",
+    "@web3modal/react": "^2.4.1",
+    "darwinia-js-sdk": "2.0.5",
     "ethers": "^5.7.2",
     "graphql": "^16.6.0",
     "intro.js": "^6.0.0",
@@ -28,7 +25,9 @@
     "react-dom": "^18.2.0",
     "react-jazzicon": "^1.0.4",
     "react-router-dom": "^6.4.0",
-    "react-transition-group": "^4.4.5"
+    "react-transition-group": "^4.4.5",
+    "viem": "^0.3.31",
+    "wagmi": "^1.0.5"
   },
   "devDependencies": {
     "@types/node": "^18.7.18",
