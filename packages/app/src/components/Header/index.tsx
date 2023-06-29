@@ -1,7 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import logoIcon from "../../assets/images/logo.png";
 import caretIcon from "../../assets/images/caret-down.svg";
-import walletIcon from "../../assets/images/wallet.svg";
 import { useMemo, useRef, useState } from "react";
 import { Button, Popover } from "@darwinia/ui";
 import { useAppTranslation, localeKeys } from "../../locale";
@@ -11,11 +10,12 @@ import JazzIcon from "../JazzIcon";
 import { utils } from "ethers";
 import { JoinCollatorModal, JoinCollatorRefs } from "../JoinCollatorModal";
 import { ManageCollatorModal, ManageCollatorRefs } from "../ManageCollatorModal";
+import { CustomRPC } from "../CustomRpc";
 
 export const Header = () => {
   const [networkOptionsTrigger, setNetworkOptionsTrigger] = useState<HTMLDivElement | null>(null);
   const { t } = useAppTranslation();
-  const { currentChain, activeAccount, setCurrentChain, disconnect } = useWallet();
+  const { currentChain, activeAccount, setCurrentChain, connect, disconnect } = useWallet();
   const location = useLocation();
   const joinCollatorModalRef = useRef<JoinCollatorRefs>(null);
   const [moreOptionsTrigger, setMoreOptionsTrigger] = useState<HTMLDivElement | null>(null);
@@ -121,25 +121,30 @@ export const Header = () => {
                   );
                 })}
               </div>
-              {activeAccount ? (
-                <div className={"border-primary border pl-[15px]"}>
-                  <div className={"flex items-center gap-[10px]"}>
-                    <JazzIcon size={20} address={utils.getAddress(activeAccount.address)} />
-                    <div
-                      ref={setMoreOptionsTrigger}
-                      className={"select-none cursor-pointer pr-[15px] py-[5px] flex gap-[10px]"}
-                    >
-                      <div>{toShortAddress(utils.getAddress(activeAccount.address))}</div>
-                      <img className={"w-[16px]"} src={caretIcon} alt="image" />
+              <div className="flex justify-center items-center gap-[10px]">
+                {activeAccount ? (
+                  <div className={"border-primary border pl-[15px]"}>
+                    <div className={"flex items-center gap-[10px]"}>
+                      <JazzIcon size={20} address={utils.getAddress(activeAccount.address)} />
+                      <div
+                        ref={setMoreOptionsTrigger}
+                        className={"select-none cursor-pointer pr-[15px] py-[5px] flex gap-[10px]"}
+                      >
+                        <div>{toShortAddress(utils.getAddress(activeAccount.address))}</div>
+                        <img className={"w-[16px]"} src={caretIcon} alt="image" />
+                      </div>
+                      <Popover offset={[0, 5]} triggerElementState={moreOptionsTrigger} triggerEvent={"click"}>
+                        <div>{accountOptions()}</div>
+                      </Popover>
                     </div>
-                    <Popover offset={[0, 5]} triggerElementState={moreOptionsTrigger} triggerEvent={"click"}>
-                      <div>{accountOptions()}</div>
-                    </Popover>
                   </div>
-                </div>
-              ) : (
-                <img alt="..." width={32} src={walletIcon} />
-              )}
+                ) : (
+                  <div className="h-9 flex justify-center items-center hover:cursor-pointer border border-primary px-3" onClick={() => connect("wallet-connect")}>
+                    <span>{t(localeKeys.connectWallet)}</span>
+                  </div>
+                )}
+                <CustomRPC />
+              </div>
             </div>
             {/*network switch toggle*/}
             <div

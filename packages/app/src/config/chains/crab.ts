@@ -9,7 +9,24 @@ export const crab: ChainConfig = {
     name: "Subscan",
     url: "https://crab.subscan.io/",
   },
-  rpc: "https://crab-rpc.darwinia.network/",
+  rpcMetas: [
+    {
+      name: "Crab",
+      url: "https://crab-rpc.darwinia.network",
+    },
+    {
+      name: "Darwinia Community",
+      url: "https://crab-rpc.darwiniacommunitydao.xyz",
+    },
+    {
+      name: "Dwellir",
+      url: "https://darwiniacrab-rpc.dwellir.com",
+    },
+    {
+      name: "OnFinality",
+      url: "https://crab.api.onfinality.io/public-rpc",
+    },
+  ],
   kton: {
     address: "0x0000000000000000000000000000000000000402",
     symbol: "CKTON",

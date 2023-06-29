@@ -11,7 +11,7 @@ import { useWeb3Modal } from "@web3modal/react";
 import { useAccount, useConnect } from "wagmi";
 import { utils, providers } from "ethers";
 import { getChainConfig, getChainsConfig, getStore, isEthersApi, isWalletClient, setStore } from "../utils";
-import { Account, ChainID, WalletID } from "../types";
+import { Account, ChainID, WalletID, RpcMeta } from "../types";
 import { BaseProvider } from "@ethersproject/providers";
 import { Subscription, from } from "rxjs";
 import { useLocation, useNavigate, matchPath } from "react-router-dom";
@@ -23,10 +23,12 @@ interface WalletCtx {
   currentChain: ChainID | undefined;
   isConnecting: { [key in WalletID]: boolean };
   isNetworkMismatch: boolean;
+  activeRpc: RpcMeta;
   connect: (walletId: WalletID) => Promise<void>;
   disconnect: () => void;
   setCurrentChain: (chainId: number) => void;
   isInstalled: (walletId: WalletID) => boolean;
+  setActiveRpc: (value: RpcMeta) => void;
 }
 
 const defaultValue: WalletCtx = {
@@ -36,10 +38,12 @@ const defaultValue: WalletCtx = {
   currentChain: undefined,
   isConnecting: { metamask: false, "wallet-connect": false },
   isNetworkMismatch: false,
+  activeRpc: { url: "" },
   connect: async () => undefined,
   disconnect: () => undefined,
   setCurrentChain: () => undefined,
   isInstalled: () => false,
+  setActiveRpc: () => undefined,
 };
 
 export const WalletContext = createContext<WalletCtx>(defaultValue);
@@ -54,6 +58,7 @@ export const WalletProvider = ({ children }: PropsWithChildren) => {
     "wallet-connect": false,
   });
   const [isNetworkMismatch, setIsNetworkMismatch] = useState<WalletCtx["isNetworkMismatch"]>(false);
+  const [activeRpc, _setActiveRpc] = useState<WalletCtx["activeRpc"]>({ url: "" });
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -146,7 +151,7 @@ export const WalletProvider = ({ children }: PropsWithChildren) => {
                   {
                     chainId: utils.hexlify(chainConfig.chainId),
                     chainName: chainConfig.displayName,
-                    rpcUrls: [chainConfig.rpc],
+                    rpcUrls: [activeRpc.url],
                     blockExplorerUrls: [chainConfig.explorer.url],
                     nativeCurrency: chainConfig.ring,
                   },
@@ -162,7 +167,7 @@ export const WalletProvider = ({ children }: PropsWithChildren) => {
         switchNetwork({ chainId: chainConfig.chainId });
       }
     }
-  }, [currentChain, signerApi]);
+  }, [currentChain, signerApi, activeRpc.url]);
 
   const isInstalled = useCallback((walletId: WalletID) => {
     if (walletId === "metamask") {
@@ -173,16 +178,28 @@ export const WalletProvider = ({ children }: PropsWithChildren) => {
     return false;
   }, []);
 
+  const setActiveRpc = useCallback(
+    (rpcMeta: RpcMeta) => {
+      const searchParams = new URLSearchParams(location.search);
+      searchParams.set("rpc", encodeURIComponent(rpcMeta.url));
+      navigate(`${location.pathname}?${searchParams.toString()}`);
+      _setActiveRpc(rpcMeta);
+    },
+    [location, navigate]
+  );
+
   // update state, save store, update url search params
   const setCurrentChain = useCallback(
     (chainId: ChainID) => {
       const config = getChainConfig(chainId);
       _setCurrentChain(config?.chainId);
+      _setActiveRpc(config?.rpcMetas[0] ?? { url: "" });
       setStore("network", config?.name);
 
       const searchParams = new URLSearchParams(location.search);
       if (config) {
         searchParams.set("network", config.name);
+        searchParams.set("rpc", config.rpcMetas[0].url);
       } else {
         searchParams.delete("network");
       }
@@ -211,17 +228,17 @@ export const WalletProvider = ({ children }: PropsWithChildren) => {
     if (currentChain) {
       const chainConfig = getChainConfig(currentChain);
       if (chainConfig) {
-        if (chainConfig.rpc.startsWith("ws")) {
-          setProviderApi(new providers.WebSocketProvider(chainConfig.rpc));
-        } else if (chainConfig.rpc.startsWith("http")) {
-          setProviderApi(new providers.JsonRpcProvider(chainConfig.rpc));
+        if (activeRpc.url.startsWith("ws")) {
+          setProviderApi(new providers.WebSocketProvider(activeRpc.url));
+        } else if (activeRpc.url.startsWith("http")) {
+          setProviderApi(new providers.JsonRpcProvider(activeRpc.url));
         }
       }
     }
     return () => {
       setProviderApi(null);
     };
-  }, [currentChain]);
+  }, [currentChain, activeRpc.url]);
 
   // init currentChain & activeAccount
   useEffect(() => {
@@ -231,6 +248,13 @@ export const WalletProvider = ({ children }: PropsWithChildren) => {
     const chainConfig = getChainsConfig().find(({ name }) => name.toLowerCase() === chainName?.toLowerCase());
     _setCurrentChain((prev) => chainConfig?.chainId ?? prev);
     setStore("network", chainConfig?.name);
+
+    const rpc = searchParams.get("rpc");
+    if (rpc) {
+      _setActiveRpc({ url: decodeURIComponent(rpc) });
+    } else {
+      _setActiveRpc(chainConfig?.rpcMetas[0] || { url: "" });
+    }
 
     const address = searchParams.get("account");
     if (utils.isAddress(address || "")) {
@@ -320,10 +344,12 @@ export const WalletProvider = ({ children }: PropsWithChildren) => {
         currentChain,
         isConnecting,
         isNetworkMismatch,
+        activeRpc,
         connect,
         disconnect,
         setCurrentChain,
         isInstalled,
+        setActiveRpc,
       }}
     >
       {children}

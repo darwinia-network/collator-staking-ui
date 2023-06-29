@@ -34,13 +34,18 @@ export enum ChainID {
   DARWINIA = 46,
 }
 
+export interface RpcMeta {
+  name?: string;
+  url: string;
+}
+
 export interface ChainConfig {
   name: string; // this name is used to set the chain name in MetaMask, the user will later see this name on Metamask
   displayName: string; // This name is used on the dApp just for the user to see
   chainId: ChainID;
   ring: Token;
   kton: Token;
-  rpc: string;
+  rpcMetas: RpcMeta[];
   explorer: {
     name: string;
     url: string;

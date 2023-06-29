@@ -9,7 +9,12 @@ export const pangolin: ChainConfig = {
     name: "Subscan",
     url: "https://pangolin.subscan.io/",
   },
-  rpc: "https://pangolin-rpc.darwinia.network/",
+  rpcMetas: [
+    {
+      name: "Darwinia",
+      url: '"https://pangolin-rpc.darwinia.network/"',
+    },
+  ],
   kton: {
     address: "0x0000000000000000000000000000000000000402",
     symbol: "PKTON",

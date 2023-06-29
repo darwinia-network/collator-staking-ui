@@ -9,7 +9,20 @@ export const darwinia: ChainConfig = {
     name: "Subscan",
     url: "https://darwinia.subscan.io/",
   },
-  rpc: "https://rpc.darwinia.network/",
+  rpcMetas: [
+    {
+      name: "Darwinia",
+      url: "https://rpc.darwinia.network",
+    },
+    {
+      name: "Darwinia Community",
+      url: "https://darwinia-rpc.darwiniacommunitydao.xyz",
+    },
+    {
+      name: "Dwellir",
+      url: "https://darwinia-rpc.dwellir.com",
+    },
+  ],
   kton: {
     address: "0x0000000000000000000000000000000000000402",
     symbol: "KTON",

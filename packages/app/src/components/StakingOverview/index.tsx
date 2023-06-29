@@ -15,7 +15,6 @@ import { SelectCollatorModal, SelectCollatorRefs } from "../SelectCollatorModal"
 import {
   formatBalance,
   getChainConfig,
-  isEthersApi,
   isValidNumber,
   parseBalance,
   prettifyNumber,
@@ -27,7 +26,7 @@ import { BN_ZERO } from "../../config";
 
 export const StakingOverview = () => {
   const { t } = useAppTranslation();
-  const { currentChain, signerApi } = useWallet();
+  const { currentChain } = useWallet();
   const {
     deposits,
     stakedDepositsIds,
