@@ -10,7 +10,7 @@ import JazzIcon from "../JazzIcon";
 import { utils } from "ethers";
 import { JoinCollatorModal, JoinCollatorRefs } from "../JoinCollatorModal";
 import { ManageCollatorModal, ManageCollatorRefs } from "../ManageCollatorModal";
-import { CustomRpc } from "../AddCustomRpc";
+import { CustomRpc } from "../CustomRpc";
 
 export const Header = () => {
   const [networkOptionsTrigger, setNetworkOptionsTrigger] = useState<HTMLDivElement | null>(null);
