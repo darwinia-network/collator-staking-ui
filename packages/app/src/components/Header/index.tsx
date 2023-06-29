@@ -10,7 +10,7 @@ import JazzIcon from "../JazzIcon";
 import { utils } from "ethers";
 import { JoinCollatorModal, JoinCollatorRefs } from "../JoinCollatorModal";
 import { ManageCollatorModal, ManageCollatorRefs } from "../ManageCollatorModal";
-import { CustomRPC } from "../CustomRpc";
+import { CustomRpc } from "../CustomRpc";
 
 export const Header = () => {
   const [networkOptionsTrigger, setNetworkOptionsTrigger] = useState<HTMLDivElement | null>(null);
@@ -143,7 +143,7 @@ export const Header = () => {
                     <span>{t(localeKeys.connectWallet)}</span>
                   </div>
                 )}
-                <CustomRPC />
+                <CustomRpc />
               </div>
             </div>
             {/*network switch toggle*/}

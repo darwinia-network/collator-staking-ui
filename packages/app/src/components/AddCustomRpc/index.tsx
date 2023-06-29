@@ -2,7 +2,7 @@ import { useState } from "react";
 import settingIcon from "../../assets/images/setting.svg";
 import { RpcSelectorModal } from "./RpcSelectorModal";
 
-export const CustomRPC = () => {
+export const CustomRpc = () => {
   const [isRpcSelectorModalVisible, setIsRpcSelectorModalVisible] = useState(false);
 
   return (
