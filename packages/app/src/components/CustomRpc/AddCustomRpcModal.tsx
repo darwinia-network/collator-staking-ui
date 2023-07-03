@@ -36,7 +36,10 @@ export const AddCustomRpcModal = ({
           className={`bg-primary w-full flex justify-center items-center h-10 ${
             rpcMeta?.url ? "" : "cursor-not-allowed opacity-80"
           }`}
-          onClick={() => rpcMeta && onSave(rpcMeta)}
+          onClick={() => {
+            rpcMeta && onSave(rpcMeta);
+            onClose();
+          }}
           disabled={!rpcMeta?.url}
         >
           <span>{t("Save")}</span>
@@ -49,6 +52,6 @@ export const AddCustomRpcModal = ({
 const MyInput = ({ label, onChange }: { label: string; onChange: ChangeEventHandler<HTMLInputElement> }) => (
   <div className="flex flex-col gap-[10px]">
     <span className="text-white text-12-bold">{label}</span>
-    <input type="text" onChange={onChange} className="h-10 text-black px-2" />
+    <input type="text" onChange={onChange} className="h-10 bg-transparent border border-white px-2 text-14" />
   </div>
 );
