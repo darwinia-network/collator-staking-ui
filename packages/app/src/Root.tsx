@@ -9,7 +9,7 @@ import { Web3Modal } from "@web3modal/react";
 import { configureChains, createConfig, WagmiConfig } from "wagmi";
 import type { Chain } from "wagmi";
 
-const chains = getChainsConfig().map(({ chainId, name, displayName, ring, rpc, explorer }) => ({
+const chains = getChainsConfig().map(({ chainId, name, displayName, ring, rpcMetas, explorer }) => ({
   id: chainId,
   name: displayName,
   network: name.toLowerCase().split(" ").join("-"),
@@ -20,12 +20,12 @@ const chains = getChainsConfig().map(({ chainId, name, displayName, ring, rpc, e
   },
   rpcUrls: {
     default: {
-      http: rpc.startsWith("http") ? [rpc] : [],
-      webSocket: rpc.startsWith("ws") ? [rpc] : [],
+      http: rpcMetas[0].url.startsWith("http") ? [rpcMetas[0].url] : [],
+      webSocket: rpcMetas[0].url.startsWith("ws") ? [rpcMetas[0].url] : [],
     },
     public: {
-      http: rpc.startsWith("http") ? [rpc] : [],
-      webSocket: rpc.startsWith("ws") ? [rpc] : [],
+      http: rpcMetas[0].url.startsWith("http") ? [rpcMetas[0].url] : [],
+      webSocket: rpcMetas[0].url.startsWith("ws") ? [rpcMetas[0].url] : [],
     },
   },
   blockExplorers: {
