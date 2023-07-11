@@ -10,7 +10,7 @@ import {
   notification,
 } from "@darwinia/ui";
 import { localeKeys, useAppTranslation } from "../../locale";
-import { useStaking, useWallet } from "../../hooks";
+import { useApp, useStaking, useWallet } from "../../hooks";
 import JazzIcon from "../JazzIcon";
 import warningIcon from "../../assets/images/warning.svg";
 import plusIcon from "../../assets/images/plus-square.svg";
@@ -45,7 +45,8 @@ interface RestakeParams {
 export const StakingRecords = () => {
   const selectCollatorModalRef = useRef<SelectCollatorRefs>(null);
   const { t } = useAppTranslation();
-  const { currentChain, signerApi } = useWallet();
+  const { currentChain, signerApi, isNetworkMismatch } = useWallet();
+  const {setIsWrongChainPromptOpen} = useApp()
   const {
     stakedAssetDistribution,
     isLedgerLoading,
@@ -650,7 +651,11 @@ export const StakingRecords = () => {
           return (
             <Button
               onClick={() => {
-                onUnbondAll();
+                if (isNetworkMismatch) {
+                  setIsWrongChainPromptOpen(true)
+                } else {
+                  onUnbondAll();
+                }
               }}
               disabled={!row.canUnbondAll}
               btnType={"secondary"}
@@ -665,7 +670,11 @@ export const StakingRecords = () => {
           <div className={"flex items-end flex-col gap-[5px]"}>
             <Button
               onClick={() => {
-                onShowUndelegateModal(row);
+                if (isNetworkMismatch) {
+                  setIsWrongChainPromptOpen(true)
+                } else {
+                  onShowUndelegateModal(row);
+                }
               }}
               btnType={"secondary"}
             >
@@ -677,7 +686,11 @@ export const StakingRecords = () => {
           <div className={"flex gap-[10px]"}>
             <Button
               onClick={() => {
-                onShowSelectCollatorModal();
+                if (isNetworkMismatch) {
+                  setIsWrongChainPromptOpen(true)
+                } else {
+                  onShowSelectCollatorModal();
+                }
               }}
               className={"!h-[36px] !px-[15px]"}
               btnType={"secondary"}

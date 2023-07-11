@@ -2,7 +2,7 @@ import { Dispatch, SetStateAction, useState } from "react";
 import { useAppTranslation } from "../../locale";
 import { AddCustomRpcModal } from "./AddCustomRpcModal";
 import type { RpcMeta } from "../../types";
-import { useWallet } from "../../hooks";
+import { useApp, useWallet } from "../../hooks";
 
 export const RpcSelector = ({rpcs, setRpcs}:{
   rpcs: RpcMeta[];
@@ -58,14 +58,20 @@ function RpcItem({
   rpcMeta: RpcMeta;
   onSelect: (rpcMeta: RpcMeta) => void;
 }) {
+  const {isNetworkMismatch} = useWallet();
+  const {setIsWrongChainPromptOpen} = useApp()
   return (
     <div
       className={`p-[5px] flex gap-[10px] hover:cursor-pointer ${
         activeRpc.url === rpcMeta.url ? "bg-primary/20" : "bg-white/20"
       }`}
       onClick={() => {
-        onSelect(rpcMeta);
-        document.body.click();
+        if (isNetworkMismatch) {
+          setIsWrongChainPromptOpen(true);
+        } else {
+          onSelect(rpcMeta);
+          document.body.click();
+        }
       }}
     >
       <div className={`px-[3px] ${activeRpc.url === rpcMeta.url ? "bg-primary" : "bg-white/20"}`} />

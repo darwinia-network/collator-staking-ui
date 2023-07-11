@@ -1,6 +1,6 @@
 import { Button, Column, Table, Tooltip, ModalEnhanced, notification } from "@darwinia/ui";
 import { localeKeys, useAppTranslation } from "../../locale";
-import { useStaking, useWallet } from "../../hooks";
+import { useApp, useStaking, useWallet } from "../../hooks";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Deposit, MetaMaskError } from "../../types";
 import { formatDate, getChainConfig, isEthersApi, isWalletClient, processTransactionError } from "../../utils";
@@ -13,7 +13,8 @@ import { waitForTransaction, writeContract } from "@wagmi/core";
 
 export const DepositRecords = () => {
   const { t } = useAppTranslation();
-  const { currentChain } = useWallet();
+  const { currentChain, isNetworkMismatch } = useWallet();
+  const {setIsWrongChainPromptOpen} = useApp()
   /*All deposits list are available in the ledger, so listening to isLedgerLoading will
    * allow adding the loading listener */
   const { deposits, isLedgerLoading } = useStaking();
@@ -135,7 +136,11 @@ export const DepositRecords = () => {
               <>
                 <Button
                   onClick={() => {
-                    onShowWithdrawModal(row, "early");
+                    if (isNetworkMismatch) {
+                      setIsWrongChainPromptOpen(true)
+                    } else {
+                      onShowWithdrawModal(row, "early");
+                    }
                   }}
                   btnType={"secondary"}
                   className={"!h-[30px]"}
@@ -161,7 +166,11 @@ export const DepositRecords = () => {
               <>
                 <Button
                   onClick={() => {
-                    onShowWithdrawModal(row, "regular");
+                    if (isNetworkMismatch) {
+                      setIsWrongChainPromptOpen(true)
+                    } else {
+                      onShowWithdrawModal(row, "regular");
+                    }
                   }}
                   btnType={"secondary"}
                   className={"!h-[30px]"}

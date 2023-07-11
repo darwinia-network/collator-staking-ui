@@ -4,7 +4,7 @@ import caretIcon from "../../assets/images/caret-down.svg";
 import { useMemo, useRef, useState } from "react";
 import { Button, Popover } from "@darwinia/ui";
 import { useAppTranslation, localeKeys } from "../../locale";
-import { useStaking, useWallet } from "../../hooks";
+import { useApp, useStaking, useWallet } from "../../hooks";
 import { getChainConfig, getChainsConfig, toShortAddress } from "../../utils";
 import JazzIcon from "../JazzIcon";
 import { utils } from "ethers";
@@ -15,7 +15,8 @@ import { CustomRpc } from "../CustomRpc";
 export const Header = () => {
   const [networkOptionsTrigger, setNetworkOptionsTrigger] = useState<HTMLDivElement | null>(null);
   const { t } = useAppTranslation();
-  const { currentChain, activeAccount, setCurrentChain, connect, disconnect } = useWallet();
+  const { currentChain, activeAccount, isNetworkMismatch, setCurrentChain, connect, disconnect } = useWallet();
+  const {setIsWrongChainPromptOpen} = useApp()
   const location = useLocation();
   const joinCollatorModalRef = useRef<JoinCollatorRefs>(null);
   const [moreOptionsTrigger, setMoreOptionsTrigger] = useState<HTMLDivElement | null>(null);
@@ -43,7 +44,9 @@ export const Header = () => {
       <div className={"border bg-black flex flex-col gap-[10px] border-primary p-[20px] select-none"}>
         <div
           onClick={() => {
-            if (!isUserACollator()) {
+            if (isNetworkMismatch) {
+              setIsWrongChainPromptOpen(true);
+            } else if (!isUserACollator()) {
               document.body.click();
               joinCollatorModalRef.current?.show();
             }
@@ -54,7 +57,9 @@ export const Header = () => {
         </div>
         <div
           onClick={() => {
-            if (isUserACollator()) {
+            if (isNetworkMismatch) {
+              setIsWrongChainPromptOpen(true);
+            } else if (isUserACollator()) {
               document.body.click();
               manageCollatorModalRef.current?.show();
             }

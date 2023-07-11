@@ -3,7 +3,7 @@ import { localeKeys, useAppTranslation } from "../../locale";
 import { Button, Input, OptionProps, Select, notification, Tooltip } from "@darwinia/ui";
 import ringIcon from "../../assets/images/ring.svg";
 import crabIcon from "../../assets/images/crab.svg";
-import { useStaking, useWallet } from "../../hooks";
+import { useApp, useStaking, useWallet } from "../../hooks";
 import {
   calcKtonFromRingDeposit,
   getChainConfig,
@@ -23,7 +23,8 @@ import { waitForTransaction, writeContract } from "@wagmi/core";
 
 export const DepositOverview = () => {
   const { t } = useAppTranslation();
-  const { currentChain, signerApi } = useWallet();
+  const { currentChain, signerApi, isNetworkMismatch } = useWallet();
+  const { setIsWrongChainPromptOpen } = useApp();
   const { minDeposit, balance } = useStaking();
   const [depositTerm, setDepositTerm] = useState<string>("1");
   const [amount, setAmount] = useState<string>("");
@@ -91,6 +92,11 @@ export const DepositOverview = () => {
   };
 
   const handleDeposit = async () => {
+    if (isNetworkMismatch) {
+      setIsWrongChainPromptOpen(true);
+      return;
+    }
+
     if (!isValidNumber(amount)) {
       setAmountHasError(true);
       notification.error({

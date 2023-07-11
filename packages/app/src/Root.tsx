@@ -1,5 +1,5 @@
 import App from "./App";
-import { WalletProvider, StakingProvider, GraphQLProvider } from "./providers";
+import { WalletProvider, StakingProvider, GraphQLProvider, AppProvider } from "./providers";
 import { getChainsConfig } from "./utils";
 import { i18nTranslationInit } from "./locale";
 import "intro.js/introjs.css";
@@ -50,15 +50,17 @@ i18nTranslationInit();
 export default function Root() {
   return (
     <>
-      <WagmiConfig config={wagmiConfig}>
-        <WalletProvider>
-          <GraphQLProvider>
-            <StakingProvider>
-              <App />
-            </StakingProvider>
-          </GraphQLProvider>
-        </WalletProvider>
-      </WagmiConfig>
+      <AppProvider>
+        <WagmiConfig config={wagmiConfig}>
+          <WalletProvider>
+            <GraphQLProvider>
+              <StakingProvider>
+                <App />
+              </StakingProvider>
+            </GraphQLProvider>
+          </WalletProvider>
+        </WagmiConfig>
+      </AppProvider>
       <Web3Modal projectId={projectId} ethereumClient={ethereumClient} />
     </>
   );

@@ -6,7 +6,7 @@ import { CSSTransition } from "react-transition-group";
 import "./style.scss";
 import * as React from "react";
 
-export type PopoverTriggerEvents = "click" | "hover";
+export type PopoverTriggerEvents = "click" | "hover" | "disabled";
 export interface PopoverReport {
   isVisible: boolean;
   isCausedByTrigger: boolean;
@@ -20,6 +20,7 @@ export interface PopoverProps {
   extendTriggerToPopover?: boolean;
   placement?: Placement;
   offset?: [number, number];
+  isOpen?: boolean;
 }
 
 /**
@@ -37,6 +38,7 @@ const Popover = ({
   placement = "bottom-end",
   offset = [0, 10],
   extendTriggerToPopover = false,
+  isOpen,
 }: PopoverProps) => {
   const isTriggerEventListenerBind = useRef(false);
   const popperContentRef = useRef<HTMLDivElement>(null);
@@ -111,17 +113,25 @@ const Popover = ({
         });
       }
       /* close the popover when the user clicks anywhere outside the popover */
-      document.addEventListener("click", () => {
-        /* don't report any random clicks on the document if the popover is not visible */
-        if (!isPopoverVisible) {
+      if (triggerEvent !== "disabled") {
+        document.addEventListener("click", () => {
+          /* don't report any random clicks on the document if the popover is not visible */
+          if (!isPopoverVisible) {
+            setPopoverVisible(false);
+            return;
+          }
+          reportPopoverEvent(false, false);
           setPopoverVisible(false);
-          return;
-        }
-        reportPopoverEvent(false, false);
-        setPopoverVisible(false);
-      });
+        });
+      }
     }
   }, [popoverTriggerRef, popoverRef, extendTriggerToPopover, isPopoverVisible, reportPopoverEvent, triggerEvent]);
+
+  useEffect(() => {
+    if (isOpen !== undefined) {
+      setPopoverVisible(isOpen);
+    }
+  }, [isOpen]);
 
   const portalItem = createPortal(
     <div
