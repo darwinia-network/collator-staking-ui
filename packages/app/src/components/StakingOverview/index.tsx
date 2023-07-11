@@ -4,7 +4,7 @@ import ringIcon from "../../assets/images/ring.svg";
 import ktonIcon from "../../assets/images/kton.svg";
 import crabIcon from "../../assets/images/crab.svg";
 import cktonIcon from "../../assets/images/ckton.svg";
-import { useStaking, useWallet } from "../../hooks";
+import { useApp, useStaking, useWallet } from "../../hooks";
 import caretDownIcon from "../../assets/images/caret-down.svg";
 import JazzIcon from "../JazzIcon";
 import switchIcon from "../../assets/images/switch.svg";
@@ -26,7 +26,8 @@ import { BN_ZERO } from "../../config";
 
 export const StakingOverview = () => {
   const { t } = useAppTranslation();
-  const { currentChain } = useWallet();
+  const { currentChain, isNetworkMismatch } = useWallet();
+  const {setIsWrongChainPromptOpen} = useApp()
   const {
     deposits,
     stakedDepositsIds,
@@ -170,6 +171,11 @@ export const StakingOverview = () => {
   };
 
   const onStartStaking = async () => {
+    if (isNetworkMismatch) {
+      setIsWrongChainPromptOpen(true)
+      return
+    }
+
     if (ringToStake.length > 0) {
       //user typed some ring value, validate it
       const isValidAmount = isValidNumber(ringToStake);

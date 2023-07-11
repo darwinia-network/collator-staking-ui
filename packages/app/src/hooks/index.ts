@@ -6,3 +6,4 @@ export * from "./power";
 export * from "./session";
 export * from "./wallet";
 export * from "./staking";
+export * from "./app";

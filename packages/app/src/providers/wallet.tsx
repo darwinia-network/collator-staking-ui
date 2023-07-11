@@ -15,6 +15,7 @@ import { Account, ChainID, WalletID, RpcMeta } from "../types";
 import { BaseProvider } from "@ethersproject/providers";
 import { Subscription, from } from "rxjs";
 import { useLocation, useNavigate, matchPath } from "react-router-dom";
+import { useApp } from "../hooks";
 
 interface WalletCtx {
   providerApi: BaseProvider | null | undefined;
@@ -29,6 +30,7 @@ interface WalletCtx {
   setCurrentChain: (chainId: number) => void;
   isInstalled: (walletId: WalletID) => boolean;
   setActiveRpc: (value: RpcMeta) => void;
+  switchNetwork: () => void;
 }
 
 const defaultValue: WalletCtx = {
@@ -44,6 +46,7 @@ const defaultValue: WalletCtx = {
   setCurrentChain: () => undefined,
   isInstalled: () => false,
   setActiveRpc: () => undefined,
+  switchNetwork: () => undefined,
 };
 
 export const WalletContext = createContext<WalletCtx>(defaultValue);
@@ -63,6 +66,7 @@ export const WalletProvider = ({ children }: PropsWithChildren) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [connectedWallet, setConnectedWallet] = useState<WalletID | null>();
+  const { setIsWrongChainPromptOpen } = useApp();
 
   const { open, setDefaultChain } = useWeb3Modal();
   const { connectors } = useConnect();
@@ -300,13 +304,15 @@ export const WalletProvider = ({ children }: PropsWithChildren) => {
       const chainConfig = getChainConfig(currentChain);
       if (chainConfig) {
         if (isEthersApi(signerApi)) {
-          sub$$ = from(signerApi.getNetwork()).subscribe(({ chainId }) =>
-            setIsNetworkMismatch(chainId !== chainConfig.chainId)
-          );
+          sub$$ = from(signerApi.getNetwork()).subscribe(({ chainId }) => {
+            setIsWrongChainPromptOpen(chainId !== chainConfig.chainId);
+            setIsNetworkMismatch(chainId !== chainConfig.chainId);
+          });
         } else if (isWalletClient(signerApi)) {
-          sub$$ = from(signerApi.getChainId()).subscribe((chainId) =>
-            setIsNetworkMismatch(chainId !== chainConfig.chainId)
-          );
+          sub$$ = from(signerApi.getChainId()).subscribe((chainId) => {
+            setIsWrongChainPromptOpen(chainId !== chainConfig.chainId);
+            setIsNetworkMismatch(chainId !== chainConfig.chainId);
+          });
         }
       }
     }
@@ -315,13 +321,7 @@ export const WalletProvider = ({ children }: PropsWithChildren) => {
       sub$$?.unsubscribe();
       setIsNetworkMismatch(false);
     };
-  }, [currentChain, signerApi]);
-
-  useEffect(() => {
-    if (isNetworkMismatch) {
-      walletSwitchNetwork();
-    }
-  }, [isNetworkMismatch, walletSwitchNetwork]);
+  }, [currentChain, signerApi, setIsWrongChainPromptOpen]);
 
   // handle navigate after connect / disconnect
   useEffect(() => {
@@ -350,6 +350,7 @@ export const WalletProvider = ({ children }: PropsWithChildren) => {
         setCurrentChain,
         isInstalled,
         setActiveRpc,
+        switchNetwork: walletSwitchNetwork,
       }}
     >
       {children}

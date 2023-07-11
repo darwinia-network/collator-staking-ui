@@ -3,7 +3,7 @@ import { Button, Input, ModalEnhanced, notification, Tooltip } from "@darwinia/u
 import { localeKeys, useAppTranslation } from "../../locale";
 import { getChainConfig, isEthersApi, isValidNumber, isWalletClient, processTransactionError } from "../../utils";
 import helpIcon from "../../assets/images/help.svg";
-import { useWallet, useStaking } from "../../hooks";
+import { useWallet, useStaking, useApp } from "../../hooks";
 import { BigNumber } from "@ethersproject/bignumber/lib/bignumber";
 import { TransactionResponse } from "@ethersproject/providers";
 import { MetaMaskError } from "../../types";
@@ -22,7 +22,8 @@ export const JoinCollatorModal = forwardRef<JoinCollatorRefs>((_, ref) => {
   const [sessionKeyHasError, setSessionKeyHasError] = useState<boolean>(false);
   const [isLoading, setLoading] = useState<boolean>(false);
   const { t } = useAppTranslation();
-  const { currentChain, signerApi } = useWallet();
+  const { currentChain, signerApi, isNetworkMismatch } = useWallet();
+  const {setIsWrongChainPromptOpen} = useApp()
   const { setCollatorSessionKey } = useStaking();
 
   const chainConfig = useMemo(() => {
@@ -64,6 +65,11 @@ export const JoinCollatorModal = forwardRef<JoinCollatorRefs>((_, ref) => {
   };
 
   const onSetCommission = async () => {
+    if (isNetworkMismatch) {
+      setIsWrongChainPromptOpen(true)
+      return
+    }
+    
     if (!isValidNumber(commission)) {
       notification.error({
         message: <div>{t(localeKeys.invalidCommission)}</div>,

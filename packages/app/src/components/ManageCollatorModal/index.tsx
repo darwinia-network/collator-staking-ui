@@ -4,7 +4,7 @@ import { localeKeys, useAppTranslation } from "../../locale";
 import { Collator, MetaMaskError } from "../../types";
 import { getChainConfig, isEthersApi, isValidNumber, isWalletClient, processTransactionError } from "../../utils";
 import helpIcon from "../../assets/images/help.svg";
-import { useStaking, useWallet } from "../../hooks";
+import { useApp, useStaking, useWallet } from "../../hooks";
 import { BigNumber } from "@ethersproject/bignumber/lib/bignumber";
 import { TransactionResponse } from "@ethersproject/providers";
 import { Contract } from "ethers";
@@ -23,7 +23,8 @@ export const ManageCollatorModal = forwardRef<ManageCollatorRefs>((_, ref) => {
   const [isLoading, setLoading] = useState<boolean>(false);
   const updatedCollator = useRef<Collator>();
   const { t } = useAppTranslation();
-  const { currentChain, signerApi } = useWallet();
+  const { currentChain, signerApi, isNetworkMismatch } = useWallet();
+  const {setIsWrongChainPromptOpen} = useApp()
   const { setCollatorSessionKey } = useStaking();
 
   const chainConfig = useMemo(() => {
@@ -95,6 +96,11 @@ export const ManageCollatorModal = forwardRef<ManageCollatorRefs>((_, ref) => {
   };
 
   const onSetCommission = async () => {
+    if (isNetworkMismatch) {
+      setIsWrongChainPromptOpen(true)
+      return
+    }
+
     const isValidCommission = isValidNumber(commission);
     if (!isValidCommission) {
       notification.error({
@@ -179,6 +185,11 @@ export const ManageCollatorModal = forwardRef<ManageCollatorRefs>((_, ref) => {
   };
 
   const onSetSessionKey = async () => {
+    if (isNetworkMismatch) {
+      setIsWrongChainPromptOpen(true)
+      return
+    }
+    
     try {
       if (sessionKey.trim().length === 0) {
         setSessionKeyHasError(true);
