@@ -28,7 +28,6 @@ jobs:
           project_name: staking-ui
           dist_path: .
           script_run: false
-          node-version: '16.16'
           enable_notify_slack: true
           slack_channel: darwinia-apps
           slack_webhook: ${{ secrets.SLACK_INCOMING_WEBHOOK_URL }}
