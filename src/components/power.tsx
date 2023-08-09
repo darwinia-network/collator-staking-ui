@@ -2,13 +2,13 @@ import { GET_LATEST_STAKING_REWARDS } from "@/config";
 import { useApp, useStaking } from "@/hooks";
 import { formatBlanace, getChainConfig, prettyNumber } from "@/utils";
 import { formatDistanceStrict } from "date-fns";
-import { useQuery } from "graphql-hooks";
 import Image from "next/image";
 import { getAddress } from "viem";
 import { useAccount } from "wagmi";
 import CountLoading from "./count-loading";
 import { useRef } from "react";
 import { CSSTransition } from "react-transition-group";
+import { useQuery } from "@apollo/client";
 
 interface Reward {
   id: string;
