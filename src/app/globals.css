@@ -1,0 +1,102 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.app-header {
+  height: 70px;
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100%;
+
+  @media (min-width: 1024px) {
+    height: 60px;
+  }
+}
+.app-main {
+  min-height: calc(100vh - 70px - 60px);
+  margin-top: 70px;
+
+  @media (min-width: 1024px) {
+    margin-top: 60px;
+  }
+}
+.app-footer {
+  height: 60px;
+
+  @media (min-width: 1024px) {
+    height: 70px;
+  }
+}
+.error-boundary {
+  height: calc(100vh - 70px - 60px - 4px);
+}
+
+.home-page {
+  height: calc(100vh - 70px - 60px);
+}
+
+.tabs-fade-enter {
+  opacity: 0;
+}
+.tabs-fade-enter-active {
+  opacity: 1;
+  transition: opacity 200ms;
+}
+.tabs-fade-exit {
+  opacity: 1;
+}
+.tabs-fade-exit-active {
+  opacity: 0;
+  transition: opacity 200ms;
+}
+
+.modal-fade-enter {
+  opacity: 0;
+}
+.modal-fade-enter > div {
+  transform: scale(0.5);
+}
+.modal-fade-enter-active {
+  opacity: 1;
+  transition: opacity 300ms;
+}
+.modal-fade-enter-active > div {
+  transform: scale(1);
+  transition: transform 300ms;
+}
+.modal-fade-exit {
+  opacity: 1;
+}
+.modal-fade-exit > div {
+  transform: scale(1);
+}
+.modal-fade-exit-active {
+  opacity: 0;
+  transition: opacity 300ms;
+}
+.modal-fade-exit-active > div {
+  transform: scale(0.5);
+  transition: transform 300ms;
+}
+
+.component-loading-appear,
+.component-loading-enter {
+  background-color: transparent;
+}
+.component-loading-appear-active,
+.component-loading-enter-active {
+  background-color: rgba(36, 42, 46, 0.6);
+  transition: background-color 300ms;
+}
+.component-loading-appear-done,
+.component-loading-enter-done {
+  background-color: rgba(36, 42, 46, 0.6);
+}
+.component-loading-exit {
+  background-color: rgba(36, 42, 46, 0.6);
+}
+.component-loading-exit-active {
+  background-color: transparent;
+  transition: background-color 300ms;
+}
