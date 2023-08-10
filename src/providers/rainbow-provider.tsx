@@ -1,7 +1,7 @@
 "use client";
 
 import "@rainbow-me/rainbowkit/styles.css";
-import { getDefaultWallets, RainbowKitProvider, connectorsForWallets } from "@rainbow-me/rainbowkit";
+import { getDefaultWallets, RainbowKitProvider, connectorsForWallets, darkTheme } from "@rainbow-me/rainbowkit";
 import { trustWallet, imTokenWallet, okxWallet, safeWallet } from "@rainbow-me/rainbowkit/wallets";
 import { configureChains, createConfig, WagmiConfig } from "wagmi";
 import { publicProvider } from "wagmi/providers/public";
@@ -76,7 +76,12 @@ export function RainbowProvider({ children }: PropsWithChildren<unknown>) {
 
   return (
     <WagmiConfig config={wagmiConfig}>
-      <RainbowKitProvider chains={chains} appInfo={{ appName: APP_NAME_CONF }} initialChain={activeChain}>
+      <RainbowKitProvider
+        theme={darkTheme()}
+        chains={chains}
+        appInfo={{ appName: APP_NAME_CONF }}
+        initialChain={activeChain}
+      >
         {mounted && children}
       </RainbowKitProvider>
     </WagmiConfig>
