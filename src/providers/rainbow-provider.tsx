@@ -2,14 +2,7 @@
 
 import "@rainbow-me/rainbowkit/styles.css";
 import { getDefaultWallets, RainbowKitProvider, connectorsForWallets } from "@rainbow-me/rainbowkit";
-import {
-  argentWallet,
-  trustWallet,
-  ledgerWallet,
-  imTokenWallet,
-  okxWallet,
-  safeWallet,
-} from "@rainbow-me/rainbowkit/wallets";
+import { trustWallet, imTokenWallet, okxWallet, safeWallet } from "@rainbow-me/rainbowkit/wallets";
 import { configureChains, createConfig, WagmiConfig } from "wagmi";
 import { publicProvider } from "wagmi/providers/public";
 
@@ -69,8 +62,6 @@ export function RainbowProvider({ children }: PropsWithChildren<unknown>) {
         imTokenWallet({ projectId, chains }),
         trustWallet({ projectId, chains }),
         safeWallet({ chains }),
-        argentWallet({ projectId, chains }),
-        ledgerWallet({ projectId, chains }),
       ],
     },
   ]);
