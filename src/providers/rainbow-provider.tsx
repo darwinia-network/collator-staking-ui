@@ -77,7 +77,7 @@ export function RainbowProvider({ children }: PropsWithChildren<unknown>) {
   return (
     <WagmiConfig config={wagmiConfig}>
       <RainbowKitProvider
-        theme={darkTheme({ borderRadius: "none" })}
+        theme={darkTheme({ borderRadius: "none", accentColor: "#FF0083" })}
         chains={chains}
         appInfo={{ appName: APP_NAME_CONF }}
         initialChain={activeChain}
