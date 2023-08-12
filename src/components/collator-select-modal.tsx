@@ -209,7 +209,7 @@ function SearchInput({ onChange = () => undefined }: { onChange?: (value: string
       <Image alt="Search" width={20} height={20} src="/images/search.svg" />
       <input
         className="h-full w-full bg-transparent text-xs font-light focus-visible:outline-none"
-        placeholder="search for a collator"
+        placeholder="Search for a collator"
         onChange={(e) => onChange(e.target.value)}
       />
     </div>
