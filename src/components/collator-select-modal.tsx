@@ -158,7 +158,7 @@ export default function CollatorSelectModal({
             key: "active",
             label: <span>Active Pool</span>,
             children: (
-              <div className="flex h-[40vh] flex-col gap-middle overflow-y-hidden">
+              <div className="flex flex-col gap-middle">
                 <div className="flex flex-col items-center gap-middle lg:flex-row lg:justify-between lg:gap-small">
                   <span className="text-xs font-light text-white/50">
                     These candidates are in the active collator pool of the current Session.
@@ -181,7 +181,7 @@ export default function CollatorSelectModal({
             key: "waiting",
             label: <span>Waiting Pool</span>,
             children: (
-              <div className="flex h-[40vh] flex-col gap-middle overflow-y-hidden">
+              <div className="flex flex-col gap-middle">
                 <SearchInput onChange={setKeyword} />
                 <Table
                   dataSource={dataSource}
@@ -209,7 +209,7 @@ function SearchInput({ onChange = () => undefined }: { onChange?: (value: string
       <Image alt="Search" width={20} height={20} src="/images/search.svg" />
       <input
         className="h-full w-full bg-transparent text-xs font-light focus-visible:outline-none"
-        placeholder="search for a collator"
+        placeholder="Search for a collator"
         onChange={(e) => onChange(e.target.value)}
       />
     </div>
