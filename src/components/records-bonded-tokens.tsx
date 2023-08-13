@@ -1,9 +1,9 @@
 import { useApp } from "@/hooks";
 import { StakingRecordsDataSource } from "@/types";
-import { formatBlanace, getChainConfig } from "@/utils";
+import { formatBlanace, getChainConfig, notifyTransaction } from "@/utils";
 import UnbondingTokenTooltip from "./unbonding-token-tooltip";
 import UnbondingDepositTooltip from "./unbonding-deposit-tooltip";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import ChangeBondButton from "./change-bond-button";
 import BondMoreRingModal from "./bond-more-ring-modal";
 import BondMoreKtonModal from "./bond-more-kton-modal";
@@ -12,19 +12,112 @@ import UnbondRingModal from "./unbond-ring-modal";
 import UnbondKtonModal from "./unbond-kton-modal";
 import UnbondDepositModal from "./unbond-deposit-modal";
 import Image from "next/image";
+import { writeContract, waitForTransaction } from "@wagmi/core";
+import { notification } from "./notification";
 
 export default function RecordsBondedTokens({ row }: { row: StakingRecordsDataSource }) {
+  const [ringBusy, setRingBusy] = useState(false);
+  const [depositBusy, setDepositBusy] = useState(false);
+  const [ktonBusy, setKtonBusy] = useState(false);
+
   const { activeChain } = useApp();
   const { nativeToken, ktonToken } = getChainConfig(activeChain);
+
+  const handleCancelUnbonding = useCallback(
+    async (ring: bigint, kton: bigint, depositIds: number[]) => {
+      if (ring > 0) {
+        setRingBusy(true);
+      } else if (kton > 0) {
+        setKtonBusy(true);
+      } else if (depositIds.length) {
+        setDepositBusy(true);
+      }
+      const { contract, explorer } = getChainConfig(activeChain);
+
+      try {
+        const contractAbi = (await import(`@/config/abi/${contract.staking.abiFile}`)).default;
+
+        const { hash } = await writeContract({
+          address: contract.staking.address,
+          abi: contractAbi,
+          functionName: "restake",
+          args: [ring, kton, depositIds],
+        });
+        const receipt = await waitForTransaction({ hash });
+
+        notifyTransaction(receipt, explorer);
+      } catch (err) {
+        console.error(err);
+        notification.error({ description: (err as Error).message });
+      }
+
+      if (ring > 0) {
+        setRingBusy(false);
+      } else if (kton > 0) {
+        setKtonBusy(false);
+      } else if (depositIds.length) {
+        setDepositBusy(false);
+      }
+    },
+    [activeChain]
+  );
+
+  const handleRelease = useCallback(
+    async (type: "ring" | "kton" | "deposit") => {
+      if (type === "ring") {
+        setRingBusy(true);
+      } else if (type === "kton") {
+        setKtonBusy(true);
+      } else {
+        setDepositBusy(true);
+      }
+      const { contract, explorer } = getChainConfig(activeChain);
+
+      try {
+        const contractAbi = (await import(`@/config/abi/${contract.staking.abiFile}`)).default;
+
+        const { hash } = await writeContract({
+          address: contract.staking.address,
+          abi: contractAbi,
+          functionName: "claim",
+          args: [],
+        });
+        const receipt = await waitForTransaction({ hash });
+
+        notifyTransaction(receipt, explorer);
+      } catch (err) {
+        console.error(err);
+        notification.error({ description: (err as Error).message });
+      }
+
+      if (type === "ring") {
+        setRingBusy(false);
+      } else if (type === "kton") {
+        setKtonBusy(false);
+      } else {
+        setDepositBusy(false);
+      }
+    },
+    [activeChain]
+  );
 
   return (
     <div className="flex flex-col">
       {/* ring */}
       <div className="flex items-center gap-small">
         {row.bondedTokens.unbondingRing.length > 0 ? (
-          <UnbondingTokenTooltip unbondings={row.bondedTokens.unbondingRing} token={nativeToken}>
-            <Image width={14} height={14} alt="Info" src="/images/info.svg" className="shrink-0" />
-          </UnbondingTokenTooltip>
+          ringBusy ? (
+            <BusyIcon />
+          ) : (
+            <UnbondingTokenTooltip
+              unbondings={row.bondedTokens.unbondingRing}
+              token={nativeToken}
+              onCancelUnbonding={handleCancelUnbonding}
+              onRelease={handleRelease}
+            >
+              <Image width={14} height={14} alt="Info" src="/images/info.svg" className="shrink-0" />
+            </UnbondingTokenTooltip>
+          )
         ) : (
           <div className="w-[14px] shrink-0" />
         )}
@@ -41,9 +134,18 @@ export default function RecordsBondedTokens({ row }: { row: StakingRecordsDataSo
       {/* deposit */}
       <div className="flex items-center gap-small">
         {row.bondedTokens.unbondingDeposits.length > 0 ? (
-          <UnbondingDepositTooltip unbondings={row.bondedTokens.unbondingDeposits} token={nativeToken}>
-            <Image width={14} height={14} alt="Info" src="/images/info.svg" className="shrink-0" />
-          </UnbondingDepositTooltip>
+          depositBusy ? (
+            <BusyIcon />
+          ) : (
+            <UnbondingDepositTooltip
+              unbondings={row.bondedTokens.unbondingDeposits}
+              token={nativeToken}
+              onCancelUnbonding={handleCancelUnbonding}
+              onRelease={handleRelease}
+            >
+              <Image width={14} height={14} alt="Info" src="/images/info.svg" className="shrink-0" />
+            </UnbondingDepositTooltip>
+          )
         ) : (
           <div className="w-[14px] shrink-0" />
         )}
@@ -61,9 +163,18 @@ export default function RecordsBondedTokens({ row }: { row: StakingRecordsDataSo
       {/* kton */}
       <div className="flex items-center gap-small">
         {row.bondedTokens.unbondingKton.length > 0 ? (
-          <UnbondingTokenTooltip unbondings={row.bondedTokens.unbondingKton} token={ktonToken || nativeToken}>
-            <Image width={14} height={14} alt="Info" src="/images/info.svg" className="shrink-0" />
-          </UnbondingTokenTooltip>
+          ktonBusy ? (
+            <BusyIcon />
+          ) : (
+            <UnbondingTokenTooltip
+              unbondings={row.bondedTokens.unbondingKton}
+              token={ktonToken || nativeToken}
+              onCancelUnbonding={handleCancelUnbonding}
+              onRelease={handleRelease}
+            >
+              <Image width={14} height={14} alt="Info" src="/images/info.svg" className="shrink-0" />
+            </UnbondingTokenTooltip>
+          )
         ) : (
           <div className="w-[14px] shrink-0" />
         )}
@@ -138,5 +249,11 @@ function UnbondDeposit() {
       <ChangeBondButton action="unbond" onClick={() => setIsOpen(true)} />
       <UnbondDepositModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
     </>
+  );
+}
+
+function BusyIcon() {
+  return (
+    <div className="h-[14px] w-[14px] shrink-0 animate-spin rounded-full border-2 border-b-white/50 border-l-white/50 border-r-white border-t-white" />
   );
 }
