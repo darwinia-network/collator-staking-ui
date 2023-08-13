@@ -61,7 +61,7 @@ export default function UnbondRingModal({
       isOpen={isOpen}
       symbol={nativeToken.symbol}
       decimals={nativeToken.decimals}
-      power={calcExtraPower(0n, inputAmount)}
+      power={calcExtraPower(inputAmount, 0n)}
       balance={stakedRing}
       busy={busy}
       disabled={inputAmount <= 0n}
