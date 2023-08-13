@@ -2,7 +2,7 @@ import { UnbondingInfo } from "@/types";
 import { formatBlanace, getChainConfig, notifyTransaction } from "@/utils";
 import { formatDistanceStrict } from "date-fns";
 import Tooltip from "./tooltip";
-import { PropsWithChildren, useCallback, useState } from "react";
+import { PropsWithChildren, useCallback } from "react";
 import { useApp } from "@/hooks";
 import EnsureMatchNetworkButton from "./ensure-match-network-button";
 import { notification } from "./notification";
@@ -37,14 +37,12 @@ function UnbondingDeposit({
   token: { symbol: string; decimals: number };
 }) {
   const { activeChain } = useApp();
-  const [busy, setBusy] = useState(false);
 
   const unexpiredUnbondings = unbondings.filter(({ isExpired }) => !isExpired);
   const expiredUnbondings = unbondings.filter(({ isExpired }) => isExpired);
 
   const handleCancelUnbonding = useCallback(
     async (depositId: number) => {
-      setBusy(true);
       const { contract, explorer } = getChainConfig(activeChain);
 
       try {
@@ -63,14 +61,11 @@ function UnbondingDeposit({
         console.error(err);
         notification.error({ description: (err as Error).message });
       }
-
-      setBusy(false);
     },
     [activeChain]
   );
 
   const handleRelease = useCallback(async () => {
-    setBusy(true);
     const { contract, explorer } = getChainConfig(activeChain);
 
     try {
@@ -89,8 +84,6 @@ function UnbondingDeposit({
       console.error(err);
       notification.error({ description: (err as Error).message });
     }
-
-    setBusy(false);
   }, [activeChain]);
 
   return (
@@ -109,7 +102,6 @@ function UnbondingDeposit({
                 Date.now()
               )}. `}
               <EnsureMatchNetworkButton
-                busy={busy}
                 className="font-bold text-primary"
                 onClick={() => handleCancelUnbonding(depositId)}
               >
@@ -129,7 +121,7 @@ function UnbondingDeposit({
               {`#${index + 1} ${formatBlanace(amount, token.decimals, { keepZero: false })} ${
                 token.symbol
               } has complete the unbonding exit delay period.  `}
-              <EnsureMatchNetworkButton busy={busy} className="text-primary" onClick={handleRelease}>
+              <EnsureMatchNetworkButton className="text-primary" onClick={handleRelease}>
                 Release them
               </EnsureMatchNetworkButton>
               {` to term deposit.`}

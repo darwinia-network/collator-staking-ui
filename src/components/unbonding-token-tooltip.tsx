@@ -2,7 +2,7 @@ import { UnbondingInfo } from "@/types";
 import { formatBlanace, getChainConfig, notifyTransaction } from "@/utils";
 import { formatDistanceStrict } from "date-fns";
 import Tooltip from "./tooltip";
-import { PropsWithChildren, useCallback, useState } from "react";
+import { PropsWithChildren, useCallback } from "react";
 import EnsureMatchNetworkButton from "./ensure-match-network-button";
 import { useApp } from "@/hooks";
 import { writeContract, waitForTransaction } from "@wagmi/core";
@@ -37,15 +37,12 @@ function UnbondingToken({
   token: { symbol: string; decimals: number };
 }) {
   const { activeChain } = useApp();
-  const [busy, setBusy] = useState(false);
 
   const unexpiredUnbondings = unbondings.filter(({ isExpired }) => !isExpired);
   const expiredUnbondings = unbondings.filter(({ isExpired }) => isExpired);
 
   const handleCancelUnbonding = useCallback(
     async (amount: bigint) => {
-      setBusy(true);
-
       const { contract, explorer } = getChainConfig(activeChain);
       const isKton = token.symbol.endsWith("KTON");
 
@@ -65,14 +62,11 @@ function UnbondingToken({
         console.error(err);
         notification.error({ description: (err as Error).message });
       }
-
-      setBusy(false);
     },
     [activeChain, token.symbol]
   );
 
   const handleRelease = useCallback(async () => {
-    setBusy(true);
     const { contract, explorer } = getChainConfig(activeChain);
 
     try {
@@ -91,8 +85,6 @@ function UnbondingToken({
       console.error(err);
       notification.error({ description: (err as Error).message });
     }
-
-    setBusy(false);
   }, [activeChain]);
 
   return (
@@ -108,7 +100,6 @@ function UnbondingToken({
                 token.symbol
               } is unbonding and will be released in ${formatDistanceStrict(expiredTimestamp, Date.now())}. `}
               <EnsureMatchNetworkButton
-                busy={busy}
                 className="font-bold text-primary"
                 onClick={() => handleCancelUnbonding(amount)}
               >
@@ -128,7 +119,7 @@ function UnbondingToken({
               {`#${index + 1} ${formatBlanace(amount, token.decimals, { keepZero: false })} ${
                 token.symbol
               } has complete the unbonding exit delay period. `}
-              <EnsureMatchNetworkButton busy={busy} className="text-primary" onClick={handleRelease}>
+              <EnsureMatchNetworkButton className="text-primary" onClick={handleRelease}>
                 Release them Now
               </EnsureMatchNetworkButton>
             </p>
