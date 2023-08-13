@@ -1,8 +1,12 @@
 import { UnbondingInfo } from "@/types";
-import { formatBlanace } from "@/utils";
+import { formatBlanace, getChainConfig, notifyTransaction } from "@/utils";
 import { formatDistanceStrict } from "date-fns";
 import Tooltip from "./tooltip";
-import { PropsWithChildren } from "react";
+import { PropsWithChildren, useCallback, useState } from "react";
+import { useApp } from "@/hooks";
+import EnsureMatchNetworkButton from "./ensure-match-network-button";
+import { notification } from "./notification";
+import { writeContract, waitForTransaction } from "@wagmi/core";
 
 export default function UnbondingDepositTooltip({
   children,
@@ -32,8 +36,62 @@ function UnbondingDeposit({
   unbondings: UnbondingInfo[];
   token: { symbol: string; decimals: number };
 }) {
+  const { activeChain } = useApp();
+  const [busy, setBusy] = useState(false);
+
   const unexpiredUnbondings = unbondings.filter(({ isExpired }) => !isExpired);
   const expiredUnbondings = unbondings.filter(({ isExpired }) => isExpired);
+
+  const handleCancelUnbonding = useCallback(
+    async (depositId: number) => {
+      setBusy(true);
+      const { contract, explorer } = getChainConfig(activeChain);
+
+      try {
+        const contractAbi = (await import(`@/config/abi/${contract.staking.abiFile}`)).default;
+
+        const { hash } = await writeContract({
+          address: contract.staking.address,
+          abi: contractAbi,
+          functionName: "restake",
+          args: [0n, 0n, [depositId]],
+        });
+        const receipt = await waitForTransaction({ hash });
+
+        notifyTransaction(receipt, explorer);
+      } catch (err) {
+        console.error(err);
+        notification.error({ description: (err as Error).message });
+      }
+
+      setBusy(false);
+    },
+    [activeChain]
+  );
+
+  const handleRelease = useCallback(async () => {
+    setBusy(true);
+    const { contract, explorer } = getChainConfig(activeChain);
+
+    try {
+      const contractAbi = (await import(`@/config/abi/${contract.staking.abiFile}`)).default;
+
+      const { hash } = await writeContract({
+        address: contract.staking.address,
+        abi: contractAbi,
+        functionName: "claim",
+        args: [],
+      });
+      const receipt = await waitForTransaction({ hash });
+
+      notifyTransaction(receipt, explorer);
+    } catch (err) {
+      console.error(err);
+      notification.error({ description: (err as Error).message });
+    }
+
+    setBusy(false);
+  }, [activeChain]);
 
   return (
     <div className="flex flex-col gap-middle lg:p-middle">
@@ -50,9 +108,13 @@ function UnbondingDeposit({
                 expiredTimestamp,
                 Date.now()
               )}. `}
-              <span className="font-bold text-primary transition-opacity hover:cursor-pointer hover:opacity-80 active:opacity-60">
+              <EnsureMatchNetworkButton
+                busy={busy}
+                className="font-bold text-primary"
+                onClick={() => handleCancelUnbonding(depositId)}
+              >
                 Cancel Unbonding
-              </span>
+              </EnsureMatchNetworkButton>
             </p>
           ))}
         </div>
@@ -67,9 +129,9 @@ function UnbondingDeposit({
               {`#${index + 1} ${formatBlanace(amount, token.decimals, { keepZero: false })} ${
                 token.symbol
               } has complete the unbonding exit delay period.  `}
-              <span className="text-primary transition-opacity hover:cursor-pointer hover:opacity-80 active:opacity-60">
+              <EnsureMatchNetworkButton busy={busy} className="text-primary" onClick={handleRelease}>
                 Release them
-              </span>
+              </EnsureMatchNetworkButton>
               {` to term deposit.`}
             </p>
           ))}
