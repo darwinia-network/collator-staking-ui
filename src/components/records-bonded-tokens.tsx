@@ -11,6 +11,7 @@ import BondMoreDepositModal from "./bond-more-deposit-modal";
 import UnbondRingModal from "./unbond-ring-modal";
 import UnbondKtonModal from "./unbond-kton-modal";
 import UnbondDepositModal from "./unbond-deposit-modal";
+import Image from "next/image";
 
 export default function RecordsBondedTokens({ row }: { row: StakingRecordsDataSource }) {
   const { activeChain } = useApp();
@@ -20,11 +21,16 @@ export default function RecordsBondedTokens({ row }: { row: StakingRecordsDataSo
     <div className="flex flex-col">
       {/* ring */}
       <div className="flex items-center gap-small">
-        <UnbondingTokenTooltip unbondings={row.bondedTokens.unbondingRing} token={nativeToken}>
-          <span className={`truncate ${row.bondedTokens.unbondingRing.length > 0 ? "text-white/50" : "text-white"}`}>
-            {formatBlanace(row.bondedTokens.stakedRing, nativeToken.decimals, { keepZero: false })} {nativeToken.symbol}
-          </span>
-        </UnbondingTokenTooltip>
+        {row.bondedTokens.unbondingRing.length > 0 ? (
+          <UnbondingTokenTooltip unbondings={row.bondedTokens.unbondingRing} token={nativeToken}>
+            <Image width={14} height={14} alt="Info" src="/images/info.svg" className="shrink-0" />
+          </UnbondingTokenTooltip>
+        ) : (
+          <div className="w-[14px] shrink-0" />
+        )}
+        <span className={`truncate ${row.bondedTokens.unbondingRing.length > 0 ? "text-white/50" : "text-white"}`}>
+          {formatBlanace(row.bondedTokens.stakedRing, nativeToken.decimals, { keepZero: false })} {nativeToken.symbol}
+        </span>
         {row.collator.length > 0 && (
           <>
             <BondMoreRing />
@@ -34,14 +40,17 @@ export default function RecordsBondedTokens({ row }: { row: StakingRecordsDataSo
       </div>
       {/* deposit */}
       <div className="flex items-center gap-small">
-        <UnbondingDepositTooltip unbondings={row.bondedTokens.unbondingDeposits} token={nativeToken}>
-          <span
-            className={`truncate ${row.bondedTokens.unbondingDeposits.length > 0 ? "text-white/50" : "text-white"}`}
-          >
-            {formatBlanace(row.bondedTokens.totalOfDepositsInStaking, nativeToken.decimals, { keepZero: false })}{" "}
-            Deposit {nativeToken.symbol}
-          </span>
-        </UnbondingDepositTooltip>
+        {row.bondedTokens.unbondingDeposits.length > 0 ? (
+          <UnbondingDepositTooltip unbondings={row.bondedTokens.unbondingDeposits} token={nativeToken}>
+            <Image width={14} height={14} alt="Info" src="/images/info.svg" className="shrink-0" />
+          </UnbondingDepositTooltip>
+        ) : (
+          <div className="w-[14px] shrink-0" />
+        )}
+        <span className={`truncate ${row.bondedTokens.unbondingDeposits.length > 0 ? "text-white/50" : "text-white"}`}>
+          {formatBlanace(row.bondedTokens.totalOfDepositsInStaking, nativeToken.decimals, { keepZero: false })} Deposit{" "}
+          {nativeToken.symbol}
+        </span>
         {row.collator.length > 0 && (
           <>
             <BondMoreDeposit />
@@ -51,11 +60,16 @@ export default function RecordsBondedTokens({ row }: { row: StakingRecordsDataSo
       </div>
       {/* kton */}
       <div className="flex items-center gap-small">
-        <UnbondingTokenTooltip unbondings={row.bondedTokens.unbondingKton} token={ktonToken || nativeToken}>
-          <span className={`truncate ${row.bondedTokens.unbondingKton.length > 0 ? "text-white/50" : "text-white"}`}>
-            {formatBlanace(row.bondedTokens.stakedKton, ktonToken?.decimals, { keepZero: false })} {ktonToken?.symbol}
-          </span>
-        </UnbondingTokenTooltip>
+        {row.bondedTokens.unbondingKton.length > 0 ? (
+          <UnbondingTokenTooltip unbondings={row.bondedTokens.unbondingKton} token={ktonToken || nativeToken}>
+            <Image width={14} height={14} alt="Info" src="/images/info.svg" className="shrink-0" />
+          </UnbondingTokenTooltip>
+        ) : (
+          <div className="w-[14px] shrink-0" />
+        )}
+        <span className={`truncate ${row.bondedTokens.unbondingKton.length > 0 ? "text-white/50" : "text-white"}`}>
+          {formatBlanace(row.bondedTokens.stakedKton, ktonToken?.decimals, { keepZero: false })} {ktonToken?.symbol}
+        </span>
         {row.collator.length > 0 && (
           <>
             <BondMoreKton />
