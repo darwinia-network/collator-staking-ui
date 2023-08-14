@@ -36,13 +36,18 @@ const columns: ColumnType<DataSource>[] = [
           height={16}
           src="/images/copy.svg"
           className="transition-transform hover:scale-105 hover:cursor-pointer active:scale-95"
-          onClick={(e) => {
+          onClick={async (e) => {
             e.stopPropagation();
-            notification.success({
-              title: "Copy address successfully",
-              disabledCloseBtn: true,
-              duration: 3000,
-            });
+            try {
+              await navigator.clipboard.writeText(row.collator);
+              notification.success({
+                title: "Copy address successfully",
+                disabledCloseBtn: true,
+                duration: 3000,
+              });
+            } catch (err) {
+              console.error(err);
+            }
           }}
         />
       </div>
