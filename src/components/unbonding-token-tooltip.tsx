@@ -3,18 +3,32 @@ import { formatBlanace } from "@/utils";
 import { formatDistanceStrict } from "date-fns";
 import Tooltip from "./tooltip";
 import { PropsWithChildren } from "react";
+import EnsureMatchNetworkButton from "./ensure-match-network-button";
+
+interface Props {
+  unbondings: Omit<UnbondingInfo, "depositId">[];
+  token: { symbol: string; decimals: number };
+  onCancelUnbonding: (ring: bigint, kton: bigint, depositIds: number[]) => Promise<void>;
+  onRelease: (type: "ring" | "kton" | "deposit") => Promise<void>;
+}
 
 export default function UnbondingTokenTooltip({
   children,
   unbondings,
   token,
-}: PropsWithChildren<{
-  unbondings: Omit<UnbondingInfo, "depositId">[];
-  token: { symbol: string; decimals: number };
-}>) {
+  onCancelUnbonding,
+  onRelease,
+}: PropsWithChildren<Props>) {
   return (
     <Tooltip
-      content={<UnbondingToken unbondings={unbondings} token={token} />}
+      content={
+        <UnbondingToken
+          unbondings={unbondings}
+          token={token}
+          onCancelUnbonding={onCancelUnbonding}
+          onRelease={onRelease}
+        />
+      }
       className="w-fit"
       contentClassName="w-11/12 lg:w-96 overflow-y-auto max-h-[40vh]"
       enabled={unbondings.length > 0}
@@ -25,15 +39,10 @@ export default function UnbondingTokenTooltip({
   );
 }
 
-function UnbondingToken({
-  unbondings,
-  token,
-}: {
-  unbondings: Omit<UnbondingInfo, "depositId">[];
-  token: { symbol: string; decimals: number };
-}) {
+function UnbondingToken({ unbondings, token, onCancelUnbonding, onRelease }: Props) {
   const unexpiredUnbondings = unbondings.filter(({ isExpired }) => !isExpired);
   const expiredUnbondings = unbondings.filter(({ isExpired }) => isExpired);
+  const isKton = token.symbol.endsWith("KTON");
 
   return (
     <div className="flex flex-col gap-middle lg:p-middle">
@@ -47,9 +56,12 @@ function UnbondingToken({
               {`#${index + 1} ${formatBlanace(amount, token.decimals, { keepZero: false })} ${
                 token.symbol
               } is unbonding and will be released in ${formatDistanceStrict(expiredTimestamp, Date.now())}. `}
-              <span className="font-bold text-primary transition-opacity hover:cursor-pointer hover:opacity-80 active:opacity-60">
+              <EnsureMatchNetworkButton
+                className="font-bold text-primary"
+                onClick={() => onCancelUnbonding(isKton ? 0n : amount, isKton ? amount : 0n, [])}
+              >
                 Cancel Unbonding
-              </span>
+              </EnsureMatchNetworkButton>
             </p>
           ))}
         </div>
@@ -64,9 +76,9 @@ function UnbondingToken({
               {`#${index + 1} ${formatBlanace(amount, token.decimals, { keepZero: false })} ${
                 token.symbol
               } has complete the unbonding exit delay period. `}
-              <span className="text-primary transition-opacity hover:cursor-pointer hover:opacity-80 active:opacity-60">
+              <EnsureMatchNetworkButton className="text-primary" onClick={() => onRelease(isKton ? "kton" : "ring")}>
                 Release them Now
-              </span>
+              </EnsureMatchNetworkButton>
             </p>
           ))}
         </div>

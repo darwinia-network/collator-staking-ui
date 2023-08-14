@@ -3,18 +3,32 @@ import { formatBlanace } from "@/utils";
 import { formatDistanceStrict } from "date-fns";
 import Tooltip from "./tooltip";
 import { PropsWithChildren } from "react";
+import EnsureMatchNetworkButton from "./ensure-match-network-button";
+
+interface Props {
+  unbondings: UnbondingInfo[];
+  token: { symbol: string; decimals: number };
+  onCancelUnbonding: (ring: bigint, kton: bigint, depositIds: number[]) => Promise<void>;
+  onRelease: (type: "ring" | "kton" | "deposit") => Promise<void>;
+}
 
 export default function UnbondingDepositTooltip({
   children,
   unbondings,
   token,
-}: PropsWithChildren<{
-  unbondings: UnbondingInfo[];
-  token: { symbol: string; decimals: number };
-}>) {
+  onCancelUnbonding,
+  onRelease,
+}: PropsWithChildren<Props>) {
   return (
     <Tooltip
-      content={<UnbondingDeposit unbondings={unbondings} token={token} />}
+      content={
+        <UnbondingDeposit
+          unbondings={unbondings}
+          token={token}
+          onCancelUnbonding={onCancelUnbonding}
+          onRelease={onRelease}
+        />
+      }
       className="w-fit"
       contentClassName="w-11/12 lg:w-80 overflow-y-auto max-h-[40vh]"
       enabled={unbondings.length > 0}
@@ -25,13 +39,7 @@ export default function UnbondingDepositTooltip({
   );
 }
 
-function UnbondingDeposit({
-  unbondings,
-  token,
-}: {
-  unbondings: UnbondingInfo[];
-  token: { symbol: string; decimals: number };
-}) {
+function UnbondingDeposit({ unbondings, token, onCancelUnbonding, onRelease }: Props) {
   const unexpiredUnbondings = unbondings.filter(({ isExpired }) => !isExpired);
   const expiredUnbondings = unbondings.filter(({ isExpired }) => isExpired);
 
@@ -50,9 +58,12 @@ function UnbondingDeposit({
                 expiredTimestamp,
                 Date.now()
               )}. `}
-              <span className="font-bold text-primary transition-opacity hover:cursor-pointer hover:opacity-80 active:opacity-60">
+              <EnsureMatchNetworkButton
+                className="font-bold text-primary"
+                onClick={() => onCancelUnbonding(0n, 0n, [depositId])}
+              >
                 Cancel Unbonding
-              </span>
+              </EnsureMatchNetworkButton>
             </p>
           ))}
         </div>
@@ -67,9 +78,9 @@ function UnbondingDeposit({
               {`#${index + 1} ${formatBlanace(amount, token.decimals, { keepZero: false })} ${
                 token.symbol
               } has complete the unbonding exit delay period.  `}
-              <span className="text-primary transition-opacity hover:cursor-pointer hover:opacity-80 active:opacity-60">
+              <EnsureMatchNetworkButton className="text-primary" onClick={() => onRelease("deposit")}>
                 Release them
-              </span>
+              </EnsureMatchNetworkButton>
               {` to term deposit.`}
             </p>
           ))}

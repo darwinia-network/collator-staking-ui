@@ -37,7 +37,7 @@ export default function StakingRecords() {
     {
       key: "collator",
       dataIndex: "collator",
-      width: "24%",
+      width: "22%",
       title: <span>Collator</span>,
       render: (row) => {
         if (row.collator) {
@@ -108,7 +108,7 @@ export default function StakingRecords() {
     {
       key: "bondedTokens",
       dataIndex: "bondedTokens",
-      width: "30%",
+      width: "32%",
       title: <span>Your bonded tokens</span>,
       render: (row) => <RecordsBondedTokens row={row} />,
     },

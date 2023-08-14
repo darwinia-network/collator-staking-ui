@@ -376,7 +376,7 @@ export function StakingProvider({ children }: PropsWithChildren<unknown>) {
             const ledgerData = ledgerOpt.unwrap().toJSON() as unknown as DarwiniaStakingLedger;
             const now = Date.now();
 
-            const _unbondingDeposits = (ledgerData.unstakingRing || []).map(([depositId, lastBlockNumber]) => {
+            const _unbondingDeposits = (ledgerData.unstakingDeposits || []).map(([depositId, lastBlockNumber]) => {
               const blocksLeft = lastBlockNumber - blockNumber;
               const secondsLeft = blocksLeft * secondsPerBlock;
 
