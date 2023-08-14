@@ -21,7 +21,10 @@ export default function User() {
   const { disconnect } = useDisconnect();
   const { openConnectModal } = useConnectModal();
 
-  const isCollator = address && collatorCommission[address] ? true : false;
+  const isCollator =
+    address && Object.keys(collatorCommission).some((addr) => addr.toLowerCase() === address.toLowerCase())
+      ? true
+      : false;
 
   return address ? (
     <>
