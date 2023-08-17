@@ -39,11 +39,8 @@ export default function JoinCollatorModal({
             ? clientBuilder.buildCrabClient(publicClient)
             : clientBuilder.buildDarwiniaClient(publicClient);
 
-        // we appended 00 to the session key to represent that we don't need any proof. Originally the setKeys method
-        // required two params which are session key and proof but here we append both values into one param
-        const proof = `${sessionKey}00` as `0x${string}`;
-        const sessionKeyCall = client.calls.session.buildSetKeysCallH(proof);
-        const commissionCall = client.calls.darwiniaStaking.buildCollectCall(commission);
+        const sessionKeyCall = client.calls.session.buildSetKeysCall(sessionKey, new Uint8Array());
+        const commissionCall = client.calls.darwiniaStaking.buildCollectCall(commissionValue * 10000000);
         const receipt = await client.calls.utility.batchAll(walletClient, [sessionKeyCall, commissionCall]);
 
         if (receipt.status === "success") {
