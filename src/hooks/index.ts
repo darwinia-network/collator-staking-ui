@@ -8,3 +8,4 @@ export * from "./use-deposits";
 export * from "./use-nominator-collators";
 export * from "./use-collator-nominators";
 export * from "./use-collator-commission";
+export * from "./use-collator-power";
