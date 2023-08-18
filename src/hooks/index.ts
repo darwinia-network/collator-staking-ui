@@ -11,3 +11,4 @@ export * from "./use-collator-commission";
 export * from "./use-collator-power";
 export * from "./use-pool";
 export * from "./use-active-collators";
+export * from "./use-collator-last-session-blocks";
