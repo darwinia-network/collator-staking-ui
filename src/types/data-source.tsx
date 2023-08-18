@@ -8,7 +8,7 @@ export interface StakingRecordsDataSource {
   bondedTokens: {
     stakedRing: bigint;
     stakedKton: bigint;
-    totalOfDepositsInStaking: bigint;
+    stakedDeposit: bigint;
     unbondingRing: Omit<UnbondingInfo, "depositId">[];
     unbondingKton: Omit<UnbondingInfo, "depositId">[];
     unbondingDeposits: UnbondingInfo[];

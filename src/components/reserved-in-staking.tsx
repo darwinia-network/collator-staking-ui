@@ -4,7 +4,7 @@ import Image from "next/image";
 import CountLoading from "./count-loading";
 
 export default function ReservedInStaking() {
-  const { stakedRing, stakedKton, totalOfDepositsInStaking, isLedgersInitialized } = useStaking();
+  const { stakedRing, stakedKton, stakedDeposit, isLedgersInitialized } = useStaking();
   const { activeChain } = useApp();
 
   const { nativeToken, ktonToken } = getChainConfig(activeChain);
@@ -17,9 +17,9 @@ export default function ReservedInStaking() {
         symbol={nativeToken.symbol}
         decimals={nativeToken.decimals}
         logoPath={nativeToken.logoPath}
-        bonded={stakedRing + totalOfDepositsInStaking}
+        bonded={stakedRing + stakedDeposit}
         loading={!isLedgersInitialized}
-        inDeposit={totalOfDepositsInStaking}
+        inDeposit={stakedDeposit}
         isNative
       />
       <div className="h-[1px] bg-white/20" />

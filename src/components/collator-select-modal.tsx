@@ -98,9 +98,9 @@ export default function CollatorSelectModal({
     nominatorCollators,
     collatorCommission,
     collatorLastSessionBlocks,
-    collatorNominators,
+    collatorPower,
     activeCollators,
-    isCollatorNominatorsInitialized,
+    isCollatorPowerInitialized,
     isCollatorLastSessionBlocksInitialized,
     isCollatorCommissionInitialized,
     isNominatorCollatorsInitialized,
@@ -122,14 +122,14 @@ export default function CollatorSelectModal({
       .map((collator) => ({
         key: collator,
         collator,
-        power: collatorNominators[collator]?.totalStakedPower || 0n,
+        power: collatorPower[collator] || 0n,
         commission: collatorCommission[collator] || "-",
         blocks: collatorLastSessionBlocks[collator] || -1,
       }));
-  }, [activeCollators, activeKey, collatorCommission, collatorLastSessionBlocks, collatorNominators, deferredKeyword]);
+  }, [activeCollators, activeKey, collatorCommission, collatorLastSessionBlocks, collatorPower, deferredKeyword]);
 
   const loading =
-    !isCollatorNominatorsInitialized ||
+    !isCollatorPowerInitialized ||
     !isCollatorLastSessionBlocksInitialized ||
     !isCollatorCommissionInitialized ||
     !isNominatorCollatorsInitialized ||
