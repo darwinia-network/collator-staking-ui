@@ -10,3 +10,4 @@ export * from "./use-collator-nominators";
 export * from "./use-collator-commission";
 export * from "./use-collator-power";
 export * from "./use-pool";
+export * from "./use-active-collators";
