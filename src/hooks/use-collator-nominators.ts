@@ -47,5 +47,5 @@ export const useCollatorNominators = (defaultValue: DefaultValue) => {
     return () => sub$$.unsubscribe();
   }, [updateCollatorNominators]);
 
-  return { collatorNominators, isCollatorNominatorsInitialized, updateCollatorNominators };
+  return { collatorNominators, isCollatorNominatorsInitialized };
 };
