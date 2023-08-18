@@ -150,7 +150,7 @@ export default function RecordsBondedTokens({ row }: { row: StakingRecordsDataSo
           <div className="w-[14px] shrink-0" />
         )}
         <span className={`truncate ${row.bondedTokens.unbondingDeposits.length > 0 ? "text-white/50" : "text-white"}`}>
-          {formatBlanace(row.bondedTokens.totalOfDepositsInStaking, nativeToken.decimals, { keepZero: false })} Deposit{" "}
+          {formatBlanace(row.bondedTokens.stakedDeposit, nativeToken.decimals, { keepZero: false })} Deposit{" "}
           {nativeToken.symbol}
         </span>
         {row.collator.length > 0 && (

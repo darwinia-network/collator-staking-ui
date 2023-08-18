@@ -20,7 +20,7 @@ export default function StakingRecords() {
     power,
     stakedRing,
     stakedKton,
-    totalOfDepositsInStaking,
+    stakedDeposit,
     unbondingRing,
     unbondingKton,
     unbondingDeposits,
@@ -136,7 +136,7 @@ export default function StakingRecords() {
     const hasStaking =
       stakedRing > 0 ||
       stakedKton > 0 ||
-      totalOfDepositsInStaking > 0 ||
+      stakedDeposit > 0 ||
       unbondingRing.length > 0 ||
       unbondingKton.length > 0 ||
       unbondingDeposits.length > 0;
@@ -152,7 +152,7 @@ export default function StakingRecords() {
           bondedTokens: {
             stakedRing,
             stakedKton,
-            totalOfDepositsInStaking,
+            stakedDeposit,
             unbondingRing,
             unbondingKton,
             unbondingDeposits,
@@ -169,7 +169,7 @@ export default function StakingRecords() {
     power,
     stakedRing,
     stakedKton,
-    totalOfDepositsInStaking,
+    stakedDeposit,
     unbondingRing,
     unbondingKton,
     unbondingDeposits,

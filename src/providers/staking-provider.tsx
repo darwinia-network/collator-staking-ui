@@ -18,7 +18,7 @@ interface StakingCtx {
   ktonPool: bigint;
   stakedRing: bigint;
   stakedKton: bigint;
-  totalOfDepositsInStaking: bigint;
+  stakedDeposit: bigint;
   activeCollators: string[];
   collatorCommission: { [collator: string]: string | undefined };
   collatorLastSessionBlocks: { [collator: string]: number | undefined };
@@ -62,7 +62,7 @@ const defaultValue: StakingCtx = {
   ktonPool: 0n,
   stakedRing: 0n,
   stakedKton: 0n,
-  totalOfDepositsInStaking: 0n,
+  stakedDeposit: 0n,
   activeCollators: [],
   collatorCommission: {},
   collatorLastSessionBlocks: {},
@@ -100,7 +100,7 @@ export function StakingProvider({ children }: PropsWithChildren<unknown>) {
   const [ktonPool, setKtonPool] = useState(defaultValue.ktonPool);
   const [stakedRing, setStakedRing] = useState(defaultValue.stakedRing);
   const [stakedKton, setStakedKton] = useState(defaultValue.stakedKton);
-  const [totalOfDepositsInStaking, setTotalOfDepositsInStaking] = useState(defaultValue.totalOfDepositsInStaking);
+  const [stakedDeposit, setStakedDeposit] = useState(defaultValue.stakedDeposit);
   const [activeCollators, setActiveCollators] = useState(defaultValue.activeCollators);
   const [collatorCommission, setCollatorCommission] = useState(defaultValue.collatorCommission);
   const [collatorLastSessionBlocks, setCollatorLastSessionBlocks] = useState(defaultValue.collatorLastSessionBlocks);
@@ -144,8 +144,8 @@ export function StakingProvider({ children }: PropsWithChildren<unknown>) {
   const { activeChain } = useApp();
 
   const power = useMemo(
-    () => stakingToPower(stakedRing + totalOfDepositsInStaking, stakedKton, ringPool, ktonPool),
-    [stakedRing, stakedKton, ringPool, ktonPool, totalOfDepositsInStaking]
+    () => stakingToPower(stakedRing + stakedDeposit, stakedKton, ringPool, ktonPool),
+    [stakedRing, stakedKton, ringPool, ktonPool, stakedDeposit]
   );
 
   const calcExtraPower = useCallback(
@@ -413,7 +413,7 @@ export function StakingProvider({ children }: PropsWithChildren<unknown>) {
               };
             });
 
-            setTotalOfDepositsInStaking(
+            setStakedDeposit(
               deposits
                 .filter(({ id }) => ledgerData.stakedDeposits?.includes(id))
                 .reduce((acc, cur) => acc + cur.value, 0n)
@@ -427,7 +427,7 @@ export function StakingProvider({ children }: PropsWithChildren<unknown>) {
             setUnbondingKton(_unbondingKton);
             setUnbondingDeposits(_unbondingDeposits);
           } else {
-            setTotalOfDepositsInStaking(0n);
+            setStakedDeposit(0n);
             setStakedDeposits([]);
             setStakedRing(0n);
             setStakedKton(0n);
@@ -440,7 +440,7 @@ export function StakingProvider({ children }: PropsWithChildren<unknown>) {
         complete: () => setIsLedgersInitialized(true),
       });
     } else {
-      setTotalOfDepositsInStaking(0n);
+      setStakedDeposit(0n);
       setStakedDeposits([]);
       setStakedRing(0n);
       setStakedKton(0n);
@@ -474,7 +474,7 @@ export function StakingProvider({ children }: PropsWithChildren<unknown>) {
         ktonPool,
         stakedRing,
         stakedKton,
-        totalOfDepositsInStaking,
+        stakedDeposit,
         activeCollators,
         collatorCommission,
         collatorLastSessionBlocks,
