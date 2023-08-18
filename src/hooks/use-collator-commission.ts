@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useApi } from "./use-api";
 import { EMPTY, from } from "rxjs";
 
@@ -40,6 +40,11 @@ export const useCollatorCommission = (defaultValue: DefaultValue) => {
       return EMPTY.subscribe();
     }
   }, [polkadotApi]);
+
+  useEffect(() => {
+    const sub$$ = updateCollatorCommission();
+    return () => sub$$.unsubscribe();
+  }, [updateCollatorCommission]);
 
   return { collatorCommission, isCollatorCommissionInitialized, isCollatorCommissionLoading, updateCollatorCommission };
 };

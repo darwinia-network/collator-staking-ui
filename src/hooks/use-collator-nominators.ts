@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useApi } from "./use-api";
 import { EMPTY, from } from "rxjs";
 import type { Option, StorageKey } from "@polkadot/types";
@@ -41,6 +41,11 @@ export const useCollatorNominators = (defaultValue: DefaultValue) => {
       return EMPTY.subscribe();
     }
   }, [polkadotApi]);
+
+  useEffect(() => {
+    const sub$$ = updateCollatorNominators();
+    return () => sub$$.unsubscribe();
+  }, [updateCollatorNominators]);
 
   return { collatorNominators, isCollatorNominatorsInitialized, updateCollatorNominators };
 };
