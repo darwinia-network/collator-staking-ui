@@ -35,6 +35,7 @@ interface StakingCtx {
   unbondingKton: Omit<UnbondingInfo, "depositId">[];
   unbondingDeposits: UnbondingInfo[];
   minimumDeposit: bigint;
+  maxCommission: number;
 
   isLedgersInitialized: boolean;
   isDepositsInitialized: boolean;
@@ -74,6 +75,7 @@ const defaultValue: StakingCtx = {
   unbondingKton: [],
   unbondingDeposits: [],
   minimumDeposit: 0n,
+  maxCommission: 100, // 100%
 
   isLedgersInitialized: false,
   isDepositsInitialized: false,
@@ -99,6 +101,7 @@ export const StakingContext = createContext(defaultValue);
 export function StakingProvider({ children }: PropsWithChildren<unknown>) {
   const { polkadotApi } = useApi();
   const [minimumDeposit, setMinimumDeposit] = useState(defaultValue.minimumDeposit);
+  const [maxCommission, setMaxCommission] = useState(defaultValue.maxCommission);
 
   const { collatorLastSessionBlocks, isCollatorLastSessionBlocksInitialized } =
     useCollatorLastSessionBlocks(defaultValue);
@@ -141,6 +144,7 @@ export function StakingProvider({ children }: PropsWithChildren<unknown>) {
 
   useEffect(() => {
     setMinimumDeposit(BigInt(polkadotApi?.consts.deposit.minLockingAmount.toString() || 0));
+    setMaxCommission(Number(polkadotApi?.consts.darwiniaStaking.maxCommission?.toJSON() || 1000000000) / 10000000);
   }, [polkadotApi]);
 
   return (
@@ -164,6 +168,7 @@ export function StakingProvider({ children }: PropsWithChildren<unknown>) {
         unbondingKton,
         unbondingDeposits,
         minimumDeposit,
+        maxCommission,
 
         isLedgersInitialized,
         isDepositsInitialized,

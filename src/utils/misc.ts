@@ -8,16 +8,14 @@ export const stakingToPower = (
   ringPool: bigint,
   ktonPool: bigint
 ): bigint => {
-  if (ringPool > 0) {
-    /**
-     * Power calculation formula is
-     * (stakingRing + (stakingKton * (ringPool / ktonPool))) / (ringPool * 2) * 1000000000
-     */
-    const divider = ktonPool === 0n ? 0n : ringPool / ktonPool;
-    return (1000000000n * (stakingRing + stakingKton * divider)) / (ringPool * 2n);
-  }
+  /**
+   * power calculation formula comes from
+   * https://github.com/darwinia-network/darwinia/blob/2f0941d6f2a896bac2900d7c3f2d17a46ca6948b/pallet/staking/src/lib.rs#L778-L802
+   */
+  const ringPower = ringPool > 0 ? (500000000n * stakingRing) / ringPool : 0n;
+  const ktonPower = ktonPool > 0 ? (500000000n * stakingKton) / ktonPool : 0n;
 
-  return 0n;
+  return ringPower + ktonPower;
 };
 
 export const calcKtonReward = (depositRing: bigint, depositMonths: number) => {
