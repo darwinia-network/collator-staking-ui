@@ -11,6 +11,7 @@ import RecordsActionButton from "./records-action-button";
 type DataSource = DepositRecordsDataSource;
 
 export default function DepositRecords() {
+  const [currentPage, setCurrentPage] = useState(0);
   const [openWithdraw, setOpenWithdraw] = useState<{ type: WithdrawType; deposit: Deposit } | null>(null);
   const { deposits, isDepositsInitialized } = useStaking();
   const { activeChain } = useApp();
@@ -111,14 +112,22 @@ export default function DepositRecords() {
     },
   ];
 
+  const pageSize = 10;
+
   return (
     <>
       <div className="flex flex-col gap-large bg-component p-5">
         <h5 className="text-sm font-bold text-white">Active Deposit Records</h5>
         <Table
           columns={columns}
-          dataSource={deposits.map((item) => ({ ...item, key: item.id }))}
+          dataSource={deposits
+            .slice(currentPage * pageSize, currentPage * pageSize + pageSize)
+            .map((item) => ({ ...item, key: item.id }))}
           loading={!isDepositsInitialized}
+          total={deposits.length}
+          pageSize={pageSize}
+          currentPage={currentPage}
+          onPageChange={setCurrentPage}
         />
       </div>
       <WithdrawModal
