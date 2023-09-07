@@ -49,8 +49,8 @@ export default function StakingRecords() {
                 <Tooltip
                   content={
                     <span className="text-xs font-light text-white">
-                      This collator is currently in the waiting pool. The rewards will not be earned until the collator
-                      joins the active pool.
+                      This collator is currently not in the active pool. The rewards will not be earned until the
+                      collator joins the active pool.
                     </span>
                   }
                   className="w-fit shrink-0"
