@@ -27,7 +27,7 @@ export default function ManageCollator({
   const publicClient = usePublicClient();
   const { data: walletClient } = useWalletClient();
   const { activeChain } = useApp();
-  const { updateCollatorCommission } = useStaking();
+  const { maxCommission, updateCollatorCommission } = useStaking();
 
   const [activeKey, setActiveKey] = useState(TabKey.UPDATE_SESSION_KEY);
   const [sessionKey, setSessionKey] = useState("");
@@ -70,8 +70,8 @@ export default function ManageCollator({
   const handleUpdateCommission = useCallback(async () => {
     const commissionValue = Number(commission);
 
-    if (Number.isNaN(commissionValue) || commissionValue < 0 || 100 < commissionValue) {
-      notification.error({ description: "Invalid commission, please enter 0~100." });
+    if (Number.isNaN(commissionValue) || commissionValue < 0 || maxCommission < commissionValue) {
+      notification.error({ description: `Invalid commission, the valid commission is 0%~${maxCommission}%.` });
     } else {
       setBusy(true);
 
@@ -99,7 +99,7 @@ export default function ManageCollator({
 
       setBusy(false);
     }
-  }, [commission, contract.staking, explorer, updateCollatorCommission, onClose]);
+  }, [commission, contract.staking, explorer, maxCommission, updateCollatorCommission, onClose]);
 
   const handleStopCollator = useCallback(async () => {
     setBusy(true);
@@ -160,7 +160,7 @@ export default function ManageCollator({
               <div className="flex flex-col gap-large">
                 <CollatorInput
                   label="Commission (%)"
-                  placeholder="Commission"
+                  placeholder={`Please enter 0~${maxCommission}`}
                   suffix="%"
                   tooltip="The percent a collator takes off the top of the due staking rewards."
                   onChange={setCommission}

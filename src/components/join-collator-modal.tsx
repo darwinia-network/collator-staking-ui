@@ -18,7 +18,7 @@ export default function JoinCollatorModal({
   const publicClient = usePublicClient();
   const { data: walletClient } = useWalletClient();
   const { activeChain } = useApp();
-  const { isCollatorCommissionLoading, updateCollatorCommission } = useStaking();
+  const { maxCommission, isCollatorCommissionLoading, updateCollatorCommission } = useStaking();
 
   const [sessionKey, setSessionKey] = useState("");
   const [commission, setCommission] = useState("");
@@ -26,11 +26,11 @@ export default function JoinCollatorModal({
 
   const handleJoin = useCallback(async () => {
     const commissionValue = Number(commission);
+    const { explorer } = getChainConfig(activeChain);
 
-    if (Number.isNaN(commissionValue) || commissionValue < 0 || 100 < commissionValue) {
-      notification.error({ description: "Invalid commission, please enter 0~100." });
+    if (Number.isNaN(commissionValue) || commissionValue < 0 || maxCommission < commissionValue) {
+      notification.error({ description: `Invalid commission, the valid commission is 0%~${maxCommission}%.` });
     } else if (walletClient) {
-      const { explorer } = getChainConfig(activeChain);
       setBusy(true);
 
       try {
@@ -57,7 +57,16 @@ export default function JoinCollatorModal({
 
       setBusy(false);
     }
-  }, [activeChain, sessionKey, commission, publicClient, walletClient, updateCollatorCommission, onClose]);
+  }, [
+    activeChain,
+    sessionKey,
+    commission,
+    maxCommission,
+    publicClient,
+    walletClient,
+    updateCollatorCommission,
+    onClose,
+  ]);
 
   return (
     <Modal
@@ -99,7 +108,7 @@ export default function JoinCollatorModal({
       <CollatorInput label="Session Key" placeholder="Session key" onChange={setSessionKey} />
       <CollatorInput
         label="Commission (%)"
-        placeholder="Commission"
+        placeholder={`Please enter 0~${maxCommission}`}
         suffix="%"
         tooltip="The percent a collator takes off the top of the due staking rewards."
         onChange={setCommission}
