@@ -134,11 +134,19 @@ export default function StakingRecords() {
 
   const dataSource: DataSource[] = useMemo(() => {
     const collator = nominatorCollators[address || ""]?.at(0);
-    if (address && collator) {
+    const hasStaking =
+      stakedRing > 0 ||
+      stakedKton > 0 ||
+      stakedDeposit > 0 ||
+      unbondingRing.length > 0 ||
+      unbondingKton.length > 0 ||
+      unbondingDeposits.length > 0;
+
+    if (address && (collator || hasStaking)) {
       return [
         {
-          key: collator,
-          collator: collator,
+          key: collator || "0",
+          collator: collator || "",
           stakedPower: power,
           bondedTokens: {
             stakedRing,
