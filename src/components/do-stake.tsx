@@ -138,7 +138,7 @@ export default function DoStake() {
 
       <EnsureMatchNetworkButton
         busy={busy || isNominatorCollatorsLoading}
-        disabled={!delegateCollator || delegateDeposits.length <= 0}
+        disabled={!delegateCollator || !(delegateRing > 0 || delegateKton > 0 || delegateDeposits.length > 0)}
         className="bg-primary px-large py-middle text-sm font-bold text-white lg:w-40"
         onClick={handleStake}
       >
