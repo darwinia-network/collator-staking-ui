@@ -17,9 +17,29 @@ interface ExposuresJson {
   total: string;
 }
 
+interface ExposuresJsonCache {
+  nominators: { who: string; vote: string }[];
+  vote: string;
+}
+
 interface DefaultValue {
   collatorPower: { [collator: string]: bigint | undefined };
   isCollatorPowerInitialized: boolean;
+}
+
+function isExposuresJsonCache(data: any): data is ExposuresJsonCache {
+  return data.vote;
+}
+
+function formatExposuresData(data: unknown) {
+  if (isExposuresJsonCache(data)) {
+    return {
+      total: data.vote,
+      nominators: data.nominators.map(({ who, vote }) => ({ who, value: vote })),
+    } as ExposuresJson;
+  } else {
+    return data as ExposuresJson;
+  }
 }
 
 export const useCollatorPower = (
@@ -37,14 +57,16 @@ export const useCollatorPower = (
 
     if (polkadotApi) {
       sub$$ = forkJoin([
-        polkadotApi.query.darwiniaStaking.exposures.entries(),
+        polkadotApi.query.darwiniaStaking.exposures
+          ? polkadotApi.query.darwiniaStaking.exposures.entries()
+          : polkadotApi.query.darwiniaStaking.exposureCache1.entries(),
         polkadotApi.query.darwiniaStaking.ledgers.entries(),
         polkadotApi.query.deposit.deposits.entries(),
       ]).subscribe({
         next: ([exposures, ledgers, deposits]) => {
           const parsedExposures = exposures.reduce((acc, cur) => {
             const address = (cur[0].toHuman() as string[])[0];
-            const data = cur[1].toJSON() as unknown as ExposuresJson;
+            const data = formatExposuresData(cur[1].toJSON() as unknown);
             return { ...acc, [address]: data };
           }, {} as { [address: string]: ExposuresJson | undefined });
 
