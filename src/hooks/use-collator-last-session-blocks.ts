@@ -17,13 +17,11 @@ export const useCollatorLastSessionBlocks = (defaultValue: DefaultValue) => {
 
     const handle = (points: Codec) => {
       const [_, collatorPoints] = points.toJSON() as [number, { [address: string]: number }]; // [totalPoint, { collator: collatorPoint }]
-      const staticNumber = 20; // this staticNumber = 20 was given by the backend
 
       setCollatorLastSessionBlocks(
         Object.keys(collatorPoints).reduce((acc, cur) => {
           const collatorPoint = collatorPoints[cur];
-          const blocks = collatorPoint / staticNumber;
-          return { ...acc, [cur]: blocks };
+          return { ...acc, [cur]: collatorPoint };
         }, {})
       );
     };
