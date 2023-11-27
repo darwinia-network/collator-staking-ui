@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { forkJoin, Subscription } from "rxjs";
+import { from, of, forkJoin, switchMap, Subscription } from "rxjs";
 import { useApi } from "./use-api";
 import { DarwiniaStakingLedger } from "@/types";
 import { stakingToPower } from "@/utils";
@@ -26,6 +26,8 @@ interface DefaultValue {
   collatorPower: { [collator: string]: bigint | undefined };
   isCollatorPowerInitialized: boolean;
 }
+
+type ExposureCacheState = "Previous" | "Current" | "Next";
 
 function isExposuresJsonCache(data: any): data is ExposuresJsonCache {
   return data.vote;
@@ -56,69 +58,80 @@ export const useCollatorPower = (
     let sub$$: Subscription | undefined;
 
     if (polkadotApi) {
-      sub$$ = forkJoin([
-        polkadotApi.query.darwiniaStaking.exposures
-          ? polkadotApi.query.darwiniaStaking.exposures.entries()
-          : polkadotApi.query.darwiniaStaking.exposureCache1.entries(),
-        polkadotApi.query.darwiniaStaking.ledgers.entries(),
-        polkadotApi.query.deposit.deposits.entries(),
-      ]).subscribe({
-        next: ([exposures, ledgers, deposits]) => {
-          const parsedExposures = exposures.reduce((acc, cur) => {
-            const address = (cur[0].toHuman() as string[])[0];
-            const data = formatExposuresData(cur[1].toJSON() as unknown);
-            return { ...acc, [address]: data };
-          }, {} as { [address: string]: ExposuresJson | undefined });
+      sub$$ = from(polkadotApi.query.darwiniaStaking.exposureCacheStates())
+        .pipe(
+          switchMap((cacheStates) => {
+            const index = (cacheStates.toJSON() as ExposureCacheState[]).findIndex((cs) => cs === "Current");
+            const exposureCache = [
+              polkadotApi.query.darwiniaStaking.exposureCache0,
+              polkadotApi.query.darwiniaStaking.exposureCache1,
+              polkadotApi.query.darwiniaStaking.exposureCache2,
+            ].at(index);
 
-          const parsedLedgers = ledgers.reduce((acc, cur) => {
-            const address = cur[0].toHuman() as string;
-            const data = cur[1].toJSON() as unknown as DarwiniaStakingLedger;
-            return { ...acc, [address]: data };
-          }, {} as { [address: string]: DarwiniaStakingLedger | undefined });
+            return forkJoin([
+              exposureCache ? exposureCache.entries() : of([]),
+              polkadotApi.query.darwiniaStaking.ledgers.entries(),
+              polkadotApi.query.deposit.deposits.entries(),
+            ]);
+          })
+        )
+        .subscribe({
+          next: ([exposures, ledgers, deposits]) => {
+            const parsedExposures = exposures.reduce((acc, cur) => {
+              const address = (cur[0].toHuman() as string[])[0];
+              const data = formatExposuresData(cur[1].toJSON() as unknown);
+              return { ...acc, [address]: data };
+            }, {} as { [address: string]: ExposuresJson | undefined });
 
-          const parsedDeposits = deposits.reduce((acc, cur) => {
-            const address = cur[0].toHuman() as string;
-            const data = cur[1].toJSON() as unknown as DepositJson[];
-            return { ...acc, [address]: data };
-          }, {} as { [address: string]: DepositJson[] | undefined });
+            const parsedLedgers = ledgers.reduce((acc, cur) => {
+              const address = cur[0].toHuman() as string;
+              const data = cur[1].toJSON() as unknown as DarwiniaStakingLedger;
+              return { ...acc, [address]: data };
+            }, {} as { [address: string]: DarwiniaStakingLedger | undefined });
 
-          const collators = Object.keys(collatorNominators);
-          setCollatorPower(
-            collators.reduce((acc, cur) => {
-              if (parsedExposures[cur]) {
-                // active collator
-                return { ...acc, [cur]: BigInt(parsedExposures[cur]?.total || 0) };
-              }
+            const parsedDeposits = deposits.reduce((acc, cur) => {
+              const address = cur[0].toHuman() as string;
+              const data = cur[1].toJSON() as unknown as DepositJson[];
+              return { ...acc, [address]: data };
+            }, {} as { [address: string]: DepositJson[] | undefined });
 
-              const nominators = collatorNominators[cur] || [];
-              const power = nominators.reduce((acc, cur) => {
-                const ledger = parsedLedgers[cur];
-                const deposits = parsedDeposits[cur] || [];
-
-                if (ledger) {
-                  const stakedDeposit = deposits
-                    .filter(({ id }) => ledger.stakedDeposits?.includes(id))
-                    .reduce((acc, cur) => acc + BigInt(cur.value), 0n);
-                  return (
-                    acc +
-                    stakingToPower(
-                      BigInt(ledger.stakedRing) + stakedDeposit,
-                      BigInt(ledger.stakedKton),
-                      ringPool,
-                      ktonPool
-                    )
-                  );
+            const collators = Object.keys(collatorNominators);
+            setCollatorPower(
+              collators.reduce((acc, cur) => {
+                if (parsedExposures[cur]) {
+                  // active collator
+                  return { ...acc, [cur]: BigInt(parsedExposures[cur]?.total || 0) };
                 }
-                return acc;
-              }, 0n);
 
-              return { ...acc, [cur]: power };
-            }, {} as { [collator: string]: bigint | undefined })
-          );
-        },
-        error: console.error,
-        complete: () => setIsCollatorPowerInitialized(true),
-      });
+                const nominators = collatorNominators[cur] || [];
+                const power = nominators.reduce((acc, cur) => {
+                  const ledger = parsedLedgers[cur];
+                  const deposits = parsedDeposits[cur] || [];
+
+                  if (ledger) {
+                    const stakedDeposit = deposits
+                      .filter(({ id }) => ledger.stakedDeposits?.includes(id))
+                      .reduce((acc, cur) => acc + BigInt(cur.value), 0n);
+                    return (
+                      acc +
+                      stakingToPower(
+                        BigInt(ledger.stakedRing) + stakedDeposit,
+                        BigInt(ledger.stakedKton),
+                        ringPool,
+                        ktonPool
+                      )
+                    );
+                  }
+                  return acc;
+                }, 0n);
+
+                return { ...acc, [cur]: power };
+              }, {} as { [collator: string]: bigint | undefined })
+            );
+          },
+          error: console.error,
+          complete: () => setIsCollatorPowerInitialized(true),
+        });
     } else {
       setCollatorPower({});
     }
