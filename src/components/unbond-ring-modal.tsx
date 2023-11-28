@@ -1,4 +1,4 @@
-import { formatBlanace, getChainConfig, notifyTransaction } from "@/utils";
+import { commissionWeightedPower, formatBlanace, getChainConfig, notifyTransaction } from "@/utils";
 import UnbondTokenModal from "./unbond-token-modal";
 import { useApp, useStaking } from "@/hooks";
 import { useCallback, useState } from "react";
@@ -6,9 +6,11 @@ import { notification } from "./notification";
 import { writeContract, waitForTransaction } from "@wagmi/core";
 
 export default function UnbondRingModal({
+  commission,
   isOpen,
   onClose = () => undefined,
 }: {
+  commission: string;
   isOpen: boolean;
   onClose?: () => void;
 }) {
@@ -61,7 +63,7 @@ export default function UnbondRingModal({
       isOpen={isOpen}
       symbol={nativeToken.symbol}
       decimals={nativeToken.decimals}
-      power={calcExtraPower(inputAmount, 0n)}
+      power={commissionWeightedPower(calcExtraPower(inputAmount, 0n), commission)}
       balance={stakedRing}
       busy={busy}
       disabled={inputAmount <= 0n}

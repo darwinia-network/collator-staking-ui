@@ -1,4 +1,4 @@
-import { formatBlanace, getChainConfig, notifyTransaction } from "@/utils";
+import { commissionWeightedPower, formatBlanace, getChainConfig, notifyTransaction } from "@/utils";
 import UnbondTokenModal from "./unbond-token-modal";
 import { useApp, useStaking } from "@/hooks";
 import { useCallback, useState } from "react";
@@ -6,9 +6,11 @@ import { notification } from "./notification";
 import { writeContract, waitForTransaction } from "@wagmi/core";
 
 export default function UnbondKtonModal({
+  commission,
   isOpen,
   onClose = () => undefined,
 }: {
+  commission: string;
   isOpen: boolean;
   onClose?: () => void;
 }) {
@@ -62,7 +64,7 @@ export default function UnbondKtonModal({
         isOpen={isOpen}
         symbol={ktonToken.symbol}
         decimals={ktonToken.decimals}
-        power={calcExtraPower(0n, inputAmount)}
+        power={commissionWeightedPower(calcExtraPower(0n, inputAmount), commission)}
         balance={stakedKton}
         busy={busy}
         disabled={inputAmount <= 0n}

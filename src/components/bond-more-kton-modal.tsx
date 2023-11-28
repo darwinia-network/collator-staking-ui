@@ -1,4 +1,4 @@
-import { getChainConfig, notifyTransaction } from "@/utils";
+import { commissionWeightedPower, getChainConfig, notifyTransaction } from "@/utils";
 import BondMoreTokenModal from "./bond-more-token-modal";
 import { useApp, useStaking } from "@/hooks";
 import { useAccount, useBalance } from "wagmi";
@@ -7,9 +7,11 @@ import { notification } from "./notification";
 import { writeContract, waitForTransaction } from "@wagmi/core";
 
 export default function BondMoreKtonModal({
+  commission,
   isOpen,
   onClose = () => undefined,
 }: {
+  commission: string;
   isOpen: boolean;
   onClose?: () => void;
 }) {
@@ -60,7 +62,7 @@ export default function BondMoreKtonModal({
         isOpen={isOpen}
         symbol={ktonToken.symbol}
         decimals={ktonToken.decimals}
-        power={calcExtraPower(0n, inputAmount)}
+        power={commissionWeightedPower(calcExtraPower(0n, inputAmount), commission)}
         balance={ktonBalance?.value || 0n}
         busy={busy}
         disabled={inputAmount <= 0n}

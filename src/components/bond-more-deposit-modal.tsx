@@ -1,16 +1,18 @@
 import { Key, useCallback, useMemo, useState } from "react";
 import Modal from "./modal";
 import CheckboxGroup from "./checkbox-group";
-import { formatBlanace, getChainConfig, notifyTransaction } from "@/utils";
+import { commissionWeightedPower, formatBlanace, getChainConfig, notifyTransaction } from "@/utils";
 import { ExtraPower } from "./balance-input";
 import { useApp, useStaking } from "@/hooks";
 import { notification } from "./notification";
 import { writeContract, waitForTransaction } from "@wagmi/core";
 
 export default function BondMoreDepositModal({
+  commission,
   isOpen,
   onClose = () => undefined,
 }: {
+  commission: string;
   isOpen: boolean;
   onClose?: () => void;
 }) {
@@ -22,11 +24,14 @@ export default function BondMoreDepositModal({
 
   const extraPower = useMemo(
     () =>
-      calcExtraPower(
-        deposits.filter(({ id }) => checkedDeposits.includes(id)).reduce((acc, cur) => acc + cur.value, 0n),
-        0n
+      commissionWeightedPower(
+        calcExtraPower(
+          deposits.filter(({ id }) => checkedDeposits.includes(id)).reduce((acc, cur) => acc + cur.value, 0n),
+          0n
+        ),
+        commission
       ),
-    [deposits, checkedDeposits, calcExtraPower]
+    [deposits, commission, checkedDeposits, calcExtraPower]
   );
 
   const availableDeposits = deposits.filter(({ id }) => !stakedDeposits.includes(id));

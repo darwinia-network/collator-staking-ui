@@ -4,6 +4,7 @@ import { Deposit, UnbondingInfo } from "./staking";
 export interface StakingRecordsDataSource {
   key: Key;
   collator: string;
+  commission: string;
   stakedPower: bigint;
   bondedTokens: {
     stakedRing: bigint;

@@ -35,3 +35,8 @@ export const calcKtonReward = (depositRing: bigint, depositMonths: number) => {
 
   return 0n;
 };
+
+export const commissionWeightedPower = (originPower: bigint, commission: string) => {
+  const c = Number(commission.replace(/,/g, "").split("%")[0]);
+  return (originPower * BigInt(100 - (Number.isNaN(c) ? 100 : c))) / 100n;
+};
