@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import Table, { ColumnType } from "./table";
-import { prettyNumber } from "@/utils";
+import { commissionWeightedPower, prettyNumber } from "@/utils";
 import Jazzicon from "./jazzicon";
 import Image from "next/image";
 import { useStaking } from "@/hooks";
@@ -25,8 +25,10 @@ export default function StakingRecords() {
     unbondingKton,
     unbondingDeposits,
     nominatorCollators,
+    collatorCommission,
     activeCollators,
     isNominatorCollatorsInitialized,
+    isCollatorCommissionInitialized,
     isActiveCollatorsInitialized,
     isLedgersInitialized,
     isNominatorCollatorsLoading,
@@ -143,11 +145,13 @@ export default function StakingRecords() {
       unbondingDeposits.length > 0;
 
     if (address && (collator || hasStaking)) {
+      const commission = (collator && collatorCommission[collator]) || "0.00%";
       return [
         {
           key: collator || "0",
           collator: collator || "",
-          stakedPower: power,
+          commission,
+          stakedPower: commissionWeightedPower(power, commission),
           bondedTokens: {
             stakedRing,
             stakedKton,
@@ -173,6 +177,7 @@ export default function StakingRecords() {
     unbondingKton,
     unbondingDeposits,
     nominatorCollators,
+    collatorCommission,
     activeCollators,
   ]);
 
@@ -184,6 +189,7 @@ export default function StakingRecords() {
         dataSource={dataSource}
         loading={
           !isActiveCollatorsInitialized ||
+          !isCollatorCommissionInitialized ||
           !isNominatorCollatorsInitialized ||
           !isLedgersInitialized ||
           isNominatorCollatorsLoading

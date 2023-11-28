@@ -1,4 +1,4 @@
-import { getChainConfig, notifyTransaction } from "@/utils";
+import { commissionWeightedPower, getChainConfig, notifyTransaction } from "@/utils";
 import BondMoreTokenModal from "./bond-more-token-modal";
 import { useAccount, useBalance } from "wagmi";
 import { useApp, useStaking } from "@/hooks";
@@ -7,9 +7,11 @@ import { notification } from "./notification";
 import { writeContract, waitForTransaction } from "@wagmi/core";
 
 export default function BondMoreRingModal({
+  commission,
   isOpen,
   onClose = () => undefined,
 }: {
+  commission: string;
   isOpen: boolean;
   onClose?: () => void;
 }) {
@@ -58,7 +60,7 @@ export default function BondMoreRingModal({
       isOpen={isOpen}
       symbol={nativeToken.symbol}
       decimals={nativeToken.decimals}
-      power={calcExtraPower(inputAmount, 0n)}
+      power={commissionWeightedPower(calcExtraPower(inputAmount, 0n), commission)}
       balance={ringBalance?.value || 0n}
       busy={busy}
       disabled={inputAmount <= 0n}

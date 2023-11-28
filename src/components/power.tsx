@@ -1,12 +1,12 @@
 import { GET_LATEST_STAKING_REWARDS } from "@/config";
 import { useApp, useStaking } from "@/hooks";
-import { formatBlanace, getChainConfig, prettyNumber } from "@/utils";
+import { commissionWeightedPower, formatBlanace, getChainConfig, prettyNumber } from "@/utils";
 import { formatDistanceStrict } from "date-fns";
 import Image from "next/image";
 import { getAddress } from "viem";
 import { useAccount } from "wagmi";
 import CountLoading from "./count-loading";
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
 import { CSSTransition } from "react-transition-group";
 import { useQuery } from "@apollo/client";
 
@@ -36,7 +36,16 @@ interface QueryResult {
 
 export default function Power() {
   const loadingRef = useRef<HTMLDivElement>(null);
-  const { power, isLedgersInitialized, isRingPoolInitialized, isKtonPoolInitialized } = useStaking();
+  const {
+    power,
+    nominatorCollators,
+    collatorCommission,
+    isNominatorCollatorsInitialized,
+    isCollatorCommissionInitialized,
+    isLedgersInitialized,
+    isRingPoolInitialized,
+    isKtonPoolInitialized,
+  } = useStaking();
   const { activeChain } = useApp();
   const { address } = useAccount();
   const { data: rewardData, loading: rewardLoading } = useQuery<QueryResult, QueryVariables>(
@@ -45,6 +54,16 @@ export default function Power() {
       variables: { accountAddress: address ? getAddress(address) : "", itemsCount: 9 },
     }
   );
+
+  const thePower = useMemo(() => {
+    const isCollator =
+      address && Object.keys(collatorCommission).some((addr) => addr.toLowerCase() === address.toLowerCase())
+        ? true
+        : false;
+    const collator = isCollator ? address : address ? nominatorCollators[address]?.at(0) : undefined;
+    const commission = collator ? collatorCommission[collator] : undefined;
+    return commissionWeightedPower(power, commission ?? "0.00%");
+  }, [address, power, collatorCommission, nominatorCollators]);
 
   const chainConfig = getChainConfig(activeChain);
 
@@ -56,8 +75,12 @@ export default function Power() {
           <Image alt="Icon of Power" src="/images/power.svg" width={30} height={42} />
           <span className="text-3xl font-bold text-white">Power</span>
         </div>
-        {isLedgersInitialized && isRingPoolInitialized && isKtonPoolInitialized ? (
-          <span className="text-3xl font-bold text-white">{prettyNumber(power)}</span>
+        {isLedgersInitialized &&
+        isRingPoolInitialized &&
+        isKtonPoolInitialized &&
+        isNominatorCollatorsInitialized &&
+        isCollatorCommissionInitialized ? (
+          <span className="text-3xl font-bold text-white">{prettyNumber(thePower)}</span>
         ) : (
           <CountLoading color="white" size="large" />
         )}

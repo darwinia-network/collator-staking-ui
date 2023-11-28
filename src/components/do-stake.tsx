@@ -1,4 +1,4 @@
-import { getChainConfig, notifyTransaction } from "@/utils";
+import { commissionWeightedPower, getChainConfig, notifyTransaction } from "@/utils";
 import ActiveDepositSelector from "./active-deposit-selector";
 import CollatorSelector from "./collator-selector";
 import BalanceInput, { ExtraPower } from "./balance-input";
@@ -11,8 +11,14 @@ import { ChainID } from "@/types";
 import { notification } from "./notification";
 
 export default function DoStake() {
-  const { deposits, nominatorCollators, isNominatorCollatorsLoading, calcExtraPower, updateNominatorCollators } =
-    useStaking();
+  const {
+    deposits,
+    nominatorCollators,
+    collatorCommission,
+    isNominatorCollatorsLoading,
+    calcExtraPower,
+    updateNominatorCollators,
+  } = useStaking();
   const [delegateCollator, setDelegateCollator] = useState<string | undefined>(undefined);
   const [delegateRing, setDelegateRing] = useState(0n);
   const [delegateKton, setDelegateKton] = useState(0n);
@@ -28,15 +34,28 @@ export default function DoStake() {
   const { data: ringBalance } = useBalance({ address, watch: true });
   const { data: ktonBalance } = useBalance({ address, watch: true, token: ktonToken?.address });
 
-  const ringExtraPower = useMemo(() => calcExtraPower(delegateRing, 0n), [delegateRing, calcExtraPower]);
-  const ktonExtraPower = useMemo(() => calcExtraPower(0n, delegateKton), [delegateKton, calcExtraPower]);
+  const commission = useMemo(() => {
+    return (delegateCollator && collatorCommission[delegateCollator]) || "0.00%";
+  }, [delegateCollator, collatorCommission]);
+
+  const ringExtraPower = useMemo(
+    () => commissionWeightedPower(calcExtraPower(delegateRing, 0n), commission),
+    [commission, delegateRing, calcExtraPower]
+  );
+  const ktonExtraPower = useMemo(
+    () => commissionWeightedPower(calcExtraPower(0n, delegateKton), commission),
+    [commission, delegateKton, calcExtraPower]
+  );
   const depositsExtraPower = useMemo(
     () =>
-      calcExtraPower(
-        deposits.filter(({ id }) => delegateDeposits.includes(id)).reduce((acc, cur) => acc + cur.value, 0n),
-        0n
+      commissionWeightedPower(
+        calcExtraPower(
+          deposits.filter(({ id }) => delegateDeposits.includes(id)).reduce((acc, cur) => acc + cur.value, 0n),
+          0n
+        ),
+        commission
       ),
-    [delegateDeposits, deposits, calcExtraPower]
+    [delegateDeposits, commission, deposits, calcExtraPower]
   );
 
   const handleStake = useCallback(async () => {
