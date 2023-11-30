@@ -39,7 +39,7 @@ export const useCollatorSessionKey = (defaultValue: DefaultValue) => {
           console.error(err);
         },
         complete: () => {
-          setIsCollatorSessionKeyInitialized(false);
+          setIsCollatorSessionKeyInitialized(true);
         },
       });
     }
