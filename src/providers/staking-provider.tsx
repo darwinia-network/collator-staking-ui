@@ -7,6 +7,7 @@ import {
   useCollatorLastSessionBlocks,
   useCollatorNominators,
   useCollatorPower,
+  useCollatorSessionKey,
   useDeposits,
   useLedger,
   useNominatorCollators,
@@ -27,6 +28,7 @@ interface StakingCtx {
   stakedDeposit: bigint;
   activeCollators: string[];
   collatorPower: { [collator: string]: bigint | undefined };
+  collatorSessionKey: { [collator: string]: string | undefined };
   collatorCommission: { [collator: string]: string | undefined };
   collatorLastSessionBlocks: { [collator: string]: number | undefined };
   collatorNominators: { [collator: string]: string[] | undefined };
@@ -43,6 +45,7 @@ interface StakingCtx {
   isKtonPoolInitialized: boolean;
   isActiveCollatorsInitialized: boolean;
   isCollatorPowerInitialized: boolean;
+  isCollatorSessionKeyInitialized: boolean;
   isCollatorCommissionInitialized: boolean;
   isCollatorLastSessionBlocksInitialized: boolean;
   isCollatorNominatorsInitialized: boolean;
@@ -67,6 +70,7 @@ const defaultValue: StakingCtx = {
   stakedDeposit: 0n,
   activeCollators: [],
   collatorPower: {},
+  collatorSessionKey: {},
   collatorCommission: {},
   collatorLastSessionBlocks: {},
   collatorNominators: {},
@@ -83,6 +87,7 @@ const defaultValue: StakingCtx = {
   isKtonPoolInitialized: false,
   isActiveCollatorsInitialized: false,
   isCollatorPowerInitialized: false,
+  isCollatorSessionKeyInitialized: false,
   isCollatorCommissionInitialized: false,
   isCollatorLastSessionBlocksInitialized: false,
   isCollatorNominatorsInitialized: false,
@@ -118,6 +123,7 @@ export function StakingProvider({ children }: PropsWithChildren<unknown>) {
     unbondingDeposits,
     isLedgersInitialized,
   } = useLedger(deposits, defaultValue);
+  const { collatorSessionKey, isCollatorSessionKeyInitialized } = useCollatorSessionKey(defaultValue);
   const { collatorCommission, isCollatorCommissionInitialized, isCollatorCommissionLoading, updateCollatorCommission } =
     useCollatorCommission(defaultValue);
   const { nominatorCollators, isNominatorCollatorsInitialized, isNominatorCollatorsLoading, updateNominatorCollators } =
@@ -160,6 +166,7 @@ export function StakingProvider({ children }: PropsWithChildren<unknown>) {
         stakedDeposit,
         activeCollators,
         collatorPower,
+        collatorSessionKey,
         collatorCommission,
         collatorLastSessionBlocks,
         collatorNominators,
@@ -176,6 +183,7 @@ export function StakingProvider({ children }: PropsWithChildren<unknown>) {
         isKtonPoolInitialized,
         isActiveCollatorsInitialized,
         isCollatorPowerInitialized,
+        isCollatorSessionKeyInitialized,
         isCollatorCommissionInitialized,
         isCollatorLastSessionBlocksInitialized,
         isCollatorNominatorsInitialized,
