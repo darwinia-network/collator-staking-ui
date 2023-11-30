@@ -19,6 +19,7 @@ interface DataSource {
   power: bigint;
   commission: string;
   blocks: number;
+  sessionKey: string | undefined;
 }
 
 const columns: ColumnType<DataSource>[] = [
@@ -51,6 +52,14 @@ const columns: ColumnType<DataSource>[] = [
             }
           }}
         />
+        {row.sessionKey ? null : (
+          <Tooltip
+            contentClassName="text-xs font-light text-white w-80"
+            content="This collator is not ready yet because the session key has not been set"
+          >
+            <Image width={15} height={15} alt="Warning" src="/images/extra-warning.svg" />
+          </Tooltip>
+        )}
       </div>
     ),
   },
@@ -125,12 +134,14 @@ export default function CollatorSelectModal({
 }) {
   const {
     nominatorCollators,
+    collatorSessionKey,
     collatorCommission,
     collatorLastSessionBlocks,
     collatorPower,
     activeCollators,
     isCollatorPowerInitialized,
     isCollatorLastSessionBlocksInitialized,
+    isCollatorSessionKeyInitialized,
     isCollatorCommissionInitialized,
     isNominatorCollatorsInitialized,
     isActiveCollatorsInitialized,
@@ -154,12 +165,22 @@ export default function CollatorSelectModal({
         power: collatorPower[collator] || 0n,
         commission: collatorCommission[collator] || "-",
         blocks: collatorLastSessionBlocks[collator] || -1,
+        sessionKey: collatorSessionKey[collator],
       }));
-  }, [activeCollators, activeKey, collatorCommission, collatorLastSessionBlocks, collatorPower, deferredKeyword]);
+  }, [
+    activeCollators,
+    activeKey,
+    collatorSessionKey,
+    collatorCommission,
+    collatorLastSessionBlocks,
+    collatorPower,
+    deferredKeyword,
+  ]);
 
   const loading =
     !isCollatorPowerInitialized ||
     !isCollatorLastSessionBlocksInitialized ||
+    !isCollatorSessionKeyInitialized ||
     !isCollatorCommissionInitialized ||
     !isNominatorCollatorsInitialized ||
     !isActiveCollatorsInitialized;
