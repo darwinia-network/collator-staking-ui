@@ -131,6 +131,7 @@ export function StakingProvider({ children }: PropsWithChildren<unknown>) {
   const { collatorNominators, isCollatorNominatorsInitialized } = useCollatorNominators(defaultValue);
   const { collatorPower, isCollatorPowerInitialized } = useCollatorPower(
     collatorNominators,
+    collatorCommission,
     ringPool,
     ktonPool,
     defaultValue
