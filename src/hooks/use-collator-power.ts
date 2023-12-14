@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { from, of, forkJoin, switchMap, Subscription } from "rxjs";
 import { useApi } from "./use-api";
 import { DarwiniaStakingLedger } from "@/types";
-import { stakingToPower } from "@/utils";
+import { commissionWeightedPower, stakingToPower } from "@/utils";
 
 interface DepositJson {
   id: number;
@@ -46,6 +46,7 @@ function formatExposuresData(data: unknown) {
 
 export const useCollatorPower = (
   collatorNominators: { [collator: string]: string[] | undefined },
+  collatorCommission: { [collator: string]: string | undefined },
   ringPool: bigint,
   ktonPool: bigint,
   defaultValue: DefaultValue
@@ -125,7 +126,8 @@ export const useCollatorPower = (
                   return acc;
                 }, 0n);
 
-                return { ...acc, [cur]: power };
+                const commission = collatorCommission[cur] || "0.00%";
+                return { ...acc, [cur]: commissionWeightedPower(power, commission) };
               }, {} as { [collator: string]: bigint | undefined })
             );
           },
@@ -137,7 +139,7 @@ export const useCollatorPower = (
     }
 
     return () => sub$$?.unsubscribe();
-  }, [polkadotApi, collatorNominators, ringPool, ktonPool]);
+  }, [polkadotApi, collatorNominators, collatorCommission, ringPool, ktonPool]);
 
   return { collatorPower, isCollatorPowerInitialized };
 };

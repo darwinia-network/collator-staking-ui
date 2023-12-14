@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useAccount } from "wagmi";
 import Table, { ColumnType } from "./table";
 import Jazzicon from "./jazzicon";
-import { commissionWeightedPower, prettyNumber } from "@/utils";
+import { prettyNumber } from "@/utils";
 import { notification } from "./notification";
 import DisplayAccountName from "./display-account-name";
 import { useStaking } from "@/hooks";
@@ -100,7 +100,7 @@ const columns: ColumnType<DataSource>[] = [
         </div>
       </div>
     ),
-    render: (row) => <span>{prettyNumber(commissionWeightedPower(row.power, row.commission))}</span>,
+    render: (row) => <span>{prettyNumber(row.power)}</span>,
   },
   {
     key: "commission",
