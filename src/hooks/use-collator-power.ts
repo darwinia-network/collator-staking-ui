@@ -105,26 +105,27 @@ export const useCollatorPower = (
                 }
 
                 const nominators = collatorNominators[cur] || [];
-                const power = nominators.reduce((acc, cur) => {
-                  const ledger = parsedLedgers[cur];
-                  const deposits = parsedDeposits[cur] || [];
+                const { stakedDeposit, stakedRing, stakedKton } = nominators.reduce(
+                  (acc, cur) => {
+                    const ledger = parsedLedgers[cur];
+                    const deposits = parsedDeposits[cur] || [];
 
-                  if (ledger) {
-                    const stakedDeposit = deposits
-                      .filter(({ id }) => ledger.stakedDeposits?.includes(id))
-                      .reduce((acc, cur) => acc + BigInt(cur.value), 0n);
-                    return (
-                      acc +
-                      stakingToPower(
-                        BigInt(ledger.stakedRing) + stakedDeposit,
-                        BigInt(ledger.stakedKton),
-                        ringPool,
-                        ktonPool
-                      )
-                    );
-                  }
-                  return acc;
-                }, 0n);
+                    if (ledger) {
+                      const stakedDeposit = deposits
+                        .filter(({ id }) => ledger.stakedDeposits?.includes(id))
+                        .reduce((acc, cur) => acc + BigInt(cur.value), 0n);
+
+                      return {
+                        stakedDeposit: acc.stakedDeposit + stakedDeposit,
+                        stakedRing: acc.stakedRing + BigInt(ledger.stakedRing),
+                        stakedKton: acc.stakedKton + BigInt(ledger.stakedKton),
+                      };
+                    }
+                    return acc;
+                  },
+                  { stakedDeposit: 0n, stakedRing: 0n, stakedKton: 0n }
+                );
+                const power = stakingToPower(stakedRing + stakedDeposit, stakedKton, ringPool, ktonPool);
 
                 const commission = collatorCommission[cur] || "0.00%";
                 return { ...acc, [cur]: commissionWeightedPower(power, commission) };
