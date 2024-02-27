@@ -128,7 +128,7 @@ export default function Power() {
       </div>
 
       {/* see detail */}
-      <div className="inline-block">
+      {/* <div className="inline-block">
         <span className="text-xs font-light text-white">See detailed staking rewards in </span>
         <a
           target="_blank"
@@ -138,7 +138,7 @@ export default function Power() {
         >
           {chainConfig.explorer.name}→
         </a>
-      </div>
+      </div> */}
     </div>
   );
 }
