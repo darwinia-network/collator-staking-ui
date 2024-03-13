@@ -1,5 +1,5 @@
 import { useApp } from "@/hooks";
-import { StakingRecordsDataSource } from "@/types";
+import { ChainID, StakingRecordsDataSource } from "@/types";
 import { formatBlanace, getChainConfig, notifyTransaction } from "@/utils";
 import UnbondingTokenTooltip from "./unbonding-token-tooltip";
 import UnbondingDepositTooltip from "./unbonding-deposit-tooltip";
@@ -35,13 +35,17 @@ export default function RecordsBondedTokens({ row }: { row: StakingRecordsDataSo
       const { contract, explorer } = getChainConfig(activeChain);
 
       try {
-        const contractAbi = (await import(`@/config/abi/${contract.staking.abiFile}`)).default;
+        const abi =
+          activeChain === ChainID.CRAB
+            ? (await import("@/config/abi/staking-v2.json")).default
+            : (await import(`@/config/abi/${contract.staking.abiFile}`)).default;
+        const args = activeChain === ChainID.CRAB ? [ring, depositIds] : [ring, kton, depositIds];
 
         const { hash } = await writeContract({
           address: contract.staking.address,
-          abi: contractAbi,
+          abi,
           functionName: "restake",
-          args: [ring, kton, depositIds],
+          args,
         });
         const receipt = await waitForTransaction({ hash });
 

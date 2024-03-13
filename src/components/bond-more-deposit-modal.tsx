@@ -6,6 +6,7 @@ import { ExtraPower } from "./balance-input";
 import { useApp, useStaking } from "@/hooks";
 import { notification } from "./notification";
 import { writeContract, waitForTransaction } from "@wagmi/core";
+import { ChainID } from "@/types";
 
 export default function BondMoreDepositModal({
   commission,
@@ -35,17 +36,21 @@ export default function BondMoreDepositModal({
   );
 
   const availableDeposits = deposits.filter(({ id }) => !stakedDeposits.includes(id));
-  const { nativeToken, contract, explorer } = getChainConfig(activeChain);
+  const { nativeToken } = getChainConfig(activeChain);
 
   const handleBond = useCallback(async () => {
     setBusy(true);
+    const { contract, explorer } = getChainConfig(activeChain);
 
     try {
-      const contractAbi = (await import(`@/config/abi/${contract.staking.abiFile}`)).default;
+      const abi =
+        activeChain === ChainID.CRAB
+          ? (await import("@/config/abi/staking-v2.json")).default
+          : (await import(`@/config/abi/${contract.staking.abiFile}`)).default;
 
       const { hash } = await writeContract({
         address: contract.staking.address,
-        abi: contractAbi,
+        abi,
         functionName: "stake",
         args: [0n, 0n, checkedDeposits],
       });
@@ -62,7 +67,7 @@ export default function BondMoreDepositModal({
     }
 
     setBusy(false);
-  }, [explorer, contract.staking, checkedDeposits, onClose]);
+  }, [activeChain, checkedDeposits, onClose]);
 
   return (
     <Modal
