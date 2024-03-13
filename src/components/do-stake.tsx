@@ -31,8 +31,8 @@ export default function DoStake() {
   const publicClient = usePublicClient();
   const { data: walletClient } = useWalletClient();
   const { address } = useAccount();
-  const { data: ringBalance } = useBalance({ address, watch: true });
-  const { data: ktonBalance } = useBalance({ address, watch: true, token: ktonToken?.address });
+  const { data: ringBalance } = useBalance({ address, query: { refetchInterval: 3000 } });
+  const { data: ktonBalance } = useBalance({ address, query: { refetchInterval: 3000 }, token: ktonToken?.address });
 
   const commission = useMemo(() => {
     return (delegateCollator && collatorCommission[delegateCollator]) || "0.00%";
@@ -59,7 +59,7 @@ export default function DoStake() {
   );
 
   const handleStake = useCallback(async () => {
-    if (delegateCollator && walletClient) {
+    if (delegateCollator && walletClient && publicClient) {
       setBusy(true);
 
       try {

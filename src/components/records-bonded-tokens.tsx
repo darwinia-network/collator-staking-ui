@@ -1,5 +1,5 @@
-import { useApp } from "@/hooks";
-import { ChainID, StakingRecordsDataSource } from "@/types";
+import { useApp, useIsStakingV2 } from "@/hooks";
+import { StakingRecordsDataSource } from "@/types";
 import { formatBlanace, getChainConfig, notifyTransaction } from "@/utils";
 import UnbondingTokenTooltip from "./unbonding-token-tooltip";
 import UnbondingDepositTooltip from "./unbonding-deposit-tooltip";
@@ -12,14 +12,18 @@ import UnbondRingModal from "./unbond-ring-modal";
 import UnbondKtonModal from "./unbond-kton-modal";
 import UnbondDepositModal from "./unbond-deposit-modal";
 import Image from "next/image";
-import { writeContract, waitForTransaction } from "@wagmi/core";
 import { notification } from "./notification";
+import { usePublicClient, useWalletClient } from "wagmi";
 
 export default function RecordsBondedTokens({ row }: { row: StakingRecordsDataSource }) {
   const [ringBusy, setRingBusy] = useState(false);
   const [depositBusy, setDepositBusy] = useState(false);
   const [ktonBusy, setKtonBusy] = useState(false);
 
+  const publicClient = usePublicClient();
+  const { data: walletClient } = useWalletClient();
+
+  const isStakingV2 = useIsStakingV2();
   const { activeChain } = useApp();
   const { nativeToken, ktonToken } = getChainConfig(activeChain);
 
@@ -34,25 +38,26 @@ export default function RecordsBondedTokens({ row }: { row: StakingRecordsDataSo
       }
       const { contract, explorer } = getChainConfig(activeChain);
 
-      try {
-        const abi =
-          activeChain === ChainID.CRAB
+      if (walletClient && publicClient) {
+        try {
+          const abi = isStakingV2
             ? (await import("@/config/abi/staking-v2.json")).default
-            : (await import(`@/config/abi/${contract.staking.abiFile}`)).default;
-        const args = activeChain === ChainID.CRAB ? [ring, depositIds] : [ring, kton, depositIds];
+            : (await import("@/config/abi/staking.json")).default;
+          const args = isStakingV2 ? [ring, depositIds] : [ring, kton, depositIds];
 
-        const { hash } = await writeContract({
-          address: contract.staking.address,
-          abi,
-          functionName: "restake",
-          args,
-        });
-        const receipt = await waitForTransaction({ hash });
+          const hash = await walletClient.writeContract({
+            address: contract.staking.address,
+            abi,
+            functionName: "restake",
+            args,
+          });
+          const receipt = await publicClient.waitForTransactionReceipt({ hash });
 
-        notifyTransaction(receipt, explorer);
-      } catch (err) {
-        console.error(err);
-        notification.error({ description: (err as Error).message });
+          notifyTransaction(receipt, explorer);
+        } catch (err) {
+          console.error(err);
+          notification.error({ description: (err as Error).message });
+        }
       }
 
       if (ring > 0) {
@@ -63,7 +68,7 @@ export default function RecordsBondedTokens({ row }: { row: StakingRecordsDataSo
         setDepositBusy(false);
       }
     },
-    [activeChain]
+    [activeChain, isStakingV2, walletClient, publicClient]
   );
 
   const handleRelease = useCallback(
@@ -77,21 +82,21 @@ export default function RecordsBondedTokens({ row }: { row: StakingRecordsDataSo
       }
       const { contract, explorer } = getChainConfig(activeChain);
 
-      try {
-        const contractAbi = (await import(`@/config/abi/${contract.staking.abiFile}`)).default;
+      if (walletClient && publicClient) {
+        try {
+          const hash = await walletClient.writeContract({
+            address: contract.staking.address,
+            abi: (await import(`@/config/abi/${contract.staking.abiFile}`)).default,
+            functionName: "claim",
+            args: [],
+          });
+          const receipt = await publicClient.waitForTransactionReceipt({ hash });
 
-        const { hash } = await writeContract({
-          address: contract.staking.address,
-          abi: contractAbi,
-          functionName: "claim",
-          args: [],
-        });
-        const receipt = await waitForTransaction({ hash });
-
-        notifyTransaction(receipt, explorer);
-      } catch (err) {
-        console.error(err);
-        notification.error({ description: (err as Error).message });
+          notifyTransaction(receipt, explorer);
+        } catch (err) {
+          console.error(err);
+          notification.error({ description: (err as Error).message });
+        }
       }
 
       if (type === "ring") {
@@ -102,7 +107,7 @@ export default function RecordsBondedTokens({ row }: { row: StakingRecordsDataSo
         setDepositBusy(false);
       }
     },
-    [activeChain]
+    [activeChain, walletClient, publicClient]
   );
 
   return (

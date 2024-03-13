@@ -5,8 +5,7 @@ import { commissionWeightedPower, formatBlanace, getChainConfig, notifyTransacti
 import { ExtraPower } from "./balance-input";
 import { useApp, useStaking } from "@/hooks";
 import { notification } from "./notification";
-import { writeContract, waitForTransaction } from "@wagmi/core";
-import { ChainID } from "@/types";
+import { usePublicClient, useWalletClient } from "wagmi";
 
 export default function BondMoreDepositModal({
   commission,
@@ -17,8 +16,11 @@ export default function BondMoreDepositModal({
   isOpen: boolean;
   onClose?: () => void;
 }) {
-  const { deposits, calcExtraPower } = useStaking();
+  const { deposits, isStakingV2, calcExtraPower } = useStaking();
   const { activeChain } = useApp();
+
+  const { data: walletClient } = useWalletClient();
+  const publicClient = usePublicClient();
 
   const [checkedDeposits, setCheckedDeposits] = useState<number[]>([]);
   const [busy, setBusy] = useState(false);
@@ -39,35 +41,36 @@ export default function BondMoreDepositModal({
   const { nativeToken } = getChainConfig(activeChain);
 
   const handleBond = useCallback(async () => {
-    setBusy(true);
-    const { contract, explorer } = getChainConfig(activeChain);
+    if (walletClient && publicClient) {
+      setBusy(true);
+      const { contract, explorer } = getChainConfig(activeChain);
 
-    try {
-      const abi =
-        activeChain === ChainID.CRAB
+      try {
+        const abi = isStakingV2
           ? (await import("@/config/abi/staking-v2.json")).default
-          : (await import(`@/config/abi/${contract.staking.abiFile}`)).default;
+          : (await import("@/config/abi/staking.json")).default;
 
-      const { hash } = await writeContract({
-        address: contract.staking.address,
-        abi,
-        functionName: "stake",
-        args: [0n, 0n, checkedDeposits],
-      });
-      const receipt = await waitForTransaction({ hash });
+        const hash = await walletClient.writeContract({
+          address: contract.staking.address,
+          abi,
+          functionName: "stake",
+          args: [0n, 0n, checkedDeposits],
+        });
+        const receipt = await publicClient?.waitForTransactionReceipt({ hash });
 
-      if (receipt.status === "success") {
-        setCheckedDeposits([]);
-        onClose();
+        if (receipt.status === "success") {
+          setCheckedDeposits([]);
+          onClose();
+        }
+        notifyTransaction(receipt, explorer);
+      } catch (err) {
+        console.error(err);
+        notification.error({ description: (err as Error).message });
       }
-      notifyTransaction(receipt, explorer);
-    } catch (err) {
-      console.error(err);
-      notification.error({ description: (err as Error).message });
-    }
 
-    setBusy(false);
-  }, [activeChain, checkedDeposits, onClose]);
+      setBusy(false);
+    }
+  }, [activeChain, isStakingV2, checkedDeposits, walletClient, publicClient, onClose]);
 
   return (
     <Modal

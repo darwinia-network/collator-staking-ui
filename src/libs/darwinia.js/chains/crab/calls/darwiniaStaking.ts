@@ -8,8 +8,7 @@
 import { Dispatch } from "../../../src/call";
 import { buildRuntimeCall, decodeCall } from "../../../src/helpers";
 import { Metadata } from "@polkadot/types";
-import type { WalletClient } from "@wagmi/core";
-import { TransactionReceipt, Hex } from "viem";
+import { TransactionReceipt, Hex, WalletClient } from "viem";
 
 export const getDarwiniaStaking = (dispatch: Dispatch, metadata: Metadata) => {
   return {
