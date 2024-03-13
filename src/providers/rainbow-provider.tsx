@@ -1,24 +1,41 @@
 "use client";
 
 import "@rainbow-me/rainbowkit/styles.css";
-import { getDefaultWallets, RainbowKitProvider, connectorsForWallets, darkTheme } from "@rainbow-me/rainbowkit";
-import { trustWallet, imTokenWallet, okxWallet, talismanWallet, safeWallet } from "@rainbow-me/rainbowkit/wallets";
-import { configureChains, createConfig, WagmiConfig } from "wagmi";
-import { publicProvider } from "wagmi/providers/public";
+import { RainbowKitProvider, connectorsForWallets, darkTheme } from "@rainbow-me/rainbowkit";
+import {
+  safeWallet,
+  rainbowWallet,
+  metaMaskWallet,
+  walletConnectWallet,
+  talismanWallet,
+  okxWallet,
+} from "@rainbow-me/rainbowkit/wallets";
+import { createConfig, WagmiProvider } from "wagmi";
 
 import { APP_NAME_CONF } from "@/config";
 import { getChainConfigs } from "@/utils";
-import { PropsWithChildren, useEffect, useState } from "react";
+import { PropsWithChildren, useMemo } from "react";
 import { useApp } from "@/hooks";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Chain, createClient, http } from "viem";
 
 const projectId = process.env.NEXT_PUBLIC_WALLET_CONNECT_ID || "";
+const queryClient = new QueryClient();
+const connectors = connectorsForWallets(
+  [
+    {
+      groupName: "More",
+      wallets: [rainbowWallet, metaMaskWallet, walletConnectWallet, talismanWallet, okxWallet, safeWallet],
+    },
+  ],
+  { appName: APP_NAME_CONF, projectId }
+);
 
 export function RainbowProvider({ children }: PropsWithChildren<unknown>) {
-  const [mounted, setMounted] = useState(true); // temporarity set to true
   const { activeChain, activeRpc } = useApp();
 
-  const { chains, publicClient } = configureChains(
-    getChainConfigs().map(({ chainId, name, nativeToken, explorer }) => ({
+  const chains = useMemo(() => {
+    return getChainConfigs().map(({ chainId, name, nativeToken, explorer }) => ({
       id: chainId,
       name,
       network: name.toLowerCase().split(" ").join("-"),
@@ -43,48 +60,26 @@ export function RainbowProvider({ children }: PropsWithChildren<unknown>) {
           name: explorer.name,
         },
       },
-    })),
-    [publicProvider()]
-  );
-
-  const { wallets } = getDefaultWallets({
-    appName: APP_NAME_CONF,
-    projectId,
-    chains,
-  });
-
-  const connectors = connectorsForWallets([
-    ...wallets,
-    {
-      groupName: "More",
-      wallets: [
-        talismanWallet({ chains }),
-        okxWallet({ projectId, chains }),
-        imTokenWallet({ projectId, chains }),
-        trustWallet({ projectId, chains }),
-        safeWallet({ chains }),
-      ],
-    },
-  ]);
-
-  const wagmiConfig = createConfig({
-    autoConnect: true,
-    connectors,
-    publicClient,
-  });
-
-  useEffect(() => setMounted(true), []);
+    })) as unknown as [Chain, ...Chain[]];
+  }, [activeRpc.url]);
 
   return (
-    <WagmiConfig config={wagmiConfig}>
-      <RainbowKitProvider
-        theme={darkTheme({ borderRadius: "none", accentColor: "#FF0083" })}
-        chains={chains}
-        appInfo={{ appName: APP_NAME_CONF }}
-        initialChain={activeChain}
-      >
-        {mounted && children}
-      </RainbowKitProvider>
-    </WagmiConfig>
+    <WagmiProvider
+      config={createConfig({
+        connectors,
+        chains,
+        client: ({ chain }) => createClient({ chain, transport: http() }),
+      })}
+    >
+      <QueryClientProvider client={queryClient}>
+        <RainbowKitProvider
+          theme={darkTheme({ borderRadius: "none", accentColor: "#FF0083" })}
+          appInfo={{ appName: APP_NAME_CONF }}
+          initialChain={activeChain}
+        >
+          {children}
+        </RainbowKitProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
   );
 }
