@@ -17,7 +17,7 @@ export default function BondMoreDepositModal({
   isOpen: boolean;
   onClose?: () => void;
 }) {
-  const { deposits, stakedDeposits, calcExtraPower } = useStaking();
+  const { deposits, calcExtraPower } = useStaking();
   const { activeChain } = useApp();
 
   const [checkedDeposits, setCheckedDeposits] = useState<number[]>([]);
@@ -35,7 +35,7 @@ export default function BondMoreDepositModal({
     [deposits, commission, checkedDeposits, calcExtraPower]
   );
 
-  const availableDeposits = deposits.filter(({ id }) => !stakedDeposits.includes(id));
+  const availableDeposits = deposits.filter(({ inUse }) => !inUse);
   const { nativeToken } = getChainConfig(activeChain);
 
   const handleBond = useCallback(async () => {
