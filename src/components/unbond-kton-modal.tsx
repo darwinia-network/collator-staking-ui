@@ -4,6 +4,7 @@ import { useApp, useStaking } from "@/hooks";
 import { useCallback, useState } from "react";
 import { notification } from "./notification";
 import { writeContract, waitForTransaction } from "@wagmi/core";
+import { ChainID } from "@/types";
 
 export default function UnbondKtonModal({
   commission,
@@ -32,13 +33,17 @@ export default function UnbondKtonModal({
       });
     } else {
       setBusy(true);
+      const { contract, explorer } = getChainConfig(activeChain);
 
       try {
-        const contractAbi = (await import(`@/config/abi/${contract.staking.abiFile}`)).default;
+        const abi =
+          activeChain === ChainID.CRAB
+            ? (await import("@/config/abi/staking-v2.json")).default
+            : (await import(`@/config/abi/${contract.staking.abiFile}`)).default;
 
         const { hash } = await writeContract({
           address: contract.staking.address,
-          abi: contractAbi,
+          abi,
           functionName: "unstake",
           args: [0n, inputAmount, []],
         });
@@ -56,7 +61,7 @@ export default function UnbondKtonModal({
 
       setBusy(false);
     }
-  }, [explorer, contract.staking, stakedKton, inputAmount, ktonToken, onClose]);
+  }, [activeChain, stakedKton, inputAmount, ktonToken, onClose]);
 
   return (
     ktonToken && (

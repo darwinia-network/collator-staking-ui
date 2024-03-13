@@ -52,7 +52,7 @@ function UnbondingDeposit({ unbondings, token, onCancelUnbonding, onRelease }: P
               key={`${index}${depositId}${amount.toString()}${expiredAtBlock}${expiredTimestamp}`}
               className="text-xs font-light text-white"
             >
-              {`#${index + 1} ${formatBlanace(amount, token.decimals, { keepZero: false })} Deposit ${
+              {`#${depositId} ${formatBlanace(amount, token.decimals, { keepZero: false })} Deposit ${
                 token.symbol
               } is unbonding and will be released to deposit in ${formatDistanceStrict(
                 expiredTimestamp,
@@ -75,7 +75,7 @@ function UnbondingDeposit({ unbondings, token, onCancelUnbonding, onRelease }: P
               key={`${index}${depositId}${amount.toString()}${expiredAtBlock}${expiredTimestamp}`}
               className="text-xs font-bold text-white"
             >
-              {`#${index + 1} ${formatBlanace(amount, token.decimals, { keepZero: false })} ${
+              {`#${depositId} ${formatBlanace(amount, token.decimals, { keepZero: false })} ${
                 token.symbol
               } has complete the unbonding exit delay period.  `}
               <EnsureMatchNetworkButton className="text-primary" onClick={() => onRelease("deposit")}>

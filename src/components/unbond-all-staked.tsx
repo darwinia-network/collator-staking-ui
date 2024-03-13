@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import { writeContract, waitForTransaction } from "@wagmi/core";
 import { notification } from "./notification";
 import { getChainConfig, notifyTransaction } from "@/utils";
+import { ChainID } from "@/types";
 
 export default function UnbondAllStaked() {
   const { stakedRing, stakedKton, stakedDeposits } = useStaking();
@@ -15,11 +16,14 @@ export default function UnbondAllStaked() {
     setBusy(true);
 
     try {
-      const contractAbi = (await import(`@/config/abi/${contract.staking.abiFile}`)).default;
+      const abi =
+        activeChain === ChainID.CRAB
+          ? (await import("@/config/abi/staking-v2.json")).default
+          : (await import(`@/config/abi/${contract.staking.abiFile}`)).default;
 
       const { hash } = await writeContract({
         address: contract.staking.address,
-        abi: contractAbi,
+        abi,
         functionName: "unstake",
         args: [stakedRing, stakedKton, stakedDeposits],
       });

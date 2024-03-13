@@ -5,6 +5,7 @@ import { useAccount, useBalance } from "wagmi";
 import { useCallback, useState } from "react";
 import { notification } from "./notification";
 import { writeContract, waitForTransaction } from "@wagmi/core";
+import { ChainID } from "@/types";
 
 export default function BondMoreKtonModal({
   commission,
@@ -30,13 +31,17 @@ export default function BondMoreKtonModal({
       notification.warn({ description: "Your balance is insufficient." });
     } else {
       setBusy(true);
+      const { contract, explorer } = getChainConfig(activeChain);
 
       try {
-        const contractAbi = (await import(`@/config/abi/${contract.staking.abiFile}`)).default;
+        const abi =
+          activeChain === ChainID.CRAB
+            ? (await import("@/config/abi/staking-v2.json")).default
+            : (await import(`@/config/abi/${contract.staking.abiFile}`)).default;
 
         const { hash } = await writeContract({
           address: contract.staking.address,
-          abi: contractAbi,
+          abi,
           functionName: "stake",
           args: [0n, inputAmount, []],
         });
@@ -54,7 +59,7 @@ export default function BondMoreKtonModal({
 
       setBusy(false);
     }
-  }, [contract.staking, explorer, inputAmount, ktonBalance?.value, onClose]);
+  }, [activeChain, inputAmount, ktonBalance?.value, onClose]);
 
   return (
     ktonToken && (
