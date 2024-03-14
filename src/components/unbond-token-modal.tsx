@@ -42,7 +42,10 @@ export default function UnbondTokenModal({
       disabled={disabled}
     >
       <>
-        <p className="text-xs font-light text-white">This unbonding process will take 14 days to complete.</p>
+        <p className="text-xs font-light text-white line-through">
+          This unbonding process will take 14 days to complete.
+        </p>
+        <p className="text-xs font-light text-white">{`There is no longer a 14-day period for unbonding ${symbol}.`}</p>
         <div className="h-[1px] bg-white/20" />
         <BalanceInput
           label="Amount"
