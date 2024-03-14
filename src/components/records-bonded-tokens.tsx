@@ -192,7 +192,7 @@ export default function RecordsBondedTokens({ row }: { row: StakingRecordsDataSo
         </span>
         {row.collator.length > 0 && (
           <>
-            <BondMoreKton />
+            <BondMoreKton commission={row.commission} />
             <UnbondKton commission={row.commission} />
           </>
         )}
@@ -211,12 +211,12 @@ function BondMoreRing({ commission }: { commission: string }) {
   );
 }
 
-function BondMoreKton() {
+function BondMoreKton({ commission }: { commission: string }) {
   const [isOpen, setIsOpen] = useState(false);
   return (
     <>
       <ChangeBondButton action="bond" onClick={() => setIsOpen(true)} />
-      <BondMoreKtonModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
+      <BondMoreKtonModal commission={commission} isOpen={isOpen} onClose={() => setIsOpen(false)} />
     </>
   );
 }

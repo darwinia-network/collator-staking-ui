@@ -12,6 +12,7 @@ import { notification } from "./notification";
 
 export default function DoStake() {
   const {
+    isStakingV2,
     deposits,
     nominatorCollators,
     collatorCommission,
@@ -26,12 +27,13 @@ export default function DoStake() {
   const [busy, setBusy] = useState(false);
 
   const { activeChain } = useApp();
-  const { nativeToken, explorer } = getChainConfig(activeChain);
+  const { nativeToken, ktonToken, explorer } = getChainConfig(activeChain);
 
   const publicClient = usePublicClient();
   const { data: walletClient } = useWalletClient();
   const { address } = useAccount();
   const { data: ringBalance } = useBalance({ address, query: { refetchInterval: 3000 } });
+  const { data: ktonBalance } = useBalance({ address, query: { refetchInterval: 3000 }, token: ktonToken?.address });
 
   const commission = useMemo(() => {
     return (delegateCollator && collatorCommission[delegateCollator]) || "0.00%";
@@ -40,6 +42,10 @@ export default function DoStake() {
   const ringExtraPower = useMemo(
     () => commissionWeightedPower(calcExtraPower(delegateRing, 0n), commission),
     [commission, delegateRing, calcExtraPower]
+  );
+  const ktonExtraPower = useMemo(
+    () => commissionWeightedPower(calcExtraPower(0n, delegateKton), commission),
+    [commission, delegateKton, calcExtraPower]
   );
   const depositsExtraPower = useMemo(
     () =>
@@ -109,6 +115,9 @@ export default function DoStake() {
 
       <div className="h-[1px] bg-white/20" />
 
+      {/* collator */}
+      {!isStakingV2 && <CollatorSelector collator={delegateCollator} onSelect={setDelegateCollator} />}
+
       <div className="flex flex-col gap-middle lg:flex-row">
         {/* ring */}
         <BalanceInput
@@ -122,6 +131,22 @@ export default function DoStake() {
           isReset={delegateRing <= 0}
         />
 
+        {/* kton */}
+        {ktonToken && !isStakingV2 && (
+          <>
+            <BalanceInput
+              balance={ktonBalance?.value || 0n}
+              symbol={ktonToken.symbol}
+              logoPath={ktonToken.logoPath}
+              decimals={ktonToken.decimals}
+              power={ktonExtraPower}
+              className="lg:flex-1"
+              onChange={setDelegateKton}
+              isReset={delegateKton <= 0}
+            />
+          </>
+        )}
+
         {/* active deposit */}
         <div className="flex flex-col gap-middle lg:flex-1">
           <ActiveDepositSelector checkedDeposits={delegateDeposits} onChange={setDelegateDeposits} />
@@ -129,10 +154,12 @@ export default function DoStake() {
         </div>
 
         {/* collator */}
-        <div className="flex flex-col gap-middle lg:flex-1">
-          <CollatorSelector collator={delegateCollator} onSelect={setDelegateCollator} />
-          <ExtraPower power={0n} className="invisible" />
-        </div>
+        {isStakingV2 && (
+          <div className="flex flex-col gap-middle lg:flex-1">
+            <CollatorSelector collator={delegateCollator} onSelect={setDelegateCollator} />
+            <ExtraPower power={0n} className="invisible" />
+          </div>
+        )}
       </div>
 
       <div className="h-[1px] bg-white/20" />
