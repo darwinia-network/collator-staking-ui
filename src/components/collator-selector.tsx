@@ -2,7 +2,7 @@ import Jazzicon from "./jazzicon";
 import Image from "next/image";
 import CollatorSelectModal from "./collator-select-modal";
 import { useCallback, useState } from "react";
-import { useAccountName } from "@/hooks";
+import { useAccountName, useStaking } from "@/hooks";
 import { toShortAdrress } from "@/utils";
 
 interface Props {
@@ -12,6 +12,7 @@ interface Props {
 
 export default function CollatorSelector({ collator, onSelect }: Props) {
   const [isOpen, setIsOpen] = useState(false);
+  const { isStakingV2 } = useStaking();
 
   const handleConfirm = useCallback(
     (collator: string) => {
@@ -24,7 +25,11 @@ export default function CollatorSelector({ collator, onSelect }: Props) {
   return (
     <>
       {collator ? (
-        <div className="flex items-center gap-middle border border-primary px-large py-middle transition-opacity">
+        <div
+          className={`flex items-center gap-middle border px-large transition-opacity ${
+            isStakingV2 ? "h-10 border-white" : "border-primary py-middle"
+          }`}
+        >
           <Collator collator={collator} />
           <button
             className="shrink-0 transition-transform hover:scale-105 active:scale-95"
@@ -35,7 +40,9 @@ export default function CollatorSelector({ collator, onSelect }: Props) {
         </div>
       ) : (
         <button
-          className="border border-primary py-middle text-sm font-bold text-white transition-opacity hover:opacity-80 active:opacity-60"
+          className={`border text-sm text-white transition-opacity hover:opacity-80 active:opacity-60 ${
+            isStakingV2 ? "h-10 border-white font-light" : "border-primary py-middle font-bold"
+          }`}
           onClick={() => setIsOpen(true)}
         >
           Select a collator
@@ -49,8 +56,16 @@ export default function CollatorSelector({ collator, onSelect }: Props) {
 
 function Collator({ collator }: { collator: string }) {
   const { accountName } = useAccountName(collator);
+  const { isStakingV2 } = useStaking();
 
-  return (
+  return isStakingV2 ? (
+    <>
+      <Jazzicon address={collator} size={22} />
+      <span className="truncate text-sm font-bold text-white">
+        {accountName === collator ? toShortAdrress(collator) : accountName}
+      </span>
+    </>
+  ) : (
     <>
       <Jazzicon address={collator} size={30} />
       <div className="flex min-w-0 flex-col gap-small">

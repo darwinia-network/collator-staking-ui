@@ -5,8 +5,7 @@ import { commissionWeightedPower, formatBlanace, getChainConfig, notifyTransacti
 import { ExtraPower } from "./balance-input";
 import { useApp, useStaking } from "@/hooks";
 import { notification } from "./notification";
-import { writeContract, waitForTransaction } from "@wagmi/core";
-import { ChainID } from "@/types";
+import { usePublicClient, useWalletClient } from "wagmi";
 
 export default function UnbondDepositModal({
   commission,
@@ -17,11 +16,14 @@ export default function UnbondDepositModal({
   isOpen: boolean;
   onClose?: () => void;
 }) {
-  const { deposits, stakedDeposits, calcExtraPower } = useStaking();
+  const { deposits, stakedDeposits, isStakingV2, calcExtraPower } = useStaking();
   const { activeChain } = useApp();
 
   const [checkedDeposits, setCheckedDeposits] = useState<number[]>([]);
   const [busy, setBusy] = useState(false);
+
+  const publicClient = usePublicClient();
+  const { data: walletClient } = useWalletClient();
 
   const extraPower = useMemo(
     () =>
@@ -42,32 +44,33 @@ export default function UnbondDepositModal({
     setBusy(true);
     const { contract, explorer } = getChainConfig(activeChain);
 
-    try {
-      const abi =
-        activeChain === ChainID.CRAB
+    if (walletClient && publicClient) {
+      try {
+        const abi = isStakingV2
           ? (await import("@/config/abi/staking-v2.json")).default
-          : (await import(`@/config/abi/${contract.staking.abiFile}`)).default;
+          : (await import("@/config/abi/staking.json")).default;
 
-      const { hash } = await writeContract({
-        address: contract.staking.address,
-        abi,
-        functionName: "unstake",
-        args: [0n, 0n, checkedDeposits],
-      });
-      const receipt = await waitForTransaction({ hash });
+        const hash = await walletClient.writeContract({
+          address: contract.staking.address,
+          abi,
+          functionName: "unstake",
+          args: [0n, 0n, checkedDeposits],
+        });
+        const receipt = await publicClient.waitForTransactionReceipt({ hash });
 
-      if (receipt.status === "success") {
-        setCheckedDeposits([]);
-        onClose();
+        if (receipt.status === "success") {
+          setCheckedDeposits([]);
+          onClose();
+        }
+        notifyTransaction(receipt, explorer);
+      } catch (err) {
+        console.error(err);
+        notification.error({ description: (err as Error).message });
       }
-      notifyTransaction(receipt, explorer);
-    } catch (err) {
-      console.error(err);
-      notification.error({ description: (err as Error).message });
     }
 
     setBusy(false);
-  }, [activeChain, checkedDeposits, onClose]);
+  }, [activeChain, checkedDeposits, isStakingV2, walletClient, publicClient, onClose]);
 
   return (
     <Modal

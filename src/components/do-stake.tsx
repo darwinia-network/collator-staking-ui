@@ -12,6 +12,7 @@ import { notification } from "./notification";
 
 export default function DoStake() {
   const {
+    isStakingV2,
     deposits,
     nominatorCollators,
     collatorCommission,
@@ -31,8 +32,8 @@ export default function DoStake() {
   const publicClient = usePublicClient();
   const { data: walletClient } = useWalletClient();
   const { address } = useAccount();
-  const { data: ringBalance } = useBalance({ address, watch: true });
-  const { data: ktonBalance } = useBalance({ address, watch: true, token: ktonToken?.address });
+  const { data: ringBalance } = useBalance({ address, query: { refetchInterval: 3000 } });
+  const { data: ktonBalance } = useBalance({ address, query: { refetchInterval: 3000 }, token: ktonToken?.address });
 
   const commission = useMemo(() => {
     return (delegateCollator && collatorCommission[delegateCollator]) || "0.00%";
@@ -59,7 +60,7 @@ export default function DoStake() {
   );
 
   const handleStake = useCallback(async () => {
-    if (delegateCollator && walletClient) {
+    if (delegateCollator && walletClient && publicClient) {
       setBusy(true);
 
       try {
@@ -115,7 +116,7 @@ export default function DoStake() {
       <div className="h-[1px] bg-white/20" />
 
       {/* collator */}
-      <CollatorSelector collator={delegateCollator} onSelect={setDelegateCollator} />
+      {!isStakingV2 && <CollatorSelector collator={delegateCollator} onSelect={setDelegateCollator} />}
 
       <div className="flex flex-col gap-middle lg:flex-row">
         {/* ring */}
@@ -131,7 +132,7 @@ export default function DoStake() {
         />
 
         {/* kton */}
-        {ktonToken && (
+        {ktonToken && !isStakingV2 && (
           <>
             <BalanceInput
               balance={ktonBalance?.value || 0n}
@@ -151,6 +152,14 @@ export default function DoStake() {
           <ActiveDepositSelector checkedDeposits={delegateDeposits} onChange={setDelegateDeposits} />
           <ExtraPower power={depositsExtraPower} />
         </div>
+
+        {/* collator */}
+        {isStakingV2 && (
+          <div className="flex flex-col gap-middle lg:flex-1">
+            <CollatorSelector collator={delegateCollator} onSelect={setDelegateCollator} />
+            <ExtraPower power={0n} className="invisible" />
+          </div>
+        )}
       </div>
 
       <div className="h-[1px] bg-white/20" />

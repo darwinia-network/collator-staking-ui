@@ -2,12 +2,11 @@ import { calcKtonReward, formatBlanace, getChainConfig, notifyTransaction } from
 import BalanceInput from "./balance-input";
 import DepositTermSelector from "./deposit-term-selector";
 import InputLabel from "./input-label";
-import { useAccount, useBalance } from "wagmi";
+import { useAccount, useBalance, usePublicClient, useWalletClient } from "wagmi";
 import { useApp, useStaking } from "@/hooks";
 import { useCallback, useState } from "react";
 import EnsureMatchNetworkButton from "./ensure-match-network-button";
 import { notification } from "./notification";
-import { writeContract, waitForTransaction } from "@wagmi/core";
 
 export default function DoDeposit() {
   const [depositRing, setDepositRing] = useState(0n);
@@ -15,9 +14,12 @@ export default function DoDeposit() {
   const [busy, setBusy] = useState(false);
 
   const { address } = useAccount();
-  const { data: ringBalance } = useBalance({ address, watch: true });
+  const { data: ringBalance } = useBalance({ address, query: { refetchInterval: 3000 } });
   const { minimumDeposit } = useStaking();
   const { activeChain } = useApp();
+
+  const { data: walletClient } = useWalletClient();
+  const publicClient = usePublicClient();
 
   const chainConfig = getChainConfig(activeChain);
 
@@ -32,19 +34,17 @@ export default function DoDeposit() {
     } else if ((ringBalance?.value || 0n) < depositRing) {
       notification.warn({ description: "Your balance is insufficient." });
       return;
-    } else {
+    } else if (walletClient && publicClient) {
       setBusy(true);
 
       try {
-        const contractAbi = (await import(`@/config/abi/${chainConfig.contract.deposit.abiFile}`)).default;
-
-        const { hash } = await writeContract({
+        const hash = await walletClient.writeContract({
           address: chainConfig.contract.deposit.address,
-          abi: contractAbi,
+          abi: (await import(`@/config/abi/${chainConfig.contract.deposit.abiFile}`)).default,
           functionName: "lock",
           args: [depositRing, depositTerm],
         });
-        const receipt = await waitForTransaction({ hash });
+        const receipt = await publicClient.waitForTransactionReceipt({ hash });
 
         if (receipt.status === "success") {
           setDepositRing(0n);
@@ -66,6 +66,8 @@ export default function DoDeposit() {
     chainConfig.explorer,
     chainConfig.nativeToken,
     ringBalance?.value,
+    walletClient,
+    publicClient,
   ]);
 
   return (

@@ -1,0 +1,5 @@
+{
+  "name": "Darwinia Staking",
+  "description": "Darwinia and Crab network staking apps",
+  "icons": [{ "src": "icon.svg", "sizes": "any" }]
+}
