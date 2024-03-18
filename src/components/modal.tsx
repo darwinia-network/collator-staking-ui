@@ -76,7 +76,7 @@ export default function Modal({
           </div>
           {/* content */}
           <div className={`h-full bg-component p-large ${onCancel || onOk ? "flex flex-col gap-large" : ""}`}>
-            {children}
+            {children}{" "}
             {(onCancel || onOk) && (
               <>
                 <div className="h-[1px] bg-white/20" />

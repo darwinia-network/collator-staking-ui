@@ -9,6 +9,7 @@ import { notification } from "./notification";
 import { getChainConfig, notifyTransaction } from "@/utils";
 import { ChainID } from "@/types";
 import { clientBuilder } from "@/libs";
+import { writeContract, waitForTransaction } from "@wagmi/core";
 
 enum TabKey {
   UPDATE_SESSION_KEY,
@@ -35,17 +36,15 @@ export default function ManageCollator({
 
   const client = useMemo(
     () =>
-      publicClient
-        ? activeChain === ChainID.CRAB
-          ? clientBuilder.buildCrabClient(publicClient)
-          : clientBuilder.buildDarwiniaClient(publicClient)
-        : null,
+      activeChain === ChainID.CRAB
+        ? clientBuilder.buildCrabClient(publicClient)
+        : clientBuilder.buildDarwiniaClient(publicClient),
     [activeChain, publicClient]
   );
   const { explorer, contract } = getChainConfig(activeChain);
 
   const handleUpdateSessionKey = useCallback(async () => {
-    if (walletClient && client?.calls.session) {
+    if (walletClient) {
       setBusy(true);
 
       try {
@@ -66,24 +65,26 @@ export default function ManageCollator({
 
       setBusy(false);
     }
-  }, [client?.calls.session, explorer, sessionKey, walletClient, onClose]);
+  }, [client.calls.session, explorer, sessionKey, walletClient, onClose]);
 
   const handleUpdateCommission = useCallback(async () => {
     const commissionValue = Number(commission);
 
     if (Number.isNaN(commissionValue) || commissionValue < 0 || maxCommission < commissionValue) {
       notification.error({ description: `Invalid commission, the valid commission is 0%~${maxCommission}%.` });
-    } else if (walletClient && publicClient) {
+    } else {
       setBusy(true);
 
       try {
-        const hash = await walletClient.writeContract({
+        const contractAbi = (await import(`@/config/abi/${contract.staking.abiFile}`)).default;
+
+        const { hash } = await writeContract({
           address: contract.staking.address,
-          abi: (await import(`@/config/abi/${contract.staking.abiFile}`)).default,
+          abi: contractAbi,
           functionName: "collect",
           args: [commissionValue],
         });
-        const receipt = await publicClient.waitForTransactionReceipt({ hash });
+        const receipt = await waitForTransaction({ hash });
 
         if (receipt.status === "success") {
           updateCollatorCommission();
@@ -98,43 +99,34 @@ export default function ManageCollator({
 
       setBusy(false);
     }
-  }, [
-    commission,
-    contract.staking,
-    explorer,
-    maxCommission,
-    walletClient,
-    publicClient,
-    updateCollatorCommission,
-    onClose,
-  ]);
+  }, [commission, contract.staking, explorer, maxCommission, updateCollatorCommission, onClose]);
 
   const handleStopCollator = useCallback(async () => {
-    if (walletClient && publicClient) {
-      setBusy(true);
+    setBusy(true);
 
-      try {
-        const hash = await walletClient.writeContract({
-          address: contract.staking.address,
-          abi: (await import(`@/config/abi/${contract.staking.abiFile}`)).default,
-          functionName: "chill",
-          args: [],
-        });
-        const receipt = await publicClient.waitForTransactionReceipt({ hash });
+    try {
+      const contractAbi = (await import(`@/config/abi/${contract.staking.abiFile}`)).default;
 
-        if (receipt.status === "success") {
-          updateCollatorCommission();
-          onClose();
-        }
-        notifyTransaction(receipt, explorer);
-      } catch (err) {
-        console.error(err);
-        notification.error({ description: (err as Error).message });
+      const { hash } = await writeContract({
+        address: contract.staking.address,
+        abi: contractAbi,
+        functionName: "chill",
+        args: [],
+      });
+      const receipt = await waitForTransaction({ hash });
+
+      if (receipt.status === "success") {
+        updateCollatorCommission();
+        onClose();
       }
-
-      setBusy(false);
+      notifyTransaction(receipt, explorer);
+    } catch (err) {
+      console.error(err);
+      notification.error({ description: (err as Error).message });
     }
-  }, [contract.staking, explorer, walletClient, publicClient, updateCollatorCommission, onClose]);
+
+    setBusy(false);
+  }, [contract.staking, explorer, updateCollatorCommission, onClose]);
 
   return (
     <Modal

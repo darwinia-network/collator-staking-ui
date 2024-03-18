@@ -1,4 +1,4 @@
-import type { PublicClient } from "viem";
+import type { PublicClient } from "@wagmi/core";
 import type { Metadata } from "@polkadot/types";
 import { dispatch as dispatchCall } from "../../../src/call";
 

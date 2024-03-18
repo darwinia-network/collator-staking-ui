@@ -30,7 +30,7 @@ export default function JoinCollatorModal({
 
     if (Number.isNaN(commissionValue) || commissionValue < 0 || maxCommission < commissionValue) {
       notification.error({ description: `Invalid commission, the valid commission is 0%~${maxCommission}%.` });
-    } else if (walletClient && publicClient) {
+    } else if (walletClient) {
       setBusy(true);
 
       try {

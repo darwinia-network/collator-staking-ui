@@ -3,7 +3,7 @@ import { crabStaticMetadata, buildCrabCallsClient } from "./crab";
 import { darwiniaStaticMetadata, buildDarwiniaCallsClient } from "./darwinia";
 import { pangoroStaticMetadata, buildPangoroCallsClient } from "./pongoro";
 
-import type { PublicClient } from "viem";
+import type { PublicClient } from "@wagmi/core";
 import { buildMetadata } from "../src/helpers";
 
 export const clientBuilder = {

@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useNetwork, useSwitchNetwork } from "wagmi";
 import OpacityButton from "./opacity-button";
 import ScaleButton from "./scale-button";
 import {
@@ -26,17 +27,16 @@ import {
   useRole,
   useTransitionStyles,
 } from "@floating-ui/react";
-import { useAccount, useSwitchChain } from "wagmi";
 
 export default forwardRef<
   HTMLButtonElement,
   ButtonHTMLAttributes<HTMLButtonElement> & { kind?: "scale" | "opacity"; busy?: boolean }
 >(function EnsureMatchNetworkButton({ children, onClick, kind = "opacity", disabled, busy, ...rest }, ref) {
   const { activeChain } = useApp();
-  const account = useAccount();
-  const { switchChain } = useSwitchChain();
+  const { chain } = useNetwork();
+  const { switchNetwork } = useSwitchNetwork();
 
-  const isMatch = useMemo(() => account.chainId === activeChain, [account.chainId, activeChain]);
+  const isMatch = useMemo(() => chain?.id === activeChain, [chain?.id, activeChain]);
 
   const [isOpen, setIsOpen] = useState(false);
   const arrowRef = useRef(null);
@@ -107,7 +107,7 @@ export default forwardRef<
                 You are connected to the Wrong Chain.{" "}
                 <span
                   className="text-primary transition-opacity hover:cursor-pointer hover:opacity-80"
-                  onClick={() => switchChain({ chainId: activeChain })}
+                  onClick={() => switchNetwork && switchNetwork(activeChain)}
                 >
                   Switch network
                 </span>

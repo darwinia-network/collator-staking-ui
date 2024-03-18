@@ -3,8 +3,8 @@ import Modal from "./modal";
 import { formatBlanace, getChainConfig, notifyTransaction } from "@/utils";
 import { Deposit } from "@/types";
 import { useCallback, useMemo, useState } from "react";
+import { writeContract, waitForTransaction } from "@wagmi/core";
 import { notification } from "./notification";
-import { usePublicClient, useWalletClient } from "wagmi";
 
 export type WithdrawType = "early" | "regular";
 
@@ -22,9 +22,6 @@ export default function WithdrawModal({
   const [busy, setBusy] = useState(false);
   const { activeChain } = useApp();
 
-  const publicClient = usePublicClient();
-  const { data: walletClient } = useWalletClient();
-
   const chainConfig = getChainConfig(activeChain);
 
   const okText = useMemo(() => {
@@ -40,37 +37,35 @@ export default function WithdrawModal({
   const handleWithdraw = useCallback(async () => {
     setBusy(true);
 
-    if (walletClient && publicClient) {
-      try {
-        const abi = (await import(`@/config/abi/${chainConfig.contract.deposit.abiFile}`)).default;
+    try {
+      const contractAbi = (await import(`@/config/abi/${chainConfig.contract.deposit.abiFile}`)).default;
 
-        const hash = await (type === "early"
-          ? walletClient.writeContract({
-              address: chainConfig.contract.deposit.address,
-              abi,
-              functionName: "claim_with_penalty",
-              args: [deposit?.id ?? 0],
-            })
-          : walletClient.writeContract({
-              address: chainConfig.contract.deposit.address,
-              abi,
-              functionName: "claim",
-              args: [],
-            }));
-        const receipt = await publicClient.waitForTransactionReceipt({ hash });
+      const { hash } = await (type === "early"
+        ? writeContract({
+            address: chainConfig.contract.deposit.address,
+            abi: contractAbi,
+            functionName: "claim_with_penalty",
+            args: [deposit?.id],
+          })
+        : writeContract({
+            address: chainConfig.contract.deposit.address,
+            abi: contractAbi,
+            functionName: "claim",
+            args: [],
+          }));
+      const receipt = await waitForTransaction({ hash });
 
-        if (receipt.status === "success") {
-          onClose();
-        }
-        notifyTransaction(receipt, chainConfig.explorer);
-      } catch (err) {
-        console.error(err);
-        notification.error({ description: (err as Error).message });
+      if (receipt.status === "success") {
+        onClose();
       }
+      notifyTransaction(receipt, chainConfig.explorer);
+    } catch (err) {
+      console.error(err);
+      notification.error({ description: (err as Error).message });
     }
 
     setBusy(false);
-  }, [type, chainConfig.contract.deposit, chainConfig.explorer, deposit?.id, walletClient, publicClient, onClose]);
+  }, [type, chainConfig.contract.deposit, chainConfig.explorer, deposit?.id, onClose]);
 
   return (
     <Modal

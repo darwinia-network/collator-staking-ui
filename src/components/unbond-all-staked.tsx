@@ -1,45 +1,42 @@
 import { useApp, useStaking } from "@/hooks";
 import RecordsActionButton from "./records-action-button";
 import { useCallback, useState } from "react";
+import { writeContract, waitForTransaction } from "@wagmi/core";
 import { notification } from "./notification";
 import { getChainConfig, notifyTransaction } from "@/utils";
-import { usePublicClient, useWalletClient } from "wagmi";
+import { ChainID } from "@/types";
 
 export default function UnbondAllStaked() {
-  const { stakedRing, stakedKton, stakedDeposits, isStakingV2 } = useStaking();
+  const { stakedRing, stakedKton, stakedDeposits } = useStaking();
   const { activeChain } = useApp();
   const [busy, setBusy] = useState(false);
-
-  const publicClient = usePublicClient();
-  const { data: walletClient } = useWalletClient();
 
   const handleUnbond = useCallback(async () => {
     const { contract, explorer } = getChainConfig(activeChain);
     setBusy(true);
 
-    if (walletClient && publicClient) {
-      try {
-        const abi = isStakingV2
+    try {
+      const abi =
+        activeChain === ChainID.CRAB
           ? (await import("@/config/abi/staking-v2.json")).default
-          : (await import("@/config/abi/staking.json")).default;
+          : (await import(`@/config/abi/${contract.staking.abiFile}`)).default;
 
-        const hash = await walletClient.writeContract({
-          address: contract.staking.address,
-          abi,
-          functionName: "unstake",
-          args: [stakedRing, stakedKton, stakedDeposits],
-        });
-        const receipt = await publicClient.waitForTransactionReceipt({ hash });
+      const { hash } = await writeContract({
+        address: contract.staking.address,
+        abi,
+        functionName: "unstake",
+        args: [stakedRing, stakedKton, stakedDeposits],
+      });
+      const receipt = await waitForTransaction({ hash });
 
-        notifyTransaction(receipt, explorer);
-      } catch (err) {
-        console.error(err);
-        notification.error({ description: (err as Error).message });
-      }
+      notifyTransaction(receipt, explorer);
+    } catch (err) {
+      console.error(err);
+      notification.error({ description: (err as Error).message });
     }
 
     setBusy(false);
-  }, [activeChain, stakedRing, stakedKton, stakedDeposits, isStakingV2, walletClient, publicClient]);
+  }, [activeChain, stakedRing, stakedKton, stakedDeposits]);
 
   return (
     <RecordsActionButton busy={busy} onClick={handleUnbond}>

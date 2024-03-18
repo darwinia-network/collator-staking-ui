@@ -3,18 +3,18 @@
 import { useApp } from "@/hooks";
 import { getChainConfig } from "@/utils";
 import { useEffect, useRef } from "react";
+import { useNetwork, useSwitchNetwork } from "wagmi";
 import { notification } from "./notification";
-import { useAccount, useSwitchChain } from "wagmi";
 
 export default function WrongChainAlert() {
   const closerRef = useRef<(() => void) | null>(null);
+  const { switchNetwork } = useSwitchNetwork();
+  const { chain } = useNetwork();
   const { activeChain } = useApp();
-  const account = useAccount();
-  const { switchChain } = useSwitchChain();
 
   useEffect(() => {
-    if (account.chainId && account.chainId !== activeChain) {
-      if (!closerRef.current) {
+    if (chain?.id && chain.id !== activeChain) {
+      if (!closerRef.current && switchNetwork) {
         const chainConfig = getChainConfig(activeChain);
 
         closerRef.current = notification.warn({
@@ -24,7 +24,7 @@ export default function WrongChainAlert() {
               You are connected to the Wrong Chain.{" "}
               <span
                 className="text-primary transition-opacity hover:cursor-pointer hover:opacity-80"
-                onClick={() => switchChain({ chainId: activeChain })}
+                onClick={() => switchNetwork(activeChain)}
               >{`Change the selected Chain to ${chainConfig.name}`}</span>{" "}
               in MetaMask.
             </p>
@@ -38,7 +38,7 @@ export default function WrongChainAlert() {
       closerRef.current();
       closerRef.current = null;
     }
-  }, [account.chainId, activeChain, switchChain]);
+  }, [chain?.id, activeChain, switchNetwork]);
 
   return null;
 }
