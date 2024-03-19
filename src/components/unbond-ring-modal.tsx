@@ -3,7 +3,8 @@ import UnbondTokenModal from "./unbond-token-modal";
 import { useApp, useStaking } from "@/hooks";
 import { useCallback, useState } from "react";
 import { notification } from "./notification";
-import { usePublicClient, useWalletClient } from "wagmi";
+import { writeContract, waitForTransaction } from "@wagmi/core";
+import { ChainID } from "@/types";
 
 export default function UnbondRingModal({
   commission,
@@ -15,13 +16,10 @@ export default function UnbondRingModal({
   onClose?: () => void;
 }) {
   const { activeChain } = useApp();
-  const { stakedRing, isStakingV2, calcExtraPower } = useStaking();
+  const { stakedRing, calcExtraPower } = useStaking();
 
   const [inputAmount, setInputAmount] = useState(0n);
   const [busy, setBusy] = useState(false);
-
-  const publicClient = usePublicClient();
-  const { data: walletClient } = useWalletClient();
 
   const { nativeToken } = getChainConfig(activeChain);
 
@@ -33,22 +31,23 @@ export default function UnbondRingModal({
           keepZero: false,
         })} ${nativeToken.symbol}`,
       });
-    } else if (walletClient && publicClient) {
+    } else {
       setBusy(true);
       const { contract, explorer } = getChainConfig(activeChain);
 
       try {
-        const abi = isStakingV2
-          ? (await import("@/config/abi/staking-v2.json")).default
-          : (await import("@/config/abi/staking.json")).default;
+        const abi =
+          activeChain === ChainID.CRAB
+            ? (await import("@/config/abi/staking-v2.json")).default
+            : (await import(`@/config/abi/${contract.staking.abiFile}`)).default;
 
-        const hash = await walletClient.writeContract({
+        const { hash } = await writeContract({
           address: contract.staking.address,
           abi,
           functionName: "unstake",
           args: [inputAmount, 0n, []],
         });
-        const receipt = await publicClient.waitForTransactionReceipt({ hash });
+        const receipt = await waitForTransaction({ hash });
 
         if (receipt.status === "success") {
           setInputAmount(0n);
@@ -62,7 +61,7 @@ export default function UnbondRingModal({
 
       setBusy(false);
     }
-  }, [activeChain, stakedRing, inputAmount, nativeToken, isStakingV2, walletClient, publicClient, onClose]);
+  }, [activeChain, stakedRing, inputAmount, nativeToken, onClose]);
 
   return (
     <UnbondTokenModal

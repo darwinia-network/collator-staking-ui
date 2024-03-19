@@ -8,7 +8,7 @@
 import { Dispatch } from "../../../src/call";
 import { buildRuntimeCall, decodeCall } from "../../../src/helpers";
 import { Metadata } from "@polkadot/types";
-import type { WalletClient } from "viem";
+import type { WalletClient } from "@wagmi/core";
 import { TransactionReceipt, Hex } from "viem";
 
 export const getSession = (dispatch: Dispatch, metadata: Metadata) => {

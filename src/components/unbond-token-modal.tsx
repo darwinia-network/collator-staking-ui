@@ -1,4 +1,3 @@
-import { useStaking } from "@/hooks";
 import BalanceInput from "./balance-input";
 import Modal from "./modal";
 
@@ -29,8 +28,6 @@ export default function UnbondTokenModal({
   onClose?: () => void;
   onChange?: (amount: bigint) => void;
 }) {
-  const { isStakingV2 } = useStaking();
-
   return (
     <Modal
       title={`Unbond ${symbol}`}
@@ -45,12 +42,7 @@ export default function UnbondTokenModal({
       disabled={disabled}
     >
       <>
-        <p className={`text-xs font-light text-white ${isStakingV2 ? "line-through" : ""}`}>
-          This unbonding process will take 14 days to complete.
-        </p>
-        {isStakingV2 && (
-          <p className="text-xs font-light text-white">{`There is no longer a 14-day period for unbonding ${symbol}.`}</p>
-        )}
+        <p className="text-xs font-light text-white">This unbonding process will take 14 days to complete.</p>
         <div className="h-[1px] bg-white/20" />
         <BalanceInput
           label="Amount"

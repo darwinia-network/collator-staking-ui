@@ -9,8 +9,7 @@ const fontJetBrainsMono = JetBrains_Mono({ subsets: ["latin", "latin-ext"] });
 
 export const metadata = {
   title: "Darwinia Staking",
-  description: "Darwinia and Crab network staking apps",
-  manifest: "/manifest.json",
+  description: "Darwinia and Crab network staking app",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

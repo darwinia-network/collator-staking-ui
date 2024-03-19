@@ -5,7 +5,8 @@ import { commissionWeightedPower, formatBlanace, getChainConfig, notifyTransacti
 import { ExtraPower } from "./balance-input";
 import { useApp, useStaking } from "@/hooks";
 import { notification } from "./notification";
-import { usePublicClient, useWalletClient } from "wagmi";
+import { writeContract, waitForTransaction } from "@wagmi/core";
+import { ChainID } from "@/types";
 
 export default function BondMoreDepositModal({
   commission,
@@ -16,11 +17,8 @@ export default function BondMoreDepositModal({
   isOpen: boolean;
   onClose?: () => void;
 }) {
-  const { deposits, isStakingV2, calcExtraPower } = useStaking();
+  const { deposits, calcExtraPower } = useStaking();
   const { activeChain } = useApp();
-
-  const { data: walletClient } = useWalletClient();
-  const publicClient = usePublicClient();
 
   const [checkedDeposits, setCheckedDeposits] = useState<number[]>([]);
   const [busy, setBusy] = useState(false);
@@ -41,36 +39,35 @@ export default function BondMoreDepositModal({
   const { nativeToken } = getChainConfig(activeChain);
 
   const handleBond = useCallback(async () => {
-    if (walletClient && publicClient) {
-      setBusy(true);
-      const { contract, explorer } = getChainConfig(activeChain);
+    setBusy(true);
+    const { contract, explorer } = getChainConfig(activeChain);
 
-      try {
-        const abi = isStakingV2
+    try {
+      const abi =
+        activeChain === ChainID.CRAB
           ? (await import("@/config/abi/staking-v2.json")).default
-          : (await import("@/config/abi/staking.json")).default;
+          : (await import(`@/config/abi/${contract.staking.abiFile}`)).default;
 
-        const hash = await walletClient.writeContract({
-          address: contract.staking.address,
-          abi,
-          functionName: "stake",
-          args: [0n, 0n, checkedDeposits],
-        });
-        const receipt = await publicClient?.waitForTransactionReceipt({ hash });
+      const { hash } = await writeContract({
+        address: contract.staking.address,
+        abi,
+        functionName: "stake",
+        args: [0n, 0n, checkedDeposits],
+      });
+      const receipt = await waitForTransaction({ hash });
 
-        if (receipt.status === "success") {
-          setCheckedDeposits([]);
-          onClose();
-        }
-        notifyTransaction(receipt, explorer);
-      } catch (err) {
-        console.error(err);
-        notification.error({ description: (err as Error).message });
+      if (receipt.status === "success") {
+        setCheckedDeposits([]);
+        onClose();
       }
-
-      setBusy(false);
+      notifyTransaction(receipt, explorer);
+    } catch (err) {
+      console.error(err);
+      notification.error({ description: (err as Error).message });
     }
-  }, [activeChain, isStakingV2, checkedDeposits, walletClient, publicClient, onClose]);
+
+    setBusy(false);
+  }, [activeChain, checkedDeposits, onClose]);
 
   return (
     <Modal

@@ -13,4 +13,3 @@ export * from "./use-pool";
 export * from "./use-active-collators";
 export * from "./use-collator-last-session-blocks";
 export * from "./use-collators-session-key";
-export * from "./use-is-staking-v2";

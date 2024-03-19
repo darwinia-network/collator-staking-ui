@@ -1,9 +1,11 @@
 import { commissionWeightedPower, getChainConfig, notifyTransaction } from "@/utils";
 import BondMoreTokenModal from "./bond-more-token-modal";
-import { useAccount, useBalance, usePublicClient, useWalletClient } from "wagmi";
+import { useAccount, useBalance } from "wagmi";
 import { useApp, useStaking } from "@/hooks";
 import { useCallback, useState } from "react";
 import { notification } from "./notification";
+import { writeContract, waitForTransaction } from "@wagmi/core";
+import { ChainID } from "@/types";
 
 export default function BondMoreRingModal({
   commission,
@@ -16,11 +18,8 @@ export default function BondMoreRingModal({
 }) {
   const { activeChain } = useApp();
   const { address } = useAccount();
-  const { data: ringBalance } = useBalance({ address, query: { refetchInterval: 3000 } });
-  const { isStakingV2, calcExtraPower } = useStaking();
-
-  const { data: walletClient } = useWalletClient();
-  const publicClient = usePublicClient();
+  const { data: ringBalance } = useBalance({ address, watch: true });
+  const { calcExtraPower } = useStaking();
 
   const [inputAmount, setInputAmount] = useState(0n);
   const [busy, setBusy] = useState(false);
@@ -30,22 +29,23 @@ export default function BondMoreRingModal({
   const handleBond = useCallback(async () => {
     if ((ringBalance?.value || 0n) < inputAmount) {
       notification.warn({ description: "Your balance is insufficient." });
-    } else if (walletClient && publicClient) {
+    } else {
       setBusy(true);
       const { contract, explorer } = getChainConfig(activeChain);
 
       try {
-        const abi = isStakingV2
-          ? (await import("@/config/abi/staking-v2.json")).default
-          : (await import("@/config/abi/staking.json")).default;
+        const abi =
+          activeChain === ChainID.CRAB
+            ? (await import("@/config/abi/staking-v2.json")).default
+            : (await import(`@/config/abi/${contract.staking.abiFile}`)).default;
 
-        const hash = await walletClient.writeContract({
+        const { hash } = await writeContract({
           address: contract.staking.address,
           abi,
           functionName: "stake",
           args: [inputAmount, 0n, []],
         });
-        const receipt = await publicClient.waitForTransactionReceipt({ hash });
+        const receipt = await waitForTransaction({ hash });
 
         if (receipt.status === "success") {
           setInputAmount(0n);
@@ -58,7 +58,7 @@ export default function BondMoreRingModal({
 
       setBusy(false);
     }
-  }, [activeChain, inputAmount, ringBalance?.value, isStakingV2, walletClient, publicClient, onClose]);
+  }, [activeChain, inputAmount, ringBalance?.value, onClose]);
 
   return (
     <BondMoreTokenModal

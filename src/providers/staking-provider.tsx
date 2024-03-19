@@ -9,7 +9,6 @@ import {
   useCollatorPower,
   useCollatorSessionKey,
   useDeposits,
-  useIsStakingV2,
   useLedger,
   useNominatorCollators,
   usePool,
@@ -39,8 +38,6 @@ interface StakingCtx {
   unbondingDeposits: UnbondingInfo[];
   minimumDeposit: bigint;
   maxCommission: number;
-
-  isStakingV2: boolean;
 
   isLedgersInitialized: boolean;
   isDepositsInitialized: boolean;
@@ -83,8 +80,6 @@ const defaultValue: StakingCtx = {
   unbondingDeposits: [],
   minimumDeposit: 0n,
   maxCommission: 100, // 100%
-
-  isStakingV2: false,
 
   isLedgersInitialized: false,
   isDepositsInitialized: false,
@@ -141,7 +136,6 @@ export function StakingProvider({ children }: PropsWithChildren<unknown>) {
     ktonPool,
     defaultValue
   );
-  const isStakingV2 = useIsStakingV2();
 
   const power = useMemo(
     () => stakingToPower(stakedRing + stakedDeposit, stakedKton, ringPool, ktonPool),
@@ -183,8 +177,6 @@ export function StakingProvider({ children }: PropsWithChildren<unknown>) {
         unbondingDeposits,
         minimumDeposit,
         maxCommission,
-
-        isStakingV2,
 
         isLedgersInitialized,
         isDepositsInitialized,

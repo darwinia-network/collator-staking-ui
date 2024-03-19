@@ -4,8 +4,8 @@ import { UNBONDING_DURATION } from "@/config";
 import { useCallback, useState } from "react";
 import { useApp } from "@/hooks";
 import { getChainConfig, notifyTransaction } from "@/utils";
+import { writeContract, waitForTransaction } from "@wagmi/core";
 import { notification } from "./notification";
-import { usePublicClient, useWalletClient } from "wagmi";
 
 interface Props {
   isOpen: boolean;
@@ -16,35 +16,32 @@ export default function UndelegateModal({ isOpen, onClose = () => undefined }: P
   const [busy, setBusy] = useState(false);
   const { activeChain } = useApp();
 
-  const publicClient = usePublicClient();
-  const { data: walletClient } = useWalletClient();
-
   const handleUndelegate = useCallback(async () => {
     const chainConfig = getChainConfig(activeChain);
     setBusy(true);
 
-    if (walletClient && publicClient) {
-      try {
-        const hash = await walletClient.writeContract({
-          address: chainConfig.contract.staking.address,
-          abi: (await import(`@/config/abi/${chainConfig.contract.staking.abiFile}`)).default,
-          functionName: "chill",
-          args: [],
-        });
-        const receipt = await publicClient.waitForTransactionReceipt({ hash });
+    try {
+      const contractAbi = (await import(`@/config/abi/${chainConfig.contract.staking.abiFile}`)).default;
 
-        if (receipt.status === "success") {
-          onClose();
-        }
-        notifyTransaction(receipt, chainConfig.explorer);
-      } catch (err) {
-        console.error(err);
-        notification.error({ description: (err as Error).message });
+      const { hash } = await writeContract({
+        address: chainConfig.contract.staking.address,
+        abi: contractAbi,
+        functionName: "chill",
+        args: [],
+      });
+      const receipt = await waitForTransaction({ hash });
+
+      if (receipt.status === "success") {
+        onClose();
       }
+      notifyTransaction(receipt, chainConfig.explorer);
+    } catch (err) {
+      console.error(err);
+      notification.error({ description: (err as Error).message });
     }
 
     setBusy(false);
-  }, [activeChain, walletClient, publicClient, onClose]);
+  }, [activeChain, onClose]);
 
   return (
     <Modal
