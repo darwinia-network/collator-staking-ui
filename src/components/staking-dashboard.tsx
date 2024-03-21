@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { useAccount } from "wagmi";
-import Power from "./power";
+import LatestRewards from "./latest-rewards";
 import ReservedInStaking from "./reserved-in-staking";
 import StakingDepositTabs from "./staking-deposit-tabs";
 
@@ -16,7 +16,7 @@ export default function StakingDashboard() {
   return (
     <>
       <div className="flex flex-col gap-5 lg:flex-row">
-        <Power />
+        <LatestRewards />
         <ReservedInStaking />
       </div>
 

@@ -124,8 +124,8 @@ export default function RecordsBondedTokens({ row }: { row: StakingRecordsDataSo
         </span>
         {row.collator.length > 0 && (
           <>
-            <BondMoreRing commission={row.commission} />
-            <UnbondRing commission={row.commission} />
+            <BondMoreRing />
+            <UnbondRing />
           </>
         )}
       </div>
@@ -153,8 +153,8 @@ export default function RecordsBondedTokens({ row }: { row: StakingRecordsDataSo
         </span>
         {row.collator.length > 0 && (
           <>
-            <BondMoreDeposit commission={row.commission} />
-            <UnbondDeposit commission={row.commission} />
+            <BondMoreDeposit />
+            <UnbondDeposit />
           </>
         )}
       </div>
@@ -181,8 +181,8 @@ export default function RecordsBondedTokens({ row }: { row: StakingRecordsDataSo
         </span>
         {row.collator.length > 0 && (
           <>
-            <BondMoreKton commission={row.commission} />
-            <UnbondKton commission={row.commission} />
+            <BondMoreKton />
+            <UnbondKton />
           </>
         )}
       </div>
@@ -190,62 +190,62 @@ export default function RecordsBondedTokens({ row }: { row: StakingRecordsDataSo
   );
 }
 
-function BondMoreRing({ commission }: { commission: string }) {
+function BondMoreRing() {
   const [isOpen, setIsOpen] = useState(false);
   return (
     <>
       <ChangeBondButton action="bond" onClick={() => setIsOpen(true)} />
-      <BondMoreRingModal commission={commission} isOpen={isOpen} onClose={() => setIsOpen(false)} />
+      <BondMoreRingModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
     </>
   );
 }
 
-function BondMoreKton({ commission }: { commission: string }) {
+function BondMoreKton() {
   const [isOpen, setIsOpen] = useState(false);
   return (
     <>
       <ChangeBondButton action="bond" onClick={() => setIsOpen(true)} />
-      <BondMoreKtonModal commission={commission} isOpen={isOpen} onClose={() => setIsOpen(false)} />
+      <BondMoreKtonModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
     </>
   );
 }
 
-function BondMoreDeposit({ commission }: { commission: string }) {
+function BondMoreDeposit() {
   const [isOpen, setIsOpen] = useState(false);
   return (
     <>
       <ChangeBondButton action="bond" onClick={() => setIsOpen(true)} />
-      <BondMoreDepositModal commission={commission} isOpen={isOpen} onClose={() => setIsOpen(false)} />
+      <BondMoreDepositModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
     </>
   );
 }
 
-function UnbondRing({ commission }: { commission: string }) {
+function UnbondRing() {
   const [isOpen, setIsOpen] = useState(false);
   return (
     <>
       <ChangeBondButton action="unbond" onClick={() => setIsOpen(true)} />
-      <UnbondRingModal commission={commission} isOpen={isOpen} onClose={() => setIsOpen(false)} />
+      <UnbondRingModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
     </>
   );
 }
 
-function UnbondKton({ commission }: { commission: string }) {
+function UnbondKton() {
   const [isOpen, setIsOpen] = useState(false);
   return (
     <>
       <ChangeBondButton action="unbond" onClick={() => setIsOpen(true)} />
-      <UnbondKtonModal commission={commission} isOpen={isOpen} onClose={() => setIsOpen(false)} />
+      <UnbondKtonModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
     </>
   );
 }
 
-function UnbondDeposit({ commission }: { commission: string }) {
+function UnbondDeposit() {
   const [isOpen, setIsOpen] = useState(false);
   return (
     <>
       <ChangeBondButton action="unbond" onClick={() => setIsOpen(true)} />
-      <UnbondDepositModal commission={commission} isOpen={isOpen} onClose={() => setIsOpen(false)} />
+      <UnbondDepositModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
     </>
   );
 }

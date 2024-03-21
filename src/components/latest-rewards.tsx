@@ -1,12 +1,11 @@
 import { GET_LATEST_STAKING_REWARDS } from "@/config";
-import { useApp, useStaking } from "@/hooks";
-import { commissionWeightedPower, formatBlanace, getChainConfig, prettyNumber } from "@/utils";
+import { useApp } from "@/hooks";
+import { formatBlanace, getChainConfig } from "@/utils";
 import { formatDistanceStrict } from "date-fns";
-import Image from "next/image";
 import { getAddress } from "viem";
 import { useAccount } from "wagmi";
 import CountLoading from "./count-loading";
-import { useMemo, useRef } from "react";
+import { useRef } from "react";
 import { CSSTransition } from "react-transition-group";
 import { useQuery } from "@apollo/client";
 
@@ -34,18 +33,8 @@ interface QueryResult {
   stakingRecord: StakingRecord | null;
 }
 
-export default function Power() {
+export default function LatestRewards() {
   const loadingRef = useRef<HTMLDivElement>(null);
-  const {
-    power,
-    nominatorCollators,
-    collatorCommission,
-    isNominatorCollatorsInitialized,
-    isCollatorCommissionInitialized,
-    isLedgersInitialized,
-    isRingPoolInitialized,
-    isKtonPoolInitialized,
-  } = useStaking();
   const { activeChain } = useApp();
   const { address } = useAccount();
   const { data: rewardData, loading: rewardLoading } = useQuery<QueryResult, QueryVariables>(
@@ -55,37 +44,10 @@ export default function Power() {
     }
   );
 
-  const thePower = useMemo(() => {
-    const isCollator =
-      address && Object.keys(collatorCommission).some((addr) => addr.toLowerCase() === address.toLowerCase())
-        ? true
-        : false;
-    const collator = isCollator ? address : address ? nominatorCollators[address]?.at(0) : undefined;
-    const commission = collator ? collatorCommission[collator] : undefined;
-    return commissionWeightedPower(power, commission ?? "0.00%");
-  }, [address, power, collatorCommission, nominatorCollators]);
-
   const chainConfig = getChainConfig(activeChain);
 
   return (
     <div className="flex flex-1 flex-col gap-5 bg-primary p-5">
-      {/* power */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-middle">
-          <Image alt="Icon of Power" src="/images/power.svg" width={30} height={42} />
-          <span className="text-3xl font-bold text-white">Power</span>
-        </div>
-        {isLedgersInitialized &&
-        isRingPoolInitialized &&
-        isKtonPoolInitialized &&
-        isNominatorCollatorsInitialized &&
-        isCollatorCommissionInitialized ? (
-          <span className="text-3xl font-bold text-white">{prettyNumber(thePower)}</span>
-        ) : (
-          <CountLoading color="white" size="large" />
-        )}
-      </div>
-
       {/* reward records */}
       <div className="flex flex-col gap-middle bg-component p-5">
         <span className="text-sm font-bold text-white">Latest Staking Rewards</span>

@@ -1,38 +1,23 @@
-import { Key, useCallback, useMemo, useState } from "react";
+import { Key, useCallback, useState } from "react";
 import Modal from "./modal";
 import CheckboxGroup from "./checkbox-group";
-import { commissionWeightedPower, formatBlanace, getChainConfig, notifyTransaction } from "@/utils";
-import { ExtraPower } from "./balance-input";
+import { formatBlanace, getChainConfig, notifyTransaction } from "@/utils";
 import { useApp, useStaking } from "@/hooks";
 import { notification } from "./notification";
 import { writeContract, waitForTransaction } from "@wagmi/core";
 
 export default function UnbondDepositModal({
-  commission,
   isOpen,
   onClose = () => undefined,
 }: {
-  commission: string;
   isOpen: boolean;
   onClose?: () => void;
 }) {
-  const { deposits, stakedDeposits, calcExtraPower } = useStaking();
+  const { deposits, stakedDeposits } = useStaking();
   const { activeChain } = useApp();
 
   const [checkedDeposits, setCheckedDeposits] = useState<number[]>([]);
   const [busy, setBusy] = useState(false);
-
-  const extraPower = useMemo(
-    () =>
-      commissionWeightedPower(
-        calcExtraPower(
-          deposits.filter(({ id }) => checkedDeposits.includes(id)).reduce((acc, cur) => acc + cur.value, 0n),
-          0n
-        ),
-        commission
-      ),
-    [deposits, commission, checkedDeposits, calcExtraPower]
-  );
 
   const availableDeposits = deposits.filter(({ id }) => stakedDeposits.includes(id));
   const { nativeToken } = getChainConfig(activeChain);
@@ -94,10 +79,6 @@ export default function UnbondDepositModal({
             onChange={setCheckedDeposits as (values: Key[]) => void}
             className="max-h-80 overflow-y-auto"
           />
-
-          <div className="h-[1px] bg-white/20" />
-
-          <ExtraPower power={extraPower} powerChanges="less" />
         </>
       ) : (
         <span className="text-xs font-light text-white">No deposits to unbond</span>

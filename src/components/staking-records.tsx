@@ -39,7 +39,7 @@ export default function StakingRecords() {
     {
       key: "collator",
       dataIndex: "collator",
-      width: "22%",
+      width: "30%",
       title: <span>Collator</span>,
       render: (row) => {
         if (row.collator) {
@@ -75,42 +75,8 @@ export default function StakingRecords() {
       },
     },
     {
-      key: "stakedPower",
-      dataIndex: "stakedPower",
-      title: <span>Your staked (Power)</span>,
-      render: (row) => {
-        if (row.collator) {
-          return <span className="truncate">{prettyNumber(row.stakedPower)}</span>;
-        }
-
-        return (
-          <div className="flex items-center gap-middle">
-            <span className="truncate text-white/50">{prettyNumber(row.stakedPower)}</span>
-            <Tooltip
-              content={
-                <span className="text-xs font-light text-white">
-                  The power is not working yet, You can delegate a collator to complete staking.
-                </span>
-              }
-              className="w-fit"
-              contentClassName="w-64"
-            >
-              <Image
-                alt="Collator tooltip"
-                width={16}
-                height={16}
-                src="/images/help.svg"
-                className="transition-transform hover:scale-105"
-              />
-            </Tooltip>
-          </div>
-        );
-      },
-    },
-    {
       key: "bondedTokens",
       dataIndex: "bondedTokens",
-      width: "32%",
       title: <span>Your bonded tokens</span>,
       render: (row) => <RecordsBondedTokens row={row} />,
     },

@@ -67,37 +67,34 @@ const columns: ColumnType<DataSource>[] = [
     key: "power",
     dataIndex: "power",
     title: (
-      <div className="inline-flex flex-col text-xs font-bold text-white">
-        <span>Total-staked</span>
-        <div className="inline-flex items-center gap-small">
-          <span>(Power)</span>
-          <Tooltip
-            content={
-              <div className="inline-block text-xs font-light text-white">
-                {`The Collator's total-staked power is a dynamic value, inversely proportional to the commission set by
-                the Collator. Higher commission results in lower total-staked power and vice versa. `}
-                <a
-                  rel="noopener noreferrer"
-                  target="_blank"
-                  className="text-primary hover:underline"
-                  href="https://github.com/darwinia-network/DIPs/blob/main/DIPs/dip-1.md"
-                >
-                  Learn More
-                </a>
-              </div>
-            }
-            enabledSafePolygon
-            contentClassName="w-80"
-          >
-            <Image
-              width={15}
-              height={14}
-              alt="Info"
-              src="/images/help.svg"
-              className="opacity-60 transition-opacity hover:opacity-100"
-            />
-          </Tooltip>
-        </div>
+      <div className="inline-flex items-center gap-small">
+        <span className="text-xs font-bold text-white">Total-staked</span>
+        <Tooltip
+          content={
+            <div className="inline-block text-xs font-light text-white">
+              {`The Collator's total-staked is a dynamic value, inversely proportional to the commission set by
+                the Collator. Higher commission results in lower total-staked and vice versa. `}
+              <a
+                rel="noopener noreferrer"
+                target="_blank"
+                className="text-primary hover:underline"
+                href="https://github.com/darwinia-network/DIPs/blob/main/DIPs/dip-1.md"
+              >
+                Learn More
+              </a>
+            </div>
+          }
+          enabledSafePolygon
+          contentClassName="w-80"
+        >
+          <Image
+            width={15}
+            height={14}
+            alt="Info"
+            src="/images/help.svg"
+            className="opacity-60 transition-opacity hover:opacity-100"
+          />
+        </Tooltip>
       </div>
     ),
     render: (row) => <span>{prettyNumber(row.power)}</span>,

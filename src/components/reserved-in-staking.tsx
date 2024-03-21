@@ -4,10 +4,10 @@ import Image from "next/image";
 import CountLoading from "./count-loading";
 
 export default function ReservedInStaking() {
-  const { stakedRing, stakedKton, stakedDeposit, isLedgersInitialized } = useStaking();
+  const { stakedRing, stakedDeposit, isLedgersInitialized } = useStaking();
   const { activeChain } = useApp();
 
-  const { nativeToken, ktonToken } = getChainConfig(activeChain);
+  const { nativeToken } = getChainConfig(activeChain);
 
   return (
     <div className="flex flex-col gap-5 bg-component p-5 lg:w-[32%] lg:shrink-0">
@@ -22,16 +22,6 @@ export default function ReservedInStaking() {
         inDeposit={stakedDeposit}
         isNative
       />
-      <div className="h-[1px] bg-white/20" />
-      {ktonToken && (
-        <Token
-          symbol={ktonToken.symbol}
-          decimals={ktonToken.decimals}
-          logoPath={ktonToken.logoPath}
-          bonded={stakedKton}
-          loading={!isLedgersInitialized}
-        />
-      )}
     </div>
   );
 }

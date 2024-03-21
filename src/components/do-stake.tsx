@@ -1,8 +1,8 @@
-import { commissionWeightedPower, getChainConfig, notifyTransaction } from "@/utils";
+import { getChainConfig, notifyTransaction } from "@/utils";
 import ActiveDepositSelector from "./active-deposit-selector";
 import CollatorSelector from "./collator-selector";
-import BalanceInput, { ExtraPower } from "./balance-input";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import BalanceInput from "./balance-input";
+import { useCallback, useEffect, useState } from "react";
 import { useApp, useStaking } from "@/hooks";
 import { useAccount, useBalance, usePublicClient, useWalletClient } from "wagmi";
 import EnsureMatchNetworkButton from "./ensure-match-network-button";
@@ -11,14 +11,7 @@ import { ChainID } from "@/types";
 import { notification } from "./notification";
 
 export default function DoStake() {
-  const {
-    deposits,
-    nominatorCollators,
-    collatorCommission,
-    isNominatorCollatorsLoading,
-    calcExtraPower,
-    updateNominatorCollators,
-  } = useStaking();
+  const { nominatorCollators, isNominatorCollatorsLoading, updateNominatorCollators } = useStaking();
   const [delegateCollator, setDelegateCollator] = useState<string | undefined>(undefined);
   const [delegateRing, setDelegateRing] = useState(0n);
   const [delegateKton, setDelegateKton] = useState(0n);
@@ -26,37 +19,12 @@ export default function DoStake() {
   const [busy, setBusy] = useState(false);
 
   const { activeChain } = useApp();
-  const { nativeToken, ktonToken, explorer } = getChainConfig(activeChain);
+  const { nativeToken, explorer } = getChainConfig(activeChain);
 
   const publicClient = usePublicClient();
   const { data: walletClient } = useWalletClient();
   const { address } = useAccount();
   const { data: ringBalance } = useBalance({ address, watch: true });
-  const { data: ktonBalance } = useBalance({ address, watch: true, token: ktonToken?.address });
-
-  const commission = useMemo(() => {
-    return (delegateCollator && collatorCommission[delegateCollator]) || "0.00%";
-  }, [delegateCollator, collatorCommission]);
-
-  const ringExtraPower = useMemo(
-    () => commissionWeightedPower(calcExtraPower(delegateRing, 0n), commission),
-    [commission, delegateRing, calcExtraPower]
-  );
-  const ktonExtraPower = useMemo(
-    () => commissionWeightedPower(calcExtraPower(0n, delegateKton), commission),
-    [commission, delegateKton, calcExtraPower]
-  );
-  const depositsExtraPower = useMemo(
-    () =>
-      commissionWeightedPower(
-        calcExtraPower(
-          deposits.filter(({ id }) => delegateDeposits.includes(id)).reduce((acc, cur) => acc + cur.value, 0n),
-          0n
-        ),
-        commission
-      ),
-    [delegateDeposits, commission, deposits, calcExtraPower]
-  );
 
   const handleStake = useCallback(async () => {
     if (delegateCollator && walletClient) {
@@ -121,7 +89,6 @@ export default function DoStake() {
           symbol={nativeToken.symbol}
           logoPath={nativeToken.logoPath}
           decimals={nativeToken.decimals}
-          power={ringExtraPower}
           className="lg:flex-1"
           onChange={setDelegateRing}
           isReset={delegateRing <= 0}
@@ -130,13 +97,11 @@ export default function DoStake() {
         {/* active deposit */}
         <div className="flex flex-col gap-middle lg:flex-1">
           <ActiveDepositSelector checkedDeposits={delegateDeposits} onChange={setDelegateDeposits} />
-          <ExtraPower power={depositsExtraPower} />
         </div>
 
         {/* collator */}
         <div className="flex flex-col gap-middle lg:flex-1">
           <CollatorSelector collator={delegateCollator} onSelect={setDelegateCollator} />
-          <ExtraPower power={0n} className="invisible" />
         </div>
       </div>
 

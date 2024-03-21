@@ -1,10 +1,8 @@
-import { formatBlanace, prettyNumber } from "@/utils";
+import { formatBlanace } from "@/utils";
 import Image from "next/image";
 import InputLabel from "./input-label";
 import { parseUnits } from "viem";
 import { useEffect, useRef, useState } from "react";
-
-type PowerChanges = "more" | "less";
 
 export default function BalanceInput({
   isReset,
@@ -12,11 +10,9 @@ export default function BalanceInput({
   symbol,
   decimals,
   logoPath,
-  power,
   label,
   boldLabel,
   className,
-  powerChanges = "more",
   onChange = () => undefined,
 }: {
   isReset?: boolean;
@@ -24,8 +20,6 @@ export default function BalanceInput({
   symbol: string;
   decimals: number;
   logoPath?: string;
-  power?: bigint;
-  powerChanges?: PowerChanges;
   label?: string;
   boldLabel?: boolean;
   className?: string;
@@ -66,23 +60,6 @@ export default function BalanceInput({
           <span className="text-sm font-light text-white">{symbol}</span>
         </div>
       </div>
-      {power !== undefined && <ExtraPower power={power} powerChanges={powerChanges} />}
     </div>
-  );
-}
-
-export function ExtraPower({
-  power,
-  className,
-  powerChanges = "more",
-}: {
-  power: bigint;
-  className?: string;
-  powerChanges?: PowerChanges;
-}) {
-  return (
-    <span className={`text-xs font-bold text-primary ${className}`}>{`${
-      powerChanges === "more" ? "+" : "-"
-    }${prettyNumber(power)} Power`}</span>
   );
 }
