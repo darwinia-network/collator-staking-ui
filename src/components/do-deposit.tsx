@@ -36,11 +36,9 @@ export default function DoDeposit() {
       setBusy(true);
 
       try {
-        const contractAbi = (await import(`@/config/abi/${chainConfig.contract.deposit.abiFile}`)).default;
-
         const { hash } = await writeContract({
           address: chainConfig.contract.deposit.address,
-          abi: contractAbi,
+          abi: (await import(`@/config/abi/${chainConfig.contract.deposit.abiFile}`)).default,
           functionName: "lock",
           args: [depositRing, depositTerm],
         });

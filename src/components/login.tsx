@@ -21,7 +21,7 @@ export default function Login() {
         Connect Wallet
       </button>
       <p className="text-center text-xs font-light text-[#FFFDFD]">
-        Connect wallet to participate in staking and deposit in Darwinia.
+        Connect wallet to participate in collactor staking and deposit in Darwinia.
       </p>
     </>
   );

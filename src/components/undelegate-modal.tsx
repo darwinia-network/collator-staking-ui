@@ -21,11 +21,9 @@ export default function UndelegateModal({ isOpen, onClose = () => undefined }: P
     setBusy(true);
 
     try {
-      const contractAbi = (await import(`@/config/abi/${chainConfig.contract.staking.abiFile}`)).default;
-
       const { hash } = await writeContract({
         address: chainConfig.contract.staking.address,
-        abi: contractAbi,
+        abi: (await import(`@/config/abi/${chainConfig.contract.staking.abiFile}`)).default,
         functionName: "chill",
         args: [],
       });

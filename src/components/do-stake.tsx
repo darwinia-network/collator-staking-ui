@@ -114,9 +114,6 @@ export default function DoStake() {
 
       <div className="h-[1px] bg-white/20" />
 
-      {/* collator */}
-      <CollatorSelector collator={delegateCollator} onSelect={setDelegateCollator} />
-
       <div className="flex flex-col gap-middle lg:flex-row">
         {/* ring */}
         <BalanceInput
@@ -130,26 +127,16 @@ export default function DoStake() {
           isReset={delegateRing <= 0}
         />
 
-        {/* kton */}
-        {ktonToken && (
-          <>
-            <BalanceInput
-              balance={ktonBalance?.value || 0n}
-              symbol={ktonToken.symbol}
-              logoPath={ktonToken.logoPath}
-              decimals={ktonToken.decimals}
-              power={ktonExtraPower}
-              className="lg:flex-1"
-              onChange={setDelegateKton}
-              isReset={delegateKton <= 0}
-            />
-          </>
-        )}
-
         {/* active deposit */}
         <div className="flex flex-col gap-middle lg:flex-1">
           <ActiveDepositSelector checkedDeposits={delegateDeposits} onChange={setDelegateDeposits} />
           <ExtraPower power={depositsExtraPower} />
+        </div>
+
+        {/* collator */}
+        <div className="flex flex-col gap-middle lg:flex-1">
+          <CollatorSelector collator={delegateCollator} onSelect={setDelegateCollator} />
+          <ExtraPower power={0n} className="invisible" />
         </div>
       </div>
 

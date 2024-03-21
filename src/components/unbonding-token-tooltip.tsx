@@ -56,12 +56,14 @@ function UnbondingToken({ unbondings, token, onCancelUnbonding, onRelease }: Pro
               {`#${index + 1} ${formatBlanace(amount, token.decimals, { keepZero: false })} ${
                 token.symbol
               } is unbonding and will be released in ${formatDistanceStrict(expiredTimestamp, Date.now())}. `}
-              <EnsureMatchNetworkButton
-                className="font-bold text-primary"
-                onClick={() => onCancelUnbonding(isKton ? 0n : amount, isKton ? amount : 0n, [])}
-              >
-                Cancel Unbonding
-              </EnsureMatchNetworkButton>
+              {isKton ? null : (
+                <EnsureMatchNetworkButton
+                  className="font-bold text-primary"
+                  onClick={() => onCancelUnbonding(isKton ? 0n : amount, isKton ? amount : 0n, [])}
+                >
+                  Cancel Unbonding
+                </EnsureMatchNetworkButton>
+              )}
             </p>
           ))}
         </div>

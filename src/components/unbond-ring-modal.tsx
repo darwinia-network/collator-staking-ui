@@ -4,7 +4,6 @@ import { useApp, useStaking } from "@/hooks";
 import { useCallback, useState } from "react";
 import { notification } from "./notification";
 import { writeContract, waitForTransaction } from "@wagmi/core";
-import { ChainID } from "@/types";
 
 export default function UnbondRingModal({
   commission,
@@ -36,14 +35,9 @@ export default function UnbondRingModal({
       const { contract, explorer } = getChainConfig(activeChain);
 
       try {
-        const abi =
-          activeChain === ChainID.CRAB
-            ? (await import("@/config/abi/staking-v2.json")).default
-            : (await import(`@/config/abi/${contract.staking.abiFile}`)).default;
-
         const { hash } = await writeContract({
           address: contract.staking.address,
-          abi,
+          abi: (await import(`@/config/abi/${contract.staking.abiFile}`)).default,
           functionName: "unstake",
           args: [inputAmount, 0n, []],
         });

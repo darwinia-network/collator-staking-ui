@@ -28,29 +28,45 @@ export default function BondMoreTokenModal({
   onClose?: () => void;
   onChange?: (amount: bigint) => void;
 }) {
+  const isKton = symbol.endsWith("KTON");
+
   return (
     <Modal
       title={`Bond More ${symbol}`}
       isOpen={isOpen}
       onCancel={onCancel}
       onClose={onClose}
-      onOk={onBond}
+      onOk={isKton ? undefined : onBond}
       maskClosable={false}
       okText="Bond"
       className="lg:w-[25rem]"
       busy={busy}
       disabled={disabled}
     >
-      <BalanceInput
-        label="Amount"
-        boldLabel
-        decimals={decimals}
-        symbol={symbol}
-        balance={balance}
-        power={power}
-        isReset={isReset}
-        onChange={onChange}
-      />
+      {isKton ? (
+        <div className="flex flex-col gap-small text-xs font-bold lg:text-sm lg:font-light">
+          <span className="text-white">{`Please stake ${symbol} in`}</span>
+          <a
+            href="https://kton-staking.darwinia.network/"
+            rel="noopener noreferrer"
+            target="_blank"
+            className="text-primary underline transition-opacity hover:opacity-80"
+          >
+            https://kton-staking.darwinia.network
+          </a>
+        </div>
+      ) : (
+        <BalanceInput
+          label="Amount"
+          boldLabel
+          decimals={decimals}
+          symbol={symbol}
+          balance={balance}
+          power={power}
+          isReset={isReset}
+          onChange={onChange}
+        />
+      )}
     </Modal>
   );
 }

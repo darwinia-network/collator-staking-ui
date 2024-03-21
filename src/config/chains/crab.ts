@@ -20,10 +20,6 @@ export const crabChainConfig: ChainConfig = {
       name: "Dwellir",
       url: "https://darwiniacrab-rpc.dwellir.com",
     },
-    // {
-    //   name: "OnFinality",
-    //   url: "https://crab.api.onfinality.io/public-rpc",
-    // },
   ],
   nativeToken: {
     symbol: "CRAB",

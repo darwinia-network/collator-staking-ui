@@ -24,7 +24,7 @@ export default function CollatorSelector({ collator, onSelect }: Props) {
   return (
     <>
       {collator ? (
-        <div className="flex items-center gap-middle border border-primary px-large py-middle transition-opacity">
+        <div className="flex h-10 items-center gap-middle border border-white px-large transition-opacity">
           <Collator collator={collator} />
           <button
             className="shrink-0 transition-transform hover:scale-105 active:scale-95"
@@ -35,7 +35,7 @@ export default function CollatorSelector({ collator, onSelect }: Props) {
         </div>
       ) : (
         <button
-          className="border border-primary py-middle text-sm font-bold text-white transition-opacity hover:opacity-80 active:opacity-60"
+          className="h-10 border border-white text-sm font-light text-white transition-opacity hover:opacity-80 active:opacity-60"
           onClick={() => setIsOpen(true)}
         >
           Select a collator
@@ -52,13 +52,10 @@ function Collator({ collator }: { collator: string }) {
 
   return (
     <>
-      <Jazzicon address={collator} size={30} />
-      <div className="flex min-w-0 flex-col gap-small">
-        <span className="text-sm font-bold text-white">
-          {accountName === collator ? toShortAdrress(collator) : accountName}
-        </span>
-        <span className="break-words text-xs font-light text-white">{collator}</span>
-      </div>
+      <Jazzicon address={collator} size={22} />
+      <span className="truncate text-sm font-bold text-white">
+        {accountName === collator ? toShortAdrress(collator) : accountName}
+      </span>
     </>
   );
 }
