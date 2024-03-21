@@ -3,7 +3,6 @@ import "./globals.css";
 import { JetBrains_Mono } from "next/font/google";
 import Footer from "@/components/footer";
 import Header from "@/components/header";
-import WrongChainAlert from "@/components/wrong-chain-alert";
 
 const fontJetBrainsMono = JetBrains_Mono({ subsets: ["latin", "latin-ext"] });
 
@@ -26,8 +25,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <Footer className="app-footer" />
               </StakingProvider>
             </ApiProvider>
-
-            <WrongChainAlert />
           </RainbowProvider>
         </AppProvider>
       </body>

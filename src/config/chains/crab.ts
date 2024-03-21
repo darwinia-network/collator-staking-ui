@@ -50,4 +50,5 @@ export const crabChainConfig: ChainConfig = {
       https: "https://crab-rpc.darwinia.network",
     },
   },
+  logo: "crab.png",
 };

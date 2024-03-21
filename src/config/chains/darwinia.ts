@@ -52,4 +52,5 @@ export const darwiniaChainConfig: ChainConfig = {
       https: "https://rpc.darwinia.network",
     },
   },
+  logo: "darwinia.png",
 };
