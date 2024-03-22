@@ -1,7 +1,7 @@
 import dynamic from "next/dynamic";
 import Image from "next/image";
-import ChainSwitch from "./chain-switch";
 
+const ChainSwitch = dynamic(() => import("./chain-switch"), { ssr: false });
 const User = dynamic(() => import("./user"), { ssr: false });
 
 export default function Header({ className }: { className: string }) {
