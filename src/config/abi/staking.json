@@ -5,7 +5,7 @@
     "outputs": [
       {
         "internalType": "bool",
-        "name": "result",
+        "name": "",
         "type": "bool"
       }
     ],
@@ -18,7 +18,7 @@
     "outputs": [
       {
         "internalType": "bool",
-        "name": "result",
+        "name": "",
         "type": "bool"
       }
     ],
@@ -37,7 +37,7 @@
     "outputs": [
       {
         "internalType": "bool",
-        "name": "result",
+        "name": "",
         "type": "bool"
       }
     ],
@@ -56,7 +56,26 @@
     "outputs": [
       {
         "internalType": "bool",
-        "name": "result",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "who",
+        "type": "address"
+      }
+    ],
+    "name": "payout",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
         "type": "bool"
       }
     ],
@@ -67,25 +86,20 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "ring_amount",
+        "name": "ringAmount",
         "type": "uint256"
       },
       {
-        "internalType": "uint256",
-        "name": "kton_amount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint8[]",
-        "name": "deposits",
-        "type": "uint8[]"
+        "internalType": "uint16[]",
+        "name": "depositIds",
+        "type": "uint16[]"
       }
     ],
     "name": "restake",
     "outputs": [
       {
         "internalType": "bool",
-        "name": "result",
+        "name": "",
         "type": "bool"
       }
     ],
@@ -96,25 +110,25 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "ring_amount",
+        "name": "ringAmount",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "kton_amount",
+        "name": "ktonAmount",
         "type": "uint256"
       },
       {
-        "internalType": "uint8[]",
-        "name": "deposits",
-        "type": "uint8[]"
+        "internalType": "uint16[]",
+        "name": "depositIds",
+        "type": "uint16[]"
       }
     ],
     "name": "stake",
     "outputs": [
       {
         "internalType": "bool",
-        "name": "result",
+        "name": "",
         "type": "bool"
       }
     ],
@@ -125,25 +139,25 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "ring_amount",
+        "name": "ringAmount",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "kton_amount",
+        "name": "ktonAmount",
         "type": "uint256"
       },
       {
-        "internalType": "uint8[]",
-        "name": "deposits",
-        "type": "uint8[]"
+        "internalType": "uint16[]",
+        "name": "depositIds",
+        "type": "uint16[]"
       }
     ],
     "name": "unstake",
     "outputs": [
       {
         "internalType": "bool",
-        "name": "result",
+        "name": "",
         "type": "bool"
       }
     ],

@@ -76,11 +76,9 @@ export default function ManageCollator({
       setBusy(true);
 
       try {
-        const contractAbi = (await import(`@/config/abi/${contract.staking.abiFile}`)).default;
-
         const { hash } = await writeContract({
           address: contract.staking.address,
-          abi: contractAbi,
+          abi: (await import(`@/config/abi/${contract.staking.abiFile}`)).default,
           functionName: "collect",
           args: [commissionValue],
         });
@@ -105,11 +103,9 @@ export default function ManageCollator({
     setBusy(true);
 
     try {
-      const contractAbi = (await import(`@/config/abi/${contract.staking.abiFile}`)).default;
-
       const { hash } = await writeContract({
         address: contract.staking.address,
-        abi: contractAbi,
+        abi: (await import(`@/config/abi/${contract.staking.abiFile}`)).default,
         functionName: "chill",
         args: [],
       });

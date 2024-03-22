@@ -1,29 +1,25 @@
-import { commissionWeightedPower, getChainConfig, notifyTransaction } from "@/utils";
+import { getChainConfig, notifyTransaction } from "@/utils";
 import BondMoreTokenModal from "./bond-more-token-modal";
-import { useApp, useStaking } from "@/hooks";
+import { useApp } from "@/hooks";
 import { useAccount, useBalance } from "wagmi";
 import { useCallback, useState } from "react";
 import { notification } from "./notification";
 import { writeContract, waitForTransaction } from "@wagmi/core";
-import { ChainID } from "@/types";
 
 export default function BondMoreKtonModal({
-  commission,
   isOpen,
   onClose = () => undefined,
 }: {
-  commission: string;
   isOpen: boolean;
   onClose?: () => void;
 }) {
   const { activeChain } = useApp();
   const { address } = useAccount();
-  const { calcExtraPower } = useStaking();
 
   const [inputAmount, setInputAmount] = useState(0n);
   const [busy, setBusy] = useState(false);
 
-  const { ktonToken, contract, explorer } = getChainConfig(activeChain);
+  const { ktonToken } = getChainConfig(activeChain);
   const { data: ktonBalance } = useBalance({ address, token: ktonToken?.address, watch: true });
 
   const handleBond = useCallback(async () => {
@@ -34,14 +30,9 @@ export default function BondMoreKtonModal({
       const { contract, explorer } = getChainConfig(activeChain);
 
       try {
-        const abi =
-          activeChain === ChainID.CRAB
-            ? (await import("@/config/abi/staking-v2.json")).default
-            : (await import(`@/config/abi/${contract.staking.abiFile}`)).default;
-
         const { hash } = await writeContract({
           address: contract.staking.address,
-          abi,
+          abi: (await import(`@/config/abi/${contract.staking.abiFile}`)).default,
           functionName: "stake",
           args: [0n, inputAmount, []],
         });
@@ -67,7 +58,6 @@ export default function BondMoreKtonModal({
         isOpen={isOpen}
         symbol={ktonToken.symbol}
         decimals={ktonToken.decimals}
-        power={commissionWeightedPower(calcExtraPower(0n, inputAmount), commission)}
         balance={ktonBalance?.value || 0n}
         busy={busy}
         disabled={inputAmount <= 0n}

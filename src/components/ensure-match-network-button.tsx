@@ -34,7 +34,6 @@ export default forwardRef<
 >(function EnsureMatchNetworkButton({ children, onClick, kind = "opacity", disabled, busy, ...rest }, ref) {
   const { activeChain } = useApp();
   const { chain } = useNetwork();
-  const { switchNetwork } = useSwitchNetwork();
 
   const isMatch = useMemo(() => chain?.id === activeChain, [chain?.id, activeChain]);
 
@@ -103,15 +102,7 @@ export default forwardRef<
           <div ref={refs.setFloating} style={floatingStyles} {...getFloatingProps()} className="z-30">
             <FloatingArrow ref={arrowRef} style={styles} context={context} fill="#FF0083" />
             <div style={styles} className="w-[70vw] border border-primary bg-component  p-middle lg:w-64">
-              <p className="text-xs font-light text-white">
-                You are connected to the Wrong Chain.{" "}
-                <span
-                  className="text-primary transition-opacity hover:cursor-pointer hover:opacity-80"
-                  onClick={() => switchNetwork && switchNetwork(activeChain)}
-                >
-                  Switch network
-                </span>
-              </p>
+              <p className="text-xs font-light text-white">You are connected to the Wrong Chain.</p>
             </div>
           </div>
         </FloatingPortal>

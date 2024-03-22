@@ -89,7 +89,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonHTMLAttributes<HTMLBut
       {...rest}
       type="button"
       ref={ref}
-      className={`flex h-10 items-center border border-primary px-large text-sm font-light text-white transition-opacity hover:opacity-80 active:opacity-60 ${className}`}
+      className={`flex h-10 items-center border border-primary px-large text-sm font-light text-white transition-opacity hover:opacity-80 ${className}`}
     >
       {children}
     </button>

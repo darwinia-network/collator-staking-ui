@@ -6,7 +6,6 @@ export default function UnbondTokenModal({
   symbol,
   decimals,
   balance,
-  power,
   busy,
   disabled,
   isReset,
@@ -19,7 +18,6 @@ export default function UnbondTokenModal({
   symbol: string;
   decimals: number;
   balance: bigint;
-  power: bigint;
   busy?: boolean;
   disabled?: boolean;
   isReset?: boolean;
@@ -28,6 +26,8 @@ export default function UnbondTokenModal({
   onClose?: () => void;
   onChange?: (amount: bigint) => void;
 }) {
+  const isKton = symbol.endsWith("KTON");
+
   return (
     <Modal
       title={`Unbond ${symbol}`}
@@ -42,7 +42,12 @@ export default function UnbondTokenModal({
       disabled={disabled}
     >
       <>
-        <p className="text-xs font-light text-white">This unbonding process will take 14 days to complete.</p>
+        <p className={`text-xs font-light text-white ${isKton ? "line-through" : ""}`}>
+          This unbonding process will take 14 days to complete.
+        </p>
+        {isKton && (
+          <p className="text-xs font-light text-white">{`There is no longer a 14-day period for unbonding ${symbol}.`}</p>
+        )}
         <div className="h-[1px] bg-white/20" />
         <BalanceInput
           label="Amount"
@@ -50,9 +55,7 @@ export default function UnbondTokenModal({
           decimals={decimals}
           symbol={symbol}
           balance={balance}
-          power={power}
           isReset={isReset}
-          powerChanges="less"
           onChange={onChange}
         />
       </>

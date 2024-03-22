@@ -51,5 +51,6 @@ export interface ChainConfig {
   };
   secondsPerBlock: number;
   substrate: Substrate;
+  logo: string; // File name
   isTestNet?: boolean;
 }
