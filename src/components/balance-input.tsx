@@ -43,7 +43,7 @@ export default function BalanceInput({
         }`}
       >
         <input
-          placeholder={`Balance: ${formatBlanace(balance, decimals, { keepZero: false, precision: 4 })}`}
+          placeholder={`Balance: ${formatBlanace(balance, decimals, { keepZero: false, precision: decimals })}`}
           className="h-full w-[72%] bg-transparent text-sm font-light focus-visible:outline-none"
           onChange={(e) => {
             const _hasError = Number.isNaN(Number(e.target.value));
