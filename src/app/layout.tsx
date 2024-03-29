@@ -7,14 +7,14 @@ import Header from "@/components/header";
 const fontJetBrainsMono = JetBrains_Mono({ subsets: ["latin", "latin-ext"] });
 
 export const metadata = {
-  title: "Collactor Staking - Darwinia",
-  description: "Collactor staking of Darwinia and Crab network",
+  title: "Collator Staking - Darwinia",
+  description: "Collator staking of Darwinia and Crab network",
   manifest: "/manifest.json",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="bg-app-black text-white">
+    <html lang="en" className="text-white bg-app-black">
       <body className={fontJetBrainsMono.className}>
         <AppProvider>
           <RainbowProvider>
