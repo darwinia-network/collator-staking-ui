@@ -24,8 +24,8 @@ export function useRateLimit() {
     ) {
       setIsDip6Implemented(true);
       sub$$ = forkJoin([
-        polkadotApi.query.darwiniaStaking.rateLimitState() as unknown as Promise<DarwiniaStakingRateLimiter>,
-        polkadotApi.query.darwiniaStaking.rateLimit() as Promise<u128>,
+        polkadotApi?.query.darwiniaStaking.rateLimitState() as unknown as Promise<DarwiniaStakingRateLimiter>,
+        polkadotApi?.query.darwiniaStaking.rateLimit() as Promise<u128>,
       ]).subscribe({
         next: ([rls, rl]) => {
           setRateLimitState(rls.isPos ? { pos: rls.asPos.toBigInt() } : { neg: rls.asNeg.toBigInt() });
