@@ -12,7 +12,6 @@ type RateLimitState = { pos: bigint; neg?: never } | { pos?: never; neg: bigint 
 export function useRateLimit() {
   const [rateLimitState, setRateLimitState] = useState<RateLimitState | null>();
   const [rateLimit, setRateLimit] = useState<bigint | null>();
-  const [isDip6Implemented, setIsDip6Implemented] = useState(false);
   const { polkadotApi } = useApi();
 
   useEffect(() => {
@@ -22,7 +21,6 @@ export function useRateLimit() {
       isFunction(polkadotApi?.query.darwiniaStaking?.rateLimitState) &&
       isFunction(polkadotApi?.query.darwiniaStaking?.rateLimit)
     ) {
-      setIsDip6Implemented(true);
       sub$$ = forkJoin([
         polkadotApi?.query.darwiniaStaking.rateLimitState() as unknown as Promise<DarwiniaStakingRateLimiter>,
         polkadotApi?.query.darwiniaStaking.rateLimit() as Promise<u128>,
@@ -38,7 +36,6 @@ export function useRateLimit() {
         },
       });
     } else {
-      setIsDip6Implemented(false);
       setRateLimitState(undefined);
       setRateLimit(undefined);
     }
@@ -48,5 +45,5 @@ export function useRateLimit() {
     };
   }, [polkadotApi?.query.darwiniaStaking]);
 
-  return { rateLimit, rateLimitState, isDip6Implemented };
+  return { rateLimit, rateLimitState };
 }
