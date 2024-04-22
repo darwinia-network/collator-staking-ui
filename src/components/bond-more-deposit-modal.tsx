@@ -1,8 +1,8 @@
-import { Key, useCallback, useState } from "react";
+import { Key, useCallback, useEffect, useState } from "react";
 import Modal from "./modal";
 import CheckboxGroup from "./checkbox-group";
 import { formatBlanace, getChainConfig, notifyTransaction } from "@/utils";
-import { useApp, useStaking } from "@/hooks";
+import { useApp, useDip6, useRateLimit, useStaking } from "@/hooks";
 import { notification } from "./notification";
 import { writeContract, waitForTransaction } from "@wagmi/core";
 
@@ -22,6 +22,14 @@ export default function BondMoreDepositModal({
   const availableDeposits = deposits.filter(({ inUse }) => !inUse);
   const { nativeToken } = getChainConfig(activeChain);
 
+  const { isDip6Implemented } = useDip6();
+  const { availableDeposit, updateRateLimit } = useRateLimit();
+  useEffect(() => {
+    if (isOpen) {
+      updateRateLimit();
+    }
+  }, [isOpen, updateRateLimit]);
+
   const handleBond = useCallback(async () => {
     setBusy(true);
     const { contract, explorer } = getChainConfig(activeChain);
@@ -37,6 +45,7 @@ export default function BondMoreDepositModal({
 
       if (receipt.status === "success") {
         setCheckedDeposits([]);
+        updateRateLimit();
         onClose();
       }
       notifyTransaction(receipt, explorer);
@@ -46,7 +55,7 @@ export default function BondMoreDepositModal({
     }
 
     setBusy(false);
-  }, [activeChain, checkedDeposits, onClose]);
+  }, [activeChain, checkedDeposits, onClose, updateRateLimit]);
 
   return (
     <Modal
@@ -63,6 +72,12 @@ export default function BondMoreDepositModal({
     >
       {availableDeposits.length ? (
         <>
+          {isDip6Implemented && (
+            <span className="text-xs font-light text-white/50">
+              Max in this session: {formatBlanace(availableDeposit, nativeToken.decimals, { keepZero: false })}{" "}
+              {nativeToken.symbol}
+            </span>
+          )}
           <CheckboxGroup
             options={availableDeposits.map(({ id, value }) => ({
               value: id,
@@ -74,6 +89,7 @@ export default function BondMoreDepositModal({
                   })} ${nativeToken.symbol}`}</span>
                 </div>
               ),
+              disabled: availableDeposit < value,
             }))}
             checkedValues={checkedDeposits}
             onChange={setCheckedDeposits as (values: Key[]) => void}

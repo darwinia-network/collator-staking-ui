@@ -5,6 +5,7 @@ export default function BondMoreTokenModal({
   isOpen,
   symbol,
   decimals,
+  max,
   balance,
   busy,
   disabled,
@@ -17,6 +18,7 @@ export default function BondMoreTokenModal({
   isOpen: boolean;
   symbol: string;
   decimals: number;
+  max: bigint;
   balance: bigint;
   busy?: boolean;
   disabled?: boolean;
@@ -60,6 +62,7 @@ export default function BondMoreTokenModal({
           decimals={decimals}
           symbol={symbol}
           balance={balance}
+          max={max}
           isReset={isReset}
           onChange={onChange}
         />

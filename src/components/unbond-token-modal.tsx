@@ -7,6 +7,7 @@ export default function UnbondTokenModal({
   symbol,
   decimals,
   balance,
+  max,
   busy,
   disabled,
   isReset,
@@ -19,6 +20,7 @@ export default function UnbondTokenModal({
   symbol: string;
   decimals: number;
   balance: bigint;
+  max: bigint;
   busy?: boolean;
   disabled?: boolean;
   isReset?: boolean;
@@ -57,6 +59,7 @@ export default function UnbondTokenModal({
           decimals={decimals}
           symbol={symbol}
           balance={balance}
+          max={max}
           isReset={isReset}
           onChange={onChange}
         />

@@ -1,49 +1,59 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useApi } from "./use-api";
 import { isFunction } from "@polkadot/util";
-import { Subscription, forkJoin } from "rxjs";
+import { forkJoin } from "rxjs";
 import type { u128 } from "@polkadot/types";
 import { DarwiniaStakingRateLimiter } from "@/types";
 
-type RateLimitState = { pos: bigint; neg?: never } | { pos?: never; neg: bigint };
+const defaultValue = BigInt(Number.MAX_SAFE_INTEGER) * 10n ** 18n; // Token decimals: 18
 
 export function useRateLimit() {
-  const [rateLimitState, setRateLimitState] = useState<RateLimitState | null>();
-  const [rateLimit, setRateLimit] = useState<bigint | null>();
+  const [availableWithdraw, setAvailableWithdraw] = useState(defaultValue);
+  const [availableDeposit, setAvailableDeposit] = useState(defaultValue);
   const { polkadotApi } = useApi();
 
-  useEffect(() => {
-    let sub$$: Subscription | undefined;
-
+  const updateRateLimit = useCallback(() => {
     if (
       isFunction(polkadotApi?.query.darwiniaStaking?.rateLimitState) &&
       isFunction(polkadotApi?.query.darwiniaStaking?.rateLimit)
     ) {
-      sub$$ = forkJoin([
+      return forkJoin([
         polkadotApi?.query.darwiniaStaking.rateLimitState() as unknown as Promise<DarwiniaStakingRateLimiter>,
         polkadotApi?.query.darwiniaStaking.rateLimit() as Promise<u128>,
       ]).subscribe({
         next: ([rls, rl]) => {
-          setRateLimitState(rls.isPos ? { pos: rls.asPos.toBigInt() } : { neg: rls.asNeg.toBigInt() });
-          setRateLimit(rl.toBigInt());
+          const limit = rl.toBigInt();
+          if (rls.isPos) {
+            const pos = rls.asPos.toBigInt();
+            setAvailableWithdraw(limit + pos);
+            setAvailableDeposit(limit - pos);
+          } else {
+            const neg = rls.asNeg.toBigInt();
+            setAvailableWithdraw(limit - neg);
+            setAvailableDeposit(limit + neg);
+          }
         },
         error: (err) => {
           console.error(err);
-          setRateLimit(null);
-          setRateLimitState(null);
+
+          setAvailableWithdraw(0n);
+          setAvailableDeposit(0n);
         },
       });
     } else {
-      setRateLimitState(undefined);
-      setRateLimit(undefined);
+      setAvailableWithdraw(defaultValue);
+      setAvailableDeposit(defaultValue);
     }
+  }, [polkadotApi?.query.darwiniaStaking]);
 
+  useEffect(() => {
+    const sub$$ = updateRateLimit();
     return () => {
       sub$$?.unsubscribe();
     };
-  }, [polkadotApi?.query.darwiniaStaking]);
+  }, [updateRateLimit]);
 
-  return { rateLimit, rateLimitState };
+  return { availableWithdraw, availableDeposit, updateRateLimit };
 }

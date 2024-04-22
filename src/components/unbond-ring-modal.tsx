@@ -1,7 +1,7 @@
 import { formatBlanace, getChainConfig, notifyTransaction } from "@/utils";
 import UnbondTokenModal from "./unbond-token-modal";
-import { useApp, useStaking } from "@/hooks";
-import { useCallback, useState } from "react";
+import { useApp, useRateLimit, useStaking } from "@/hooks";
+import { useCallback, useEffect, useState } from "react";
 import { notification } from "./notification";
 import { writeContract, waitForTransaction } from "@wagmi/core";
 
@@ -19,6 +19,13 @@ export default function UnbondRingModal({
   const [busy, setBusy] = useState(false);
 
   const { nativeToken } = getChainConfig(activeChain);
+
+  const { availableWithdraw, updateRateLimit } = useRateLimit();
+  useEffect(() => {
+    if (isOpen) {
+      updateRateLimit();
+    }
+  }, [isOpen, updateRateLimit]);
 
   const handleUnbond = useCallback(async () => {
     if (stakedRing < inputAmount) {
@@ -43,6 +50,7 @@ export default function UnbondRingModal({
 
         if (receipt.status === "success") {
           setInputAmount(0n);
+          updateRateLimit();
           onClose();
         }
         notifyTransaction(receipt, explorer);
@@ -53,7 +61,7 @@ export default function UnbondRingModal({
 
       setBusy(false);
     }
-  }, [activeChain, stakedRing, inputAmount, nativeToken, onClose]);
+  }, [activeChain, stakedRing, inputAmount, nativeToken, onClose, updateRateLimit]);
 
   return (
     <UnbondTokenModal
@@ -61,6 +69,7 @@ export default function UnbondRingModal({
       symbol={nativeToken.symbol}
       decimals={nativeToken.decimals}
       balance={stakedRing}
+      max={availableWithdraw}
       busy={busy}
       disabled={inputAmount <= 0n}
       isReset={inputAmount <= 0}
