@@ -59,6 +59,7 @@ export default function BondMoreKtonModal({
         symbol={ktonToken.symbol}
         decimals={ktonToken.decimals}
         balance={ktonBalance?.value || 0n}
+        max={0n}
         busy={busy}
         disabled={inputAmount <= 0n}
         isReset={inputAmount <= 0}

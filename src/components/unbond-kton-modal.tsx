@@ -62,6 +62,7 @@ export default function UnbondKtonModal({
         symbol={ktonToken.symbol}
         decimals={ktonToken.decimals}
         balance={stakedKton}
+        max={0n}
         busy={busy}
         disabled={inputAmount <= 0n}
         isReset={inputAmount <= 0}
