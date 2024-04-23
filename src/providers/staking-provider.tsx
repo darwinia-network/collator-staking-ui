@@ -11,9 +11,7 @@ import {
   useDeposits,
   useLedger,
   useNominatorCollators,
-  usePool,
 } from "@/hooks";
-import { stakingToPower } from "@/utils";
 import { PropsWithChildren, createContext, useCallback, useEffect, useMemo, useState } from "react";
 import type { Deposit, UnbondingInfo } from "@/types";
 
@@ -21,8 +19,6 @@ interface StakingCtx {
   deposits: Deposit[];
   stakedDeposits: number[];
   power: bigint;
-  ringPool: bigint;
-  ktonPool: bigint;
   stakedRing: bigint;
   stakedKton: bigint;
   stakedDeposit: bigint;
@@ -41,8 +37,6 @@ interface StakingCtx {
 
   isLedgersInitialized: boolean;
   isDepositsInitialized: boolean;
-  isRingPoolInitialized: boolean;
-  isKtonPoolInitialized: boolean;
   isActiveCollatorsInitialized: boolean;
   isCollatorPowerInitialized: boolean;
   isCollatorSessionKeyInitialized: boolean;
@@ -63,8 +57,6 @@ const defaultValue: StakingCtx = {
   deposits: [],
   stakedDeposits: [],
   power: 0n,
-  ringPool: 0n,
-  ktonPool: 0n,
   stakedRing: 0n,
   stakedKton: 0n,
   stakedDeposit: 0n,
@@ -83,8 +75,6 @@ const defaultValue: StakingCtx = {
 
   isLedgersInitialized: false,
   isDepositsInitialized: false,
-  isRingPoolInitialized: false,
-  isKtonPoolInitialized: false,
   isActiveCollatorsInitialized: false,
   isCollatorPowerInitialized: false,
   isCollatorSessionKeyInitialized: false,
@@ -110,7 +100,6 @@ export function StakingProvider({ children }: PropsWithChildren<unknown>) {
 
   const { collatorLastSessionBlocks, isCollatorLastSessionBlocksInitialized } =
     useCollatorLastSessionBlocks(defaultValue);
-  const { ringPool, ktonPool, isRingPoolInitialized, isKtonPoolInitialized } = usePool(defaultValue);
   const { activeCollators, isActiveCollatorsInitialized } = useActiveCollators(defaultValue);
   const { deposits, isDepositsInitialized } = useDeposits(defaultValue);
   const {
@@ -129,25 +118,11 @@ export function StakingProvider({ children }: PropsWithChildren<unknown>) {
   const { nominatorCollators, isNominatorCollatorsInitialized, isNominatorCollatorsLoading, updateNominatorCollators } =
     useNominatorCollators(defaultValue);
   const { collatorNominators, isCollatorNominatorsInitialized } = useCollatorNominators(defaultValue);
-  const { collatorPower, isCollatorPowerInitialized } = useCollatorPower(
-    collatorNominators,
-    collatorCommission,
-    ringPool,
-    ktonPool,
-    defaultValue
-  );
+  const { collatorPower, isCollatorPowerInitialized } = useCollatorPower(collatorNominators, defaultValue);
 
-  const power = useMemo(
-    () => stakingToPower(stakedRing + stakedDeposit, stakedKton, ringPool, ktonPool),
-    [stakedRing, stakedKton, ringPool, ktonPool, stakedDeposit]
-  );
+  const power = useMemo(() => stakedRing + stakedDeposit, [stakedRing, stakedDeposit]);
 
-  const calcExtraPower = useCallback(
-    (stakingRing: bigint, stakingKton: bigint) =>
-      stakingToPower(stakingRing, stakingKton, ringPool + stakingRing, ktonPool + stakingKton) -
-      stakingToPower(0n, 0n, ringPool, ktonPool),
-    [ringPool, ktonPool]
-  );
+  const calcExtraPower = useCallback((stakingRing: bigint, stakingKton: bigint) => stakingRing + stakingKton, []);
 
   useEffect(() => {
     setMinimumDeposit(BigInt(polkadotApi?.consts.deposit.minLockingAmount.toString() || 0));
@@ -160,8 +135,6 @@ export function StakingProvider({ children }: PropsWithChildren<unknown>) {
         power,
         deposits,
         stakedDeposits,
-        ringPool,
-        ktonPool,
         stakedRing,
         stakedKton,
         stakedDeposit,
@@ -180,8 +153,6 @@ export function StakingProvider({ children }: PropsWithChildren<unknown>) {
 
         isLedgersInitialized,
         isDepositsInitialized,
-        isRingPoolInitialized,
-        isKtonPoolInitialized,
         isActiveCollatorsInitialized,
         isCollatorPowerInitialized,
         isCollatorSessionKeyInitialized,

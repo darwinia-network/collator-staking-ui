@@ -87,13 +87,13 @@ export const useLedger = (deposits: Deposit[], defaultValue: DefaultValue) => {
 
             setStakedDeposit(
               deposits
-                .filter(({ id }) => ledgerData.stakedDeposits?.includes(id))
+                .filter(({ id }) => (ledgerData.stakedDeposits || ledgerData.deposits)?.includes(id))
                 .reduce((acc, cur) => acc + cur.value, 0n)
             );
-            setStakedDeposits(ledgerData.stakedDeposits || []);
+            setStakedDeposits(ledgerData.stakedDeposits || ledgerData.deposits || []);
 
-            setStakedRing(BigInt(ledgerData.stakedRing));
-            setStakedKton(BigInt(ledgerData.stakedKton));
+            setStakedRing(BigInt(ledgerData.stakedRing ?? ledgerData.ring ?? 0));
+            setStakedKton(BigInt(ledgerData.stakedKton ?? 0));
 
             setUnbondingRing(_unbondingRing);
             setUnbondingKton(_unbondingKton);

@@ -1,8 +1,8 @@
 import { getChainConfig, notifyTransaction } from "@/utils";
 import BondMoreTokenModal from "./bond-more-token-modal";
 import { useAccount, useBalance } from "wagmi";
-import { useApp } from "@/hooks";
-import { useCallback, useState } from "react";
+import { useApp, useDip6, useRateLimit } from "@/hooks";
+import { useCallback, useEffect, useState } from "react";
 import { notification } from "./notification";
 import { writeContract, waitForTransaction } from "@wagmi/core";
 
@@ -22,6 +22,14 @@ export default function BondMoreRingModal({
 
   const { nativeToken } = getChainConfig(activeChain);
 
+  const { isDip6Implemented } = useDip6();
+  const { availableDeposit, updateRateLimit } = useRateLimit();
+  useEffect(() => {
+    if (isOpen) {
+      updateRateLimit();
+    }
+  }, [isOpen, updateRateLimit]);
+
   const handleBond = useCallback(async () => {
     if ((ringBalance?.value || 0n) < inputAmount) {
       notification.warn({ description: "Your balance is insufficient." });
@@ -40,6 +48,7 @@ export default function BondMoreRingModal({
 
         if (receipt.status === "success") {
           setInputAmount(0n);
+          updateRateLimit();
           onClose();
         }
         notifyTransaction(receipt, explorer);
@@ -49,7 +58,7 @@ export default function BondMoreRingModal({
 
       setBusy(false);
     }
-  }, [activeChain, inputAmount, ringBalance?.value, onClose]);
+  }, [activeChain, inputAmount, ringBalance?.value, onClose, updateRateLimit]);
 
   return (
     <BondMoreTokenModal
@@ -57,6 +66,7 @@ export default function BondMoreRingModal({
       symbol={nativeToken.symbol}
       decimals={nativeToken.decimals}
       balance={ringBalance?.value || 0n}
+      max={isDip6Implemented ? availableDeposit : undefined}
       busy={busy}
       disabled={inputAmount <= 0n}
       isReset={inputAmount <= 0}

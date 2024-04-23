@@ -3,6 +3,7 @@ import { Key, ReactElement } from "react";
 interface Props {
   options: {
     label: ReactElement;
+    disabled?: boolean;
     value: Key;
   }[];
   checkedValues: Key[];
@@ -13,7 +14,7 @@ interface Props {
 export default function CheckboxGroup({ options, checkedValues, className, onChange = () => undefined }: Props) {
   return (
     <div className={`flex flex-col gap-large ${className}`}>
-      {options.map(({ label, value }) => {
+      {options.map(({ label, value, disabled }) => {
         const idx = checkedValues.findIndex((v) => v === value);
         const checked = idx >= 0;
 
@@ -23,6 +24,7 @@ export default function CheckboxGroup({ options, checkedValues, className, onCha
               className={`relative h-4 w-4 rounded-sm border transition hover:scale-105 active:scale-95 ${
                 checked ? "border-primary bg-primary" : "border-white bg-transparent"
               }`}
+              disabled={disabled}
               onClick={() => {
                 const checkeds = [...checkedValues];
                 if (checked) {

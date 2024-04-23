@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { from, of, forkJoin, switchMap, Subscription } from "rxjs";
 import { useApi } from "./use-api";
 import { DarwiniaStakingLedger } from "@/types";
-import { commissionWeightedPower, stakingToPower } from "@/utils";
 
 interface DepositJson {
   id: number;
@@ -13,11 +12,6 @@ interface DepositJson {
 }
 
 interface ExposuresJson {
-  nominators: { who: string; value: string }[];
-  total: string;
-}
-
-interface ExposuresJsonCache {
   nominators: { who: string; vote: string }[];
   vote: string;
 }
@@ -29,26 +23,8 @@ interface DefaultValue {
 
 type ExposureCacheState = "Previous" | "Current" | "Next";
 
-function isExposuresJsonCache(data: any): data is ExposuresJsonCache {
-  return data.vote;
-}
-
-function formatExposuresData(data: unknown) {
-  if (isExposuresJsonCache(data)) {
-    return {
-      total: data.vote,
-      nominators: data.nominators.map(({ who, vote }) => ({ who, value: vote })),
-    } as ExposuresJson;
-  } else {
-    return data as ExposuresJson;
-  }
-}
-
 export const useCollatorPower = (
   collatorNominators: { [collator: string]: string[] | undefined },
-  collatorCommission: { [collator: string]: string | undefined },
-  ringPool: bigint,
-  ktonPool: bigint,
   defaultValue: DefaultValue
 ) => {
   const [collatorPower, setCollatorPower] = useState(defaultValue.collatorPower);
@@ -80,7 +56,7 @@ export const useCollatorPower = (
           next: ([exposures, ledgers, deposits]) => {
             const parsedExposures = exposures.reduce((acc, cur) => {
               const address = (cur[0].toHuman() as string[])[0];
-              const data = formatExposuresData(cur[1].toJSON() as unknown);
+              const data = cur[1].toJSON() as unknown as ExposuresJson;
               return { ...acc, [address]: data };
             }, {} as { [address: string]: ExposuresJson | undefined });
 
@@ -101,34 +77,31 @@ export const useCollatorPower = (
               collators.reduce((acc, cur) => {
                 if (parsedExposures[cur]) {
                   // active collator
-                  return { ...acc, [cur]: BigInt(parsedExposures[cur]?.total || 0) };
+                  return { ...acc, [cur]: BigInt(parsedExposures[cur]?.vote || 0) };
                 }
 
                 const nominators = collatorNominators[cur] || [];
-                const { stakedDeposit, stakedRing, stakedKton } = nominators.reduce(
+                const { stakedDeposit, stakedRing } = nominators.reduce(
                   (acc, cur) => {
                     const ledger = parsedLedgers[cur];
                     const deposits = parsedDeposits[cur] || [];
 
                     if (ledger) {
                       const stakedDeposit = deposits
-                        .filter(({ id }) => ledger.stakedDeposits?.includes(id))
+                        .filter(({ id }) => (ledger.stakedDeposits || ledger.deposits)?.includes(id))
                         .reduce((acc, cur) => acc + BigInt(cur.value), 0n);
 
                       return {
                         stakedDeposit: acc.stakedDeposit + stakedDeposit,
-                        stakedRing: acc.stakedRing + BigInt(ledger.stakedRing),
-                        stakedKton: acc.stakedKton + BigInt(ledger.stakedKton),
+                        stakedRing: acc.stakedRing + BigInt(ledger.stakedRing ?? ledger.ring ?? 0n),
                       };
                     }
                     return acc;
                   },
-                  { stakedDeposit: 0n, stakedRing: 0n, stakedKton: 0n }
+                  { stakedDeposit: 0n, stakedRing: 0n }
                 );
-                const power = stakingToPower(stakedRing + stakedDeposit, stakedKton, ringPool, ktonPool);
 
-                const commission = collatorCommission[cur] || "0.00%";
-                return { ...acc, [cur]: commissionWeightedPower(power, commission) };
+                return { ...acc, [cur]: stakedRing + stakedDeposit };
               }, {} as { [collator: string]: bigint | undefined })
             );
           },
@@ -140,7 +113,7 @@ export const useCollatorPower = (
     }
 
     return () => sub$$?.unsubscribe();
-  }, [polkadotApi, collatorNominators, collatorCommission, ringPool, ktonPool]);
+  }, [polkadotApi, collatorNominators]);
 
   return { collatorPower, isCollatorPowerInitialized };
 };

@@ -1,4 +1,4 @@
-import { useApp } from "@/hooks";
+import { useApp, useDip6 } from "@/hooks";
 import { StakingRecordsDataSource } from "@/types";
 import { formatBlanace, getChainConfig, notifyTransaction } from "@/utils";
 import UnbondingTokenTooltip from "./unbonding-token-tooltip";
@@ -21,6 +21,7 @@ export default function RecordsBondedTokens({ row }: { row: StakingRecordsDataSo
   const [ktonBusy, setKtonBusy] = useState(false);
 
   const { activeChain } = useApp();
+  const { isDip6Implemented } = useDip6();
   const { nativeToken, ktonToken } = getChainConfig(activeChain);
 
   const handleCancelUnbonding = useCallback(
@@ -103,7 +104,7 @@ export default function RecordsBondedTokens({ row }: { row: StakingRecordsDataSo
     <div className="flex flex-col">
       {/* ring */}
       <div className="flex items-center gap-small">
-        {row.bondedTokens.unbondingRing.length > 0 ? (
+        {row.bondedTokens.unbondingRing.length > 0 && !isDip6Implemented ? (
           ringBusy ? (
             <BusyIcon />
           ) : (
@@ -131,7 +132,7 @@ export default function RecordsBondedTokens({ row }: { row: StakingRecordsDataSo
       </div>
       {/* deposit */}
       <div className="flex items-center gap-small">
-        {row.bondedTokens.unbondingDeposits.length > 0 ? (
+        {row.bondedTokens.unbondingDeposits.length > 0 && !isDip6Implemented ? (
           depositBusy ? (
             <BusyIcon />
           ) : (
@@ -160,7 +161,7 @@ export default function RecordsBondedTokens({ row }: { row: StakingRecordsDataSo
       </div>
       {/* kton */}
       <div className="flex items-center gap-small">
-        {row.bondedTokens.unbondingKton.length > 0 ? (
+        {row.bondedTokens.unbondingKton.length > 0 && !isDip6Implemented ? (
           ktonBusy ? (
             <BusyIcon />
           ) : (

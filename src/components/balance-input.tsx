@@ -2,11 +2,12 @@ import { formatBlanace } from "@/utils";
 import Image from "next/image";
 import InputLabel from "./input-label";
 import { parseUnits } from "viem";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 export default function BalanceInput({
   isReset,
   balance,
+  max,
   symbol,
   decimals,
   logoPath,
@@ -17,6 +18,7 @@ export default function BalanceInput({
 }: {
   isReset?: boolean;
   balance: bigint;
+  max?: bigint;
   symbol: string;
   decimals: number;
   logoPath?: string;
@@ -34,6 +36,14 @@ export default function BalanceInput({
     }
   }, [isReset]);
 
+  const placeholder = useMemo(() => {
+    if (typeof max === "bigint") {
+      return `Max: ${formatBlanace(max, decimals, { keepZero: false, precision: decimals })}`;
+    } else {
+      return `Balance: ${formatBlanace(balance, decimals, { keepZero: false, precision: decimals })}`;
+    }
+  }, [balance, decimals, max]);
+
   return (
     <div className={`flex flex-col gap-middle ${className}`}>
       {label && <InputLabel label={label} bold={boldLabel} />}
@@ -43,11 +53,15 @@ export default function BalanceInput({
         }`}
       >
         <input
-          placeholder={`Balance: ${formatBlanace(balance, decimals, { keepZero: false, precision: decimals })}`}
+          placeholder={placeholder}
           className="h-full w-[72%] bg-transparent text-sm font-light focus-visible:outline-none"
           onChange={(e) => {
             const _hasError = Number.isNaN(Number(e.target.value));
-            setHasError(_hasError || balance < parseUnits(e.target.value, decimals));
+            setHasError(
+              _hasError ||
+                balance < parseUnits(e.target.value, decimals) ||
+                (typeof max === "bigint" && max < parseUnits(e.target.value, decimals))
+            );
 
             if (!_hasError) {
               onChange(parseUnits(e.target.value, decimals));
