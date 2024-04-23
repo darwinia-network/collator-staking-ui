@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useAccount } from "wagmi";
 import Table, { ColumnType } from "./table";
 import Jazzicon from "./jazzicon";
-import { prettyNumber } from "@/utils";
+import { formatBlanace } from "@/utils";
 import { notification } from "./notification";
 import DisplayAccountName from "./display-account-name";
 import { useStaking } from "@/hooks";
@@ -22,77 +22,96 @@ interface DataSource {
   sessionKey: string | undefined;
 }
 
-const columns: ColumnType<DataSource>[] = [
-  {
-    key: "collator",
-    dataIndex: "collator",
-    width: "32%",
-    title: <span className="text-xs font-bold text-white">Collator</span>,
-    render: (row) => (
-      <div className="flex items-center gap-small">
-        <Jazzicon size={20} address={row.collator} className="hidden lg:flex" />
-        <DisplayAccountName address={row.collator} />
-        <Image
-          alt="Copy collator"
-          width={16}
-          height={16}
-          src="/images/copy.svg"
-          className="transition-transform hover:scale-105 hover:cursor-pointer active:scale-95"
-          onClick={async (e) => {
-            e.stopPropagation();
-            try {
-              await navigator.clipboard.writeText(row.collator);
-              notification.success({
-                title: "Copy address successfully",
-                disabledCloseBtn: true,
-                duration: 3000,
-              });
-            } catch (err) {
-              console.error(err);
-            }
-          }}
-        />
-        {row.sessionKey ? null : (
-          <Tooltip
-            contentClassName="text-xs font-light text-white w-80"
-            content="This collator is not ready yet because the session key has not been set"
-          >
-            <Image width={15} height={15} alt="Warning" src="/images/extra-warning.svg" />
-          </Tooltip>
-        )}
-      </div>
-    ),
-  },
-  {
-    key: "power",
-    dataIndex: "power",
-    title: (
-      <div className="inline-flex items-center gap-small">
-        <span className="text-xs font-bold text-white">Total-staked</span>
-      </div>
-    ),
-    render: (row) => <span>{prettyNumber(row.power)}</span>,
-  },
-  {
-    key: "commission",
-    dataIndex: "commission",
-    width: "20%",
-    title: <span className="text-xs font-bold text-white">Commission</span>,
-    render: (row) => <span>{row.commission}</span>,
-  },
-  {
-    key: "blocks",
-    dataIndex: "blocks",
-    width: "20%",
-    title: (
-      <div className="inline-flex flex-col text-xs font-bold text-white">
-        <span>Blocks</span>
-        <span>Last session</span>
-      </div>
-    ),
-    render: (row) => <span>{row.blocks >= 0 ? row.blocks : "-"}</span>,
-  },
-];
+function getColumns(activeTab: TabKey) {
+  const columns: ColumnType<DataSource>[] = [
+    {
+      key: "collator",
+      dataIndex: "collator",
+      width: "32%",
+      title: <span className="text-xs font-bold text-white">Collator</span>,
+      render: (row) => (
+        <div className="flex items-center gap-small">
+          <Jazzicon size={20} address={row.collator} className="hidden lg:flex" />
+          <DisplayAccountName address={row.collator} />
+          <Image
+            alt="Copy collator"
+            width={16}
+            height={16}
+            src="/images/copy.svg"
+            className="transition-transform hover:scale-105 hover:cursor-pointer active:scale-95"
+            onClick={async (e) => {
+              e.stopPropagation();
+              try {
+                await navigator.clipboard.writeText(row.collator);
+                notification.success({
+                  title: "Copy address successfully",
+                  disabledCloseBtn: true,
+                  duration: 3000,
+                });
+              } catch (err) {
+                console.error(err);
+              }
+            }}
+          />
+          {row.sessionKey ? null : (
+            <Tooltip
+              contentClassName="text-xs font-light text-white w-80"
+              content="This collator is not ready yet because the session key has not been set"
+            >
+              <Image width={15} height={15} alt="Warning" src="/images/extra-warning.svg" />
+            </Tooltip>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: "power",
+      dataIndex: "power",
+      title: (
+        <div className="inline-flex items-center gap-small">
+          <span className="text-xs font-bold text-white">{activeTab === "active" ? "Vote" : "Total-staked"}</span>
+          {activeTab === "active" && (
+            <Tooltip
+              content={<span className="text-xs font-light text-white">Vote = Total-staked * (1 - Commission)</span>}
+              enabledSafePolygon
+              contentClassName="w-80"
+            >
+              <Image
+                width={15}
+                height={14}
+                alt="Info"
+                src="/images/help.svg"
+                className="opacity-60 transition-opacity hover:opacity-100"
+              />
+            </Tooltip>
+          )}
+        </div>
+      ),
+      render: (row) => <span>{formatBlanace(row.power, 18, { keepZero: false })}</span>,
+    },
+    {
+      key: "commission",
+      dataIndex: "commission",
+      width: "20%",
+      title: <span className="text-xs font-bold text-white">Commission</span>,
+      render: (row) => <span>{row.commission}</span>,
+    },
+    {
+      key: "blocks",
+      dataIndex: "blocks",
+      width: "20%",
+      title: (
+        <div className="inline-flex flex-col text-xs font-bold text-white">
+          <span>Blocks</span>
+          <span>Last session</span>
+        </div>
+      ),
+      render: (row) => <span>{row.blocks >= 0 ? row.blocks : "-"}</span>,
+    },
+  ];
+
+  return columns;
+}
 
 export default function CollatorSelectModal({
   isOpen,
@@ -193,7 +212,7 @@ export default function CollatorSelectModal({
                 </div>
                 <Table
                   dataSource={dataSource}
-                  columns={columns}
+                  columns={getColumns(activeKey)}
                   styles={{ minWidth: 560 }}
                   contentClassName="h-[22vh] lg:h-[28vh]"
                   selectedItem={selectedCollator}
@@ -211,7 +230,7 @@ export default function CollatorSelectModal({
                 <SearchInput onChange={setKeyword} />
                 <Table
                   dataSource={dataSource}
-                  columns={columns}
+                  columns={getColumns(activeKey)}
                   styles={{ minWidth: 560 }}
                   contentClassName="h-[28vh]"
                   selectedItem={selectedCollator}

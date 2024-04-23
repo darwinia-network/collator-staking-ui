@@ -101,7 +101,7 @@ export const useCollatorPower = (
                   { stakedDeposit: 0n, stakedRing: 0n }
                 );
 
-                return { ...acc, [cur]: (stakedRing + stakedDeposit) / 10n ** 18n }; // Token decimals: 18
+                return { ...acc, [cur]: stakedRing + stakedDeposit };
               }, {} as { [collator: string]: bigint | undefined })
             );
           },
