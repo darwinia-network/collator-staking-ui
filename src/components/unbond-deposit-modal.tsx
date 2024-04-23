@@ -89,7 +89,7 @@ export default function UnbondDepositModal({
                   })} ${nativeToken.symbol}`}</span>
                 </div>
               ),
-              disabled: availableWithdraw < value,
+              disabled: isDip6Implemented && availableWithdraw < value,
             }))}
             checkedValues={checkedDeposits}
             onChange={setCheckedDeposits as (values: Key[]) => void}

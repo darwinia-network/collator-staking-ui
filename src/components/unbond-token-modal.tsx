@@ -20,7 +20,7 @@ export default function UnbondTokenModal({
   symbol: string;
   decimals: number;
   balance: bigint;
-  max: bigint;
+  max?: bigint;
   busy?: boolean;
   disabled?: boolean;
   isReset?: boolean;

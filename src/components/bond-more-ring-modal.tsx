@@ -1,7 +1,7 @@
 import { getChainConfig, notifyTransaction } from "@/utils";
 import BondMoreTokenModal from "./bond-more-token-modal";
 import { useAccount, useBalance } from "wagmi";
-import { useApp, useRateLimit } from "@/hooks";
+import { useApp, useDip6, useRateLimit } from "@/hooks";
 import { useCallback, useEffect, useState } from "react";
 import { notification } from "./notification";
 import { writeContract, waitForTransaction } from "@wagmi/core";
@@ -22,6 +22,7 @@ export default function BondMoreRingModal({
 
   const { nativeToken } = getChainConfig(activeChain);
 
+  const { isDip6Implemented } = useDip6();
   const { availableDeposit, updateRateLimit } = useRateLimit();
   useEffect(() => {
     if (isOpen) {
@@ -65,7 +66,7 @@ export default function BondMoreRingModal({
       symbol={nativeToken.symbol}
       decimals={nativeToken.decimals}
       balance={ringBalance?.value || 0n}
-      max={availableDeposit}
+      max={isDip6Implemented ? availableDeposit : undefined}
       busy={busy}
       disabled={inputAmount <= 0n}
       isReset={inputAmount <= 0}

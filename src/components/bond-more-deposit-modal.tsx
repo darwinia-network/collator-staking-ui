@@ -89,7 +89,7 @@ export default function BondMoreDepositModal({
                   })} ${nativeToken.symbol}`}</span>
                 </div>
               ),
-              disabled: availableDeposit < value,
+              disabled: isDip6Implemented && availableDeposit < value,
             }))}
             checkedValues={checkedDeposits}
             onChange={setCheckedDeposits as (values: Key[]) => void}

@@ -18,7 +18,7 @@ export default function BondMoreTokenModal({
   isOpen: boolean;
   symbol: string;
   decimals: number;
-  max: bigint;
+  max?: bigint;
   balance: bigint;
   busy?: boolean;
   disabled?: boolean;

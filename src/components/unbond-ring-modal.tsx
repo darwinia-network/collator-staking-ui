@@ -1,6 +1,6 @@
 import { formatBlanace, getChainConfig, notifyTransaction } from "@/utils";
 import UnbondTokenModal from "./unbond-token-modal";
-import { useApp, useRateLimit, useStaking } from "@/hooks";
+import { useApp, useDip6, useRateLimit, useStaking } from "@/hooks";
 import { useCallback, useEffect, useState } from "react";
 import { notification } from "./notification";
 import { writeContract, waitForTransaction } from "@wagmi/core";
@@ -20,6 +20,7 @@ export default function UnbondRingModal({
 
   const { nativeToken } = getChainConfig(activeChain);
 
+  const { isDip6Implemented } = useDip6();
   const { availableWithdraw, updateRateLimit } = useRateLimit();
   useEffect(() => {
     if (isOpen) {
@@ -69,7 +70,7 @@ export default function UnbondRingModal({
       symbol={nativeToken.symbol}
       decimals={nativeToken.decimals}
       balance={stakedRing}
-      max={availableWithdraw}
+      max={isDip6Implemented ? availableWithdraw : undefined}
       busy={busy}
       disabled={inputAmount <= 0n}
       isReset={inputAmount <= 0}
