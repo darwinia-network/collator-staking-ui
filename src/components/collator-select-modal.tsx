@@ -5,10 +5,10 @@ import Image from "next/image";
 import { useAccount } from "wagmi";
 import Table, { ColumnType } from "./table";
 import Jazzicon from "./jazzicon";
-import { formatBlanace } from "@/utils";
+import { formatBlanace, prettyNumber } from "@/utils";
 import { notification } from "./notification";
 import DisplayAccountName from "./display-account-name";
-import { useStaking } from "@/hooks";
+import { useDip6, useStaking } from "@/hooks";
 import Tooltip from "./tooltip";
 
 type TabKey = "active" | "waiting";
@@ -22,7 +22,7 @@ interface DataSource {
   sessionKey: string | undefined;
 }
 
-function getColumns(activeTab: TabKey) {
+function getColumns(activeTab: TabKey, isDip6Implemented: boolean) {
   const columns: ColumnType<DataSource>[] = [
     {
       key: "collator",
@@ -87,7 +87,12 @@ function getColumns(activeTab: TabKey) {
           )}
         </div>
       ),
-      render: (row) => <span>{formatBlanace(row.power, 18, { keepZero: false })}</span>,
+      render: (row) => {
+        if (activeTab === "active" && !isDip6Implemented) {
+          return <span>{prettyNumber(row.power)}</span>;
+        }
+        return <span>{formatBlanace(row.power, 18, { keepZero: false, precision: 0 })}</span>;
+      },
     },
     {
       key: "commission",
@@ -183,6 +188,8 @@ export default function CollatorSelectModal({
     }
   }, [address, nominatorCollators, isOpen]);
 
+  const { isDip6Implemented } = useDip6();
+
   return (
     <Modal
       title="Select A Collator"
@@ -212,7 +219,7 @@ export default function CollatorSelectModal({
                 </div>
                 <Table
                   dataSource={dataSource}
-                  columns={getColumns(activeKey)}
+                  columns={getColumns(activeKey, isDip6Implemented)}
                   styles={{ minWidth: 560 }}
                   contentClassName="h-[22vh] lg:h-[28vh]"
                   selectedItem={selectedCollator}
@@ -230,7 +237,7 @@ export default function CollatorSelectModal({
                 <SearchInput onChange={setKeyword} />
                 <Table
                   dataSource={dataSource}
-                  columns={getColumns(activeKey)}
+                  columns={getColumns(activeKey, isDip6Implemented)}
                   styles={{ minWidth: 560 }}
                   contentClassName="h-[28vh]"
                   selectedItem={selectedCollator}
