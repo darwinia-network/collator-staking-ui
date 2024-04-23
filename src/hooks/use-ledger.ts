@@ -93,7 +93,7 @@ export const useLedger = (deposits: Deposit[], defaultValue: DefaultValue) => {
             setStakedDeposits(ledgerData.stakedDeposits || ledgerData.deposits || []);
 
             setStakedRing(BigInt(ledgerData.stakedRing ?? ledgerData.ring ?? 0));
-            setStakedKton(0n);
+            setStakedKton(BigInt(ledgerData.stakedKton ?? 0));
 
             setUnbondingRing(_unbondingRing);
             setUnbondingKton(_unbondingKton);
