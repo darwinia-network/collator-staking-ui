@@ -1,6 +1,6 @@
 import { useApp, useDip6 } from "@/hooks";
 import { StakingRecordsDataSource } from "@/types";
-import { formatBlanace, getChainConfig, notifyTransaction } from "@/utils";
+import { formatBlanace, getChainConfig } from "@/utils";
 import UnbondingTokenTooltip from "./unbonding-token-tooltip";
 import UnbondingDepositTooltip from "./unbonding-deposit-tooltip";
 import { useCallback, useState } from "react";
@@ -12,93 +12,18 @@ import UnbondRingModal from "./unbond-ring-modal";
 import UnbondKtonModal from "./unbond-kton-modal";
 import UnbondDepositModal from "./unbond-deposit-modal";
 import Image from "next/image";
-import { writeContract, waitForTransaction } from "@wagmi/core";
-import { notification } from "./notification";
 
 export default function RecordsBondedTokens({ row }: { row: StakingRecordsDataSource }) {
-  const [ringBusy, setRingBusy] = useState(false);
-  const [depositBusy, setDepositBusy] = useState(false);
-  const [ktonBusy, setKtonBusy] = useState(false);
+  const [ringBusy, _setRingBusy] = useState(false);
+  const [depositBusy, _setDepositBusy] = useState(false);
+  const [ktonBusy, _setKtonBusy] = useState(false);
 
   const { activeChain } = useApp();
   const { isDip6Implemented } = useDip6();
   const { nativeToken, ktonToken } = getChainConfig(activeChain);
 
-  const handleCancelUnbonding = useCallback(
-    async (ring: bigint, kton: bigint, depositIds: number[]) => {
-      if (ring > 0) {
-        setRingBusy(true);
-      } else if (kton > 0) {
-        setKtonBusy(true);
-      } else if (depositIds.length) {
-        setDepositBusy(true);
-      }
-      const { contract, explorer } = getChainConfig(activeChain);
-
-      try {
-        const { hash } = await writeContract({
-          address: contract.staking.address,
-          abi: (await import(`@/config/abi/${contract.staking.abiFile}`)).default,
-          functionName: "restake",
-          args: [ring, depositIds],
-        });
-        const receipt = await waitForTransaction({ hash });
-
-        notifyTransaction(receipt, explorer);
-      } catch (err) {
-        console.error(err);
-        notification.error({ description: (err as Error).message });
-      }
-
-      if (ring > 0) {
-        setRingBusy(false);
-      } else if (kton > 0) {
-        setKtonBusy(false);
-      } else if (depositIds.length) {
-        setDepositBusy(false);
-      }
-    },
-    [activeChain]
-  );
-
-  const handleRelease = useCallback(
-    async (type: "ring" | "kton" | "deposit") => {
-      if (type === "ring") {
-        setRingBusy(true);
-      } else if (type === "kton") {
-        setKtonBusy(true);
-      } else {
-        setDepositBusy(true);
-      }
-      const { contract, explorer } = getChainConfig(activeChain);
-
-      try {
-        const contractAbi = (await import(`@/config/abi/${contract.staking.abiFile}`)).default;
-
-        const { hash } = await writeContract({
-          address: contract.staking.address,
-          abi: contractAbi,
-          functionName: "claim",
-          args: [],
-        });
-        const receipt = await waitForTransaction({ hash });
-
-        notifyTransaction(receipt, explorer);
-      } catch (err) {
-        console.error(err);
-        notification.error({ description: (err as Error).message });
-      }
-
-      if (type === "ring") {
-        setRingBusy(false);
-      } else if (type === "kton") {
-        setKtonBusy(false);
-      } else {
-        setDepositBusy(false);
-      }
-    },
-    [activeChain]
-  );
+  const handleCancelUnbonding = useCallback(async (_ring: bigint, _kton: bigint, _depositIds: number[]) => {}, []);
+  const handleRelease = useCallback(async (_type: "ring" | "kton" | "deposit") => {}, []);
 
   return (
     <div className="flex flex-col">

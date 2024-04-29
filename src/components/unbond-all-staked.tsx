@@ -6,7 +6,7 @@ import { notification } from "./notification";
 import { getChainConfig, notifyTransaction } from "@/utils";
 
 export default function UnbondAllStaked() {
-  const { stakedRing, stakedKton, stakedDeposits } = useStaking();
+  const { stakedRing, stakedDeposits } = useStaking();
   const { activeChain } = useApp();
   const [busy, setBusy] = useState(false);
 
@@ -19,7 +19,7 @@ export default function UnbondAllStaked() {
         address: contract.staking.address,
         abi: (await import(`@/config/abi/${contract.staking.abiFile}`)).default,
         functionName: "unstake",
-        args: [stakedRing, stakedKton, stakedDeposits],
+        args: [stakedRing, stakedDeposits],
       });
       const receipt = await waitForTransaction({ hash });
 
@@ -30,7 +30,7 @@ export default function UnbondAllStaked() {
     }
 
     setBusy(false);
-  }, [activeChain, stakedRing, stakedKton, stakedDeposits]);
+  }, [activeChain, stakedRing, stakedDeposits]);
 
   return (
     <RecordsActionButton busy={busy} onClick={handleUnbond}>

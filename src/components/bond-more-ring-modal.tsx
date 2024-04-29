@@ -42,7 +42,7 @@ export default function BondMoreRingModal({
           address: contract.staking.address,
           abi: (await import(`@/config/abi/${contract.staking.abiFile}`)).default,
           functionName: "stake",
-          args: [inputAmount, 0n, []],
+          args: [inputAmount, []],
         });
         const receipt = await waitForTransaction({ hash });
 
