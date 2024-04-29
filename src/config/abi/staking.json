@@ -13,19 +13,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "claim",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "uint32",
@@ -95,35 +82,6 @@
         "type": "uint16[]"
       }
     ],
-    "name": "restake",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "ringAmount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "ktonAmount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint16[]",
-        "name": "depositIds",
-        "type": "uint16[]"
-      }
-    ],
     "name": "stake",
     "outputs": [
       {
@@ -140,11 +98,6 @@
       {
         "internalType": "uint256",
         "name": "ringAmount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "ktonAmount",
         "type": "uint256"
       },
       {

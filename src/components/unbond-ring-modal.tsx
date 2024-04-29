@@ -45,7 +45,7 @@ export default function UnbondRingModal({
           address: contract.staking.address,
           abi: (await import(`@/config/abi/${contract.staking.abiFile}`)).default,
           functionName: "unstake",
-          args: [inputAmount, 0n, []],
+          args: [inputAmount, []],
         });
         const receipt = await waitForTransaction({ hash });
 

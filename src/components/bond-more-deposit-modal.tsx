@@ -39,7 +39,7 @@ export default function BondMoreDepositModal({
         address: contract.staking.address,
         abi: (await import(`@/config/abi/${contract.staking.abiFile}`)).default,
         functionName: "stake",
-        args: [0n, 0n, checkedDeposits],
+        args: [0n, checkedDeposits],
       });
       const receipt = await waitForTransaction({ hash });
 

@@ -1,9 +1,7 @@
-import { formatBlanace, getChainConfig, notifyTransaction } from "@/utils";
+import { getChainConfig } from "@/utils";
 import UnbondTokenModal from "./unbond-token-modal";
 import { useApp, useStaking } from "@/hooks";
 import { useCallback, useState } from "react";
-import { notification } from "./notification";
-import { writeContract, waitForTransaction } from "@wagmi/core";
 
 export default function UnbondKtonModal({
   isOpen,
@@ -20,40 +18,7 @@ export default function UnbondKtonModal({
 
   const { ktonToken } = getChainConfig(activeChain);
 
-  const handleUnbond = useCallback(async () => {
-    if (stakedKton < inputAmount) {
-      notification.warn({
-        description: `You can't unbond more than ${formatBlanace(stakedKton, ktonToken?.decimals, {
-          precision: 4,
-          keepZero: false,
-        })} ${ktonToken?.symbol}`,
-      });
-    } else {
-      setBusy(true);
-      const { contract, explorer } = getChainConfig(activeChain);
-
-      try {
-        const { hash } = await writeContract({
-          address: contract.staking.address,
-          abi: (await import(`@/config/abi/${contract.staking.abiFile}`)).default,
-          functionName: "unstake",
-          args: [0n, inputAmount, []],
-        });
-        const receipt = await waitForTransaction({ hash });
-
-        if (receipt.status === "success") {
-          setInputAmount(0n);
-          onClose();
-        }
-        notifyTransaction(receipt, explorer);
-      } catch (err) {
-        console.error(err);
-        notification.error({ description: (err as Error).message });
-      }
-
-      setBusy(false);
-    }
-  }, [activeChain, stakedKton, inputAmount, ktonToken, onClose]);
+  const handleUnbond = useCallback(() => setBusy(false), []);
 
   return (
     ktonToken && (
