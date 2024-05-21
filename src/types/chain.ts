@@ -1,5 +1,5 @@
 export enum ChainID {
-  // PANGOLIN = 43,
+  PANGOLIN = 43,
   CRAB = 44,
   // PANGORO = 45,
   DARWINIA = 46,
