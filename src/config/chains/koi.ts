@@ -1,20 +1,20 @@
 import { ChainConfig, ChainID } from "@/types";
 
-export const pangolinChainConfig: ChainConfig = {
-  name: "Pangolin",
-  chainId: ChainID.PANGOLIN,
+export const koiChainConfig: ChainConfig = {
+  name: "Koi",
+  chainId: ChainID.KOI,
   explorer: {
-    name: "Subscan",
-    url: "https://pangolin.subscan.io/",
+    name: "Koiscan",
+    url: "https://koi-scan.darwinia.network",
   },
   rpcMetas: [
     {
-      name: "Pangolin",
-      url: "https://pangolin-rpc.darwinia.network",
+      name: "Koi",
+      url: "https://koi-rpc.darwinia.network",
     },
   ],
   nativeToken: {
-    symbol: "PRING",
+    symbol: "KRING",
     decimals: 18,
     logoPath: "/images/token/ring.svg",
   },
@@ -34,13 +34,13 @@ export const pangolinChainConfig: ChainConfig = {
       abiFile: "staking.json",
     },
   },
-  secondsPerBlock: 12,
+  secondsPerBlock: 6,
   substrate: {
-    graphql: { endpoint: "https://subql.darwinia.network/subql-apps-pangolin/" },
+    graphql: { endpoint: "https://subql.darwinia.network/subql-apps-pangolin/" }, // Fake
     rpc: {
-      wss: "wss://pangolin-rpc.darwinia.network",
-      https: "https://pangolin-rpc.darwinia.network",
+      wss: "wss://koi-scan.darwinia.network",
+      https: "https://koi-scan.darwinia.network",
     },
   },
-  logo: "pangolin.png",
+  logo: "koi.png",
 };
