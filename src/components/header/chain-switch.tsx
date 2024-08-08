@@ -62,7 +62,13 @@ export default function ChainSwitch() {
       >
         {currentChain ? (
           <>
-            <Image alt="Chain logo" width={24} height={24} src={getChainLogo(currentChain.logo)} />
+            <Image
+              alt="Chain logo"
+              width={24}
+              height={24}
+              src={getChainLogo(currentChain.logo)}
+              className="rounded-full"
+            />
             <span className="text-sm font-light">{currentChain.name}</span>
             <Image
               src="/images/caret-down.svg"
@@ -97,7 +103,13 @@ export default function ChainSwitch() {
                     setIsOpen(false);
                   }}
                 >
-                  <Image alt="Chain logo" width={24} height={24} src={getChainLogo(option.logo)} />
+                  <Image
+                    alt="Chain logo"
+                    width={24}
+                    height={24}
+                    src={getChainLogo(option.logo)}
+                    className="rounded-full"
+                  />
                   <span className="text-sm font-light">{getChainConfig(option.chainId).name}</span>
                 </button>
               ))}
