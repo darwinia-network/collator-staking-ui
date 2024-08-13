@@ -5,7 +5,7 @@ export const crabChainConfig: ChainConfig = {
   chainId: ChainID.CRAB,
   explorer: {
     name: "Subscan",
-    url: "https://crab.subscan.io/",
+    url: "https://crab-scan.darwinia.network/",
   },
   rpcMetas: [
     {
@@ -13,13 +13,9 @@ export const crabChainConfig: ChainConfig = {
       url: "https://crab-rpc.darwinia.network",
     },
     {
-      name: "Darwinia Community",
-      url: "https://crab-rpc.darwiniacommunitydao.xyz",
-    },
-    {
-      name: "Dwellir",
-      url: "https://darwiniacrab-rpc.dwellir.com",
-    },
+      name: "DCDAO",
+      url: "https://crab-rpc.dcdao.box",
+    }
   ],
   nativeToken: {
     symbol: "CRAB",
