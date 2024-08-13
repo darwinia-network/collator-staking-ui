@@ -14,7 +14,7 @@ export const darwiniaChainConfig: ChainConfig = {
     },
     {
       name: "Darwinia Community",
-      url: "https://darwinia-rpc.darwiniacommunitydao.xyz",
+      url: "https://crab-rpc.dcdao.box/",
     },
     {
       name: "Dwellir",
