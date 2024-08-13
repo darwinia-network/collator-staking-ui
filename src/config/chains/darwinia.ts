@@ -13,7 +13,7 @@ export const darwiniaChainConfig: ChainConfig = {
       url: "https://rpc.darwinia.network",
     },
     {
-      name: "Darwinia Community",
+      name: "DCDAO",
       url: "https://crab-rpc.dcdao.box/",
     },
     {
