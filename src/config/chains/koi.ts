@@ -38,8 +38,8 @@ export const koiChainConfig: ChainConfig = {
   substrate: {
     graphql: { endpoint: "https://subql.darwinia.network/subql-apps-koi" },
     rpc: {
-      wss: "wss://koi-scan.darwinia.network",
-      https: "https://koi-scan.darwinia.network",
+      wss: "wss://koi-rpc.darwinia.network",
+      https: "https://koi-rpc.darwinia.network",
     },
   },
   logo: "koi.png",
