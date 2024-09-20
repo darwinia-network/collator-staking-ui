@@ -125,7 +125,7 @@ export function StakingProvider({ children }: PropsWithChildren<unknown>) {
   const calcExtraPower = useCallback((stakingRing: bigint, stakingKton: bigint) => stakingRing + stakingKton, []);
 
   useEffect(() => {
-    setMinimumDeposit(BigInt(polkadotApi?.consts.deposit.minLockingAmount.toString() || 0));
+    setMinimumDeposit(BigInt(polkadotApi?.consts.deposit.minLockingAmount?.toString() || 0));
     setMaxCommission(Number(polkadotApi?.consts.darwiniaStaking.maxCommission?.toJSON() || 1000000000) / 10000000);
   }, [polkadotApi]);
 
