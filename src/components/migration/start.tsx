@@ -18,7 +18,7 @@ export function MigrationStartModal({
       okText="Start Migration"
       onOk={onOk}
       onClose={onClose}
-      className="lg:w-[450px]"
+      className="md:w-[450px]"
       busy={false}
     >
       <p className="text-sm">

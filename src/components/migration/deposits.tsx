@@ -28,14 +28,14 @@ export function DepositsModal({
       isOpen={isOpen}
       okText="Start Migration"
       onClose={onClose}
-      className="lg:w-[450px]"
+      className="md:w-[450px]"
       busy={busy}
     >
       <div className="max-h-1/2 flex w-full flex-col gap-5 overflow-y-auto pb-5">
         {deposits.length ? (
           deposits.map(({ id, value }) => (
             <div className="flex justify-between" key={id}>
-              <span className="text-sm font-light text-white">Token ID [{id}]</span>
+              <span className="text-sm font-light text-white">ID#{id}</span>
               <span className="text-sm font-light text-white">{formatBlanace(value)} RING</span>
             </div>
           ))

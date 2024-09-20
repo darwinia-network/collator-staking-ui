@@ -82,6 +82,7 @@ export function MigrationModal({ isOpen, maskClosable = true, onClose = () => un
     }
   }, [activeChain, address, deposits]);
 
+  const isLoading = !isLedgersInitialized || !isDepositsInitialized;
   return (
     <>
       {createPortal(
@@ -103,7 +104,7 @@ export function MigrationModal({ isOpen, maskClosable = true, onClose = () => un
             className="fixed inset-0 z-30 flex items-center justify-center bg-app-black/80 px-large"
             onClick={() => maskClosable && onClose()}
           >
-            <div className="relative flex w-full flex-col lg:w-[450px]" onClick={(e) => e.stopPropagation()}>
+            <div className="relative flex w-full flex-col md:w-[450px]" onClick={(e) => e.stopPropagation()}>
               <Image
                 alt="Close modal"
                 width={24}
@@ -131,7 +132,7 @@ export function MigrationModal({ isOpen, maskClosable = true, onClose = () => un
                   <EnsureMatchNetworkButton
                     className="h-10 w-full border border-primary bg-primary text-sm font-bold text-white"
                     onClick={handleUnbond}
-                    disabled={currentStep !== 1}
+                    disabled={currentStep !== 1 || isLoading}
                     busy={step1Busy}
                   >
                     {total === 0n ? (
@@ -146,7 +147,7 @@ export function MigrationModal({ isOpen, maskClosable = true, onClose = () => un
                   <EnsureMatchNetworkButton
                     className="h-10 w-full border border-primary bg-primary text-sm font-bold text-white"
                     onClick={() => setOpenDeposits(true)}
-                    disabled={currentStep !== 2}
+                    disabled={currentStep !== 2 || isLoading}
                   >
                     {depositTotal === 0n ? (
                       <span className="flex items-center justify-center gap-1">
@@ -160,7 +161,10 @@ export function MigrationModal({ isOpen, maskClosable = true, onClose = () => un
 
                   {currentStep === 3 ? (
                     <Link href="https://collator-staking.ringdao.com" passHref>
-                      <EnsureMatchNetworkButton className="h-10 w-full border border-primary bg-primary text-sm font-bold text-white">
+                      <EnsureMatchNetworkButton
+                        className="h-10 w-full border border-primary bg-primary text-sm font-bold text-white"
+                        disabled={isLoading}
+                      >
                         Step3: Stake in new pool
                       </EnsureMatchNetworkButton>
                     </Link>
@@ -174,7 +178,7 @@ export function MigrationModal({ isOpen, maskClosable = true, onClose = () => un
                   )}
                 </div>
               </div>
-              {(!isLedgersInitialized || !isDepositsInitialized) && (
+              {isLoading && (
                 <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-white/5">
                   <CountLoading color="white" />
                 </div>
