@@ -36,7 +36,7 @@ export const koiChainConfig: ChainConfig = {
   },
   secondsPerBlock: 6,
   substrate: {
-    graphql: { endpoint: "https://subql.darwinia.network/subql-apps-pangolin/" }, // Fake
+    graphql: { endpoint: "https://subql.darwinia.network/subql-apps-koi" },
     rpc: {
       wss: "wss://koi-scan.darwinia.network",
       https: "https://koi-scan.darwinia.network",
