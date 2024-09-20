@@ -21,7 +21,7 @@ export function MigrationStartModal({
       className="md:w-[450px]"
       busy={false}
     >
-      <p className="text-sm">
+      <p className="text-sm leading-[22px]">
         Please migrate to the new RING Pool to receive your rewards and participate in RingDAO governance. For more
         information, please check{" "}
         <Link
@@ -40,7 +40,7 @@ export function MigrationStartModal({
           "Migrate all your Deposit",
           "Go to new staking DApp to create new stake",
         ].map((step, index) => (
-          <div key={index} className="bg-white/20 px-5 py-2.5 text-sm font-light text-white">
+          <div key={index} className="bg-white/20 px-5 py-2.5 text-sm font-light leading-[22px] text-white">
             Step {index + 1}: Click &quot;{["Unstake", "Migrate", "Stake"][index]}&quot; button {step}
           </div>
         ))}
