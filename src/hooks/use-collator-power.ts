@@ -35,7 +35,11 @@ export const useCollatorPower = (
     let sub$$: Subscription | undefined;
 
     if (polkadotApi) {
-      sub$$ = from(polkadotApi.query.darwiniaStaking.exposureCacheStates())
+      sub$$ = from(
+        polkadotApi.query.darwiniaStaking.exposureCacheStates
+          ? polkadotApi.query.darwiniaStaking.exposureCacheStates()
+          : polkadotApi.query.darwiniaStaking.cacheStates()
+      )
         .pipe(
           switchMap((cacheStates) => {
             const index = (cacheStates.toJSON() as ExposureCacheState[]).findIndex((cs) => cs === "Current");
