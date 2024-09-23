@@ -10,9 +10,7 @@ import { writeContract, waitForTransaction } from "@wagmi/core";
 import { notification } from "../notification";
 import EnsureMatchNetworkButton from "../ensure-match-network-button";
 import CountLoading from "../count-loading";
-import { DepositsModal } from "./deposits";
 import Link from "next/link";
-import { useAccount } from "wagmi";
 
 interface Props {
   isOpen: boolean;
@@ -22,19 +20,15 @@ interface Props {
 }
 
 export function MigrationModal({ isOpen, maskClosable = true, onClose = () => undefined }: PropsWithChildren<Props>) {
-  const [openDeposits, setOpenDeposits] = useState(false);
   const [step1Busy, setStep1Busy] = useState(false);
-  const [step2Busy, setStep2Busy] = useState(false);
   const { activeChain } = useApp();
-  const { address } = useAccount();
-  const { stakedRing, stakedDeposit, deposits, isLedgersInitialized, isDepositsInitialized } = useStaking();
+  const { stakedRing, stakedDeposit, isLedgersInitialized } = useStaking();
   const nodeRef = useRef<HTMLDivElement | null>(null);
 
   const total = stakedRing + stakedDeposit;
   const { integer, decimal } = formatBalanceParts(total);
-  const depositTotal = deposits?.reduce((sum, deposit) => sum + deposit.value, 0n) ?? 0n;
 
-  const currentStep = total > 0n ? 1 : depositTotal > 0n ? 2 : 3;
+  const currentStep = total > 0n ? 1 : 2;
 
   const handleUnbond = useCallback(async () => {
     const { contract, explorer } = getChainConfig(activeChain);
@@ -57,32 +51,8 @@ export function MigrationModal({ isOpen, maskClosable = true, onClose = () => un
     }
   }, [activeChain, stakedRing, stakedDeposit]);
 
-  const handleMigrate = useCallback(async () => {
-    const chainConfig = getChainConfig(activeChain);
-    setStep2Busy(true);
+  const isLoading = !isLedgersInitialized;
 
-    try {
-      const { hash } = await writeContract({
-        address: chainConfig.contract.deposit.address,
-        abi: (await import(`@/config/abi/${chainConfig.contract.deposit.abiFile}`)).default,
-        functionName: "migrate",
-        args: [address],
-      });
-      const receipt = await waitForTransaction({ hash });
-
-      if (receipt.status === "success" && deposits?.length === 0) {
-        setOpenDeposits(false);
-      }
-      notifyTransaction(receipt, chainConfig.explorer);
-    } catch (err) {
-      console.error(err);
-      notification.error({ description: (err as Error).message });
-    } finally {
-      setStep2Busy(false);
-    }
-  }, [activeChain, address, deposits]);
-
-  const isLoading = !isLedgersInitialized || !isDepositsInitialized;
   return (
     <>
       {createPortal(
@@ -144,23 +114,32 @@ export function MigrationModal({ isOpen, maskClosable = true, onClose = () => un
                       "Step1: Unstake"
                     )}
                   </EnsureMatchNetworkButton>
-                  <EnsureMatchNetworkButton
-                    className="h-10 w-full border border-primary bg-primary text-sm font-bold text-white"
-                    onClick={() => setOpenDeposits(true)}
-                    disabled={currentStep !== 2 || isLoading}
-                  >
-                    {depositTotal === 0n ? (
-                      <span className="flex items-center justify-center gap-1">
-                        <span>No Deposit Migration required</span>
-                        <Image src="/images/status/success-white.svg" alt="success" width={26} height={26} />
-                      </span>
-                    ) : (
-                      "Step2: Migrate"
-                    )}
-                  </EnsureMatchNetworkButton>
 
-                  {currentStep === 3 ? (
-                    <Link href="https://collator-staking.ringdao.com" passHref>
+                  {currentStep === 2 ? (
+                    <Link
+                      href="https://darwinia.notion.site/How-do-you-migrate-your-deposit-10aaad1d671e80a8bf89e7c8b0b0e670?pvs=74"
+                      passHref
+                      target="_blank"
+                      rel="noopener"
+                    >
+                      <EnsureMatchNetworkButton
+                        className="h-10 w-full border border-primary bg-primary text-sm font-bold text-white"
+                        disabled={isLoading}
+                      >
+                        Step2: Migrate
+                      </EnsureMatchNetworkButton>
+                    </Link>
+                  ) : (
+                    <EnsureMatchNetworkButton
+                      className="h-10 w-full border border-primary bg-primary text-sm font-bold text-white"
+                      disabled
+                    >
+                      Step2: Migrate
+                    </EnsureMatchNetworkButton>
+                  )}
+
+                  {currentStep === 2 ? (
+                    <Link href="https://collator-staking.ringdao.com" passHref target="_blank" rel="noopener">
                       <EnsureMatchNetworkButton
                         className="h-10 w-full border border-primary bg-primary text-sm font-bold text-white"
                         disabled={isLoading}
@@ -188,13 +167,8 @@ export function MigrationModal({ isOpen, maskClosable = true, onClose = () => un
         </CSSTransition>,
         document.body
       )}
-      <DepositsModal
-        isOpen={openDeposits}
-        onClose={() => setOpenDeposits(false)}
-        onConfirm={handleMigrate}
-        deposits={deposits}
-        busy={step2Busy}
-      />
     </>
   );
 }
+
+//
