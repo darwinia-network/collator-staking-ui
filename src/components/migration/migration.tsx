@@ -22,7 +22,7 @@ interface Props {
 export function MigrationModal({ isOpen, maskClosable = true, onClose = () => undefined }: PropsWithChildren<Props>) {
   const [step1Busy, setStep1Busy] = useState(false);
   const { activeChain } = useApp();
-  const { stakedRing, stakedDeposit, isLedgersInitialized } = useStaking();
+  const { stakedRing, stakedDeposit, stakedDeposits, isLedgersInitialized } = useStaking();
   const nodeRef = useRef<HTMLDivElement | null>(null);
 
   const total = stakedRing + stakedDeposit;
@@ -39,8 +39,9 @@ export function MigrationModal({ isOpen, maskClosable = true, onClose = () => un
         address: contract.staking.address,
         abi: (await import(`@/config/abi/${contract.staking.abiFile}`)).default,
         functionName: "unstake",
-        args: [stakedRing, stakedDeposit],
+        args: [stakedRing, stakedDeposits],
       });
+
       const receipt = await waitForTransaction({ hash });
       notifyTransaction(receipt, explorer);
     } catch (err) {
@@ -49,7 +50,7 @@ export function MigrationModal({ isOpen, maskClosable = true, onClose = () => un
     } finally {
       setStep1Busy(false);
     }
-  }, [activeChain, stakedRing, stakedDeposit]);
+  }, [activeChain, stakedRing, stakedDeposits]);
 
   const isLoading = !isLedgersInitialized;
 
