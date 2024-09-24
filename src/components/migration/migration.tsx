@@ -96,7 +96,10 @@ export function MigrationModal({ isOpen, maskClosable = true, onClose = () => un
                   </div>
                 </div>
 
-                <div className="mt-5 flex w-full flex-col gap-5" style={{ pointerEvents: isLoading ? "auto" : "none" }}>
+                <div
+                  className="mt-5 flex w-full flex-col gap-5"
+                  style={{ pointerEvents: !isLoading ? "auto" : "none" }}
+                >
                   <EnsureMatchNetworkButton
                     className="h-10 w-full border border-primary bg-primary text-sm font-bold text-white"
                     onClick={handleUnbond}
