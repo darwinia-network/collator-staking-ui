@@ -36,12 +36,12 @@ export function MigrationStartModal({
       </p>
       <div className="flex flex-col gap-2.5">
         {[
-          "Unstake both your staking RING and Deposit",
-          "Migrate all your Deposit",
-          "Go to new staking DApp to create new stake",
+          "to unstake your staked RING and Deposit.",
+          "to migrate your Deposit.",
+          "to go to the new staking DApp and create a new stake.",
         ].map((step, index) => (
           <div key={index} className="bg-white/20 px-5 py-2.5 text-sm font-light leading-[22px] text-white">
-            Step {index + 1}: Click &quot;{["Unstake", "Migrate", "Stake"][index]}&quot; button {step}
+            Step {index + 1}: Click &quot;{["Unstake", "Migrate", "Stake in new pool"][index]}&quot; button {step}
           </div>
         ))}
       </div>
