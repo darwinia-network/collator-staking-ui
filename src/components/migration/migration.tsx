@@ -22,7 +22,7 @@ interface Props {
 export function MigrationModal({ isOpen, maskClosable = true, onClose = () => undefined }: PropsWithChildren<Props>) {
   const [step1Busy, setStep1Busy] = useState(false);
   const { activeChain } = useApp();
-  const { stakedRing, stakedDeposit, stakedDeposits, isLedgersInitialized } = useStaking();
+  const { stakedRing, stakedDeposit, stakedDeposits, isLedgersInitialized, isDepositsInitialized } = useStaking();
   const nodeRef = useRef<HTMLDivElement | null>(null);
 
   const total = stakedRing + stakedDeposit;
@@ -52,7 +52,7 @@ export function MigrationModal({ isOpen, maskClosable = true, onClose = () => un
     }
   }, [activeChain, stakedRing, stakedDeposits]);
 
-  const isLoading = !isLedgersInitialized;
+  const isLoading = !isLedgersInitialized || !isDepositsInitialized;
 
   return (
     <>
@@ -96,10 +96,7 @@ export function MigrationModal({ isOpen, maskClosable = true, onClose = () => un
                   </div>
                 </div>
 
-                <div
-                  className="mt-5 flex w-full flex-col gap-5"
-                  style={{ pointerEvents: isLedgersInitialized ? "auto" : "none" }}
-                >
+                <div className="mt-5 flex w-full flex-col gap-5" style={{ pointerEvents: isLoading ? "auto" : "none" }}>
                   <EnsureMatchNetworkButton
                     className="h-10 w-full border border-primary bg-primary text-sm font-bold text-white"
                     onClick={handleUnbond}
