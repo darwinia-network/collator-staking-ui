@@ -5,6 +5,7 @@ import { useAccount } from "wagmi";
 import LatestRewards from "./latest-rewards";
 import ReservedInStaking from "./reserved-in-staking";
 import StakingDepositTabs from "./staking-deposit-tabs";
+import { Migration } from "./migration";
 
 export default function StakingDashboard() {
   const { address } = useAccount();
@@ -21,6 +22,7 @@ export default function StakingDashboard() {
       </div>
 
       <StakingDepositTabs />
+      <Migration />
     </>
   );
 }
