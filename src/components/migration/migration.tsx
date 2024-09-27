@@ -118,7 +118,7 @@ export function MigrationModal({ isOpen, maskClosable = true, onClose = () => un
 
                   {currentStep === 2 ? (
                     <Link
-                      href="https://darwinia.notion.site/How-do-you-migrate-your-deposit-10aaad1d671e80a8bf89e7c8b0b0e670?pvs=74"
+                      href="https://ringdao.notion.site/How-do-you-migrate-your-deposits-fffaad1d671e81ab8caeddf83974b9ad"
                       passHref
                       target="_blank"
                       rel="noopener"
