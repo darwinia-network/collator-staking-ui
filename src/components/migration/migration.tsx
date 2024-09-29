@@ -35,11 +35,15 @@ export function MigrationModal({ isOpen, maskClosable = true, onClose = () => un
     setStep1Busy(true);
 
     try {
+      console.log("functionName unstake");
+      console.log("args [ringAmount]", stakedRing);
+      console.log("args [depositIds]", stakedDeposits);
+
       const { hash } = await writeContract({
         address: contract.staking.address,
         abi: (await import(`@/config/abi/${contract.staking.abiFile}`)).default,
         functionName: "unstake",
-        args: [stakedRing || 0n, stakedDeposits || []],
+        args: [stakedRing, stakedDeposits],
       });
 
       const receipt = await waitForTransaction({ hash });
