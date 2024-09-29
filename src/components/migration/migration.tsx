@@ -39,7 +39,7 @@ export function MigrationModal({ isOpen, maskClosable = true, onClose = () => un
         address: contract.staking.address,
         abi: (await import(`@/config/abi/${contract.staking.abiFile}`)).default,
         functionName: "unstake",
-        args: [stakedRing, stakedDeposits],
+        args: [stakedRing || 0n, stakedDeposits || []],
       });
 
       const receipt = await waitForTransaction({ hash });
