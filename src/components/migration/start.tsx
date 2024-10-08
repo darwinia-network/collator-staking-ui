@@ -35,15 +35,13 @@ export function MigrationStartModal({
         . To migrate, please follow the steps below:
       </p>
       <div className="flex flex-col gap-2.5">
-        {[
-          "to unstake your staked RING and Deposit.",
-          "to migrate your Deposit.",
-          "to go to the new staking DApp and create a new stake.",
-        ].map((step, index) => (
-          <div key={index} className="bg-white/20 px-5 py-2.5 text-sm font-light leading-[22px] text-white">
-            Step {index + 1}: Click &quot;{["Unstake", "Migrate", "Stake in new pool"][index]}&quot; button {step}
-          </div>
-        ))}
+        <div className="bg-white/20 px-5 py-2.5 text-sm font-light leading-[22px] text-white">
+          Step 1: Click &quot;Unstake and Migrate&quot; button to go to a new page where you can unstake all your assets
+          and migrate all your deposits.
+        </div>
+        <div className="bg-white/20 px-5 py-2.5 text-sm font-light leading-[22px] text-white">
+          Step 2: Click &quot;Stake in New Pool&quot; button to go to the new staking DApp and create a new stake.
+        </div>
       </div>
     </Modal>
   );
