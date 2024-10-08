@@ -1,16 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import { PropsWithChildren, useCallback, useRef, useState } from "react";
+import { PropsWithChildren, useRef } from "react";
 import { createPortal } from "react-dom";
 import { CSSTransition } from "react-transition-group";
-import { useStaking, useApp } from "@/hooks";
-import { formatBalanceParts, getChainConfig, notifyTransaction } from "@/utils";
-import { writeContract, waitForTransaction } from "@wagmi/core";
-import { notification } from "../notification";
+import { useStaking } from "@/hooks";
+import { formatBalanceParts } from "@/utils";
 import EnsureMatchNetworkButton from "../ensure-match-network-button";
-import CountLoading from "../count-loading";
 import Link from "next/link";
+import CountLoading from "../count-loading";
 
 interface Props {
   isOpen: boolean;
@@ -20,37 +18,12 @@ interface Props {
 }
 
 export function MigrationModal({ isOpen, maskClosable = true, onClose = () => undefined }: PropsWithChildren<Props>) {
-  const [step1Busy, setStep1Busy] = useState(false);
-  const { activeChain } = useApp();
-  const { stakedRing, stakedDeposit, stakedDeposits, isLedgersInitialized, isDepositsInitialized } = useStaking();
+  const { stakedRing, stakedDeposit, isLedgersInitialized, isDepositsInitialized } = useStaking();
+
   const nodeRef = useRef<HTMLDivElement | null>(null);
 
   const total = stakedRing + stakedDeposit;
   const { integer, decimal } = formatBalanceParts(total);
-
-  const currentStep = total > 0n ? 1 : 2;
-
-  const handleUnbond = useCallback(async () => {
-    const { contract, explorer } = getChainConfig(activeChain);
-    setStep1Busy(true);
-
-    try {
-      const { hash } = await writeContract({
-        address: contract.staking.address,
-        abi: (await import(`@/config/abi/${contract.staking.abiFile}`)).default,
-        functionName: "unstake",
-        args: [stakedRing, stakedDeposits],
-      });
-
-      const receipt = await waitForTransaction({ hash });
-      notifyTransaction(receipt, explorer);
-    } catch (err) {
-      console.error(err);
-      notification.error({ description: (err as Error).message });
-    } finally {
-      setStep1Busy(false);
-    }
-  }, [activeChain, stakedRing, stakedDeposits]);
 
   const isLoading = !isLedgersInitialized || !isDepositsInitialized;
 
@@ -96,66 +69,30 @@ export function MigrationModal({ isOpen, maskClosable = true, onClose = () => un
                   </div>
                 </div>
 
-                <div
-                  className="mt-5 flex w-full flex-col gap-5"
-                  style={{ pointerEvents: !isLoading ? "auto" : "none" }}
-                >
-                  <EnsureMatchNetworkButton
-                    className="h-10 w-full border border-primary bg-primary text-sm font-bold text-white"
-                    onClick={handleUnbond}
-                    disabled={currentStep !== 1 || isLoading}
-                    busy={step1Busy}
-                  >
-                    {total === 0n ? (
-                      <span className="flex items-center justify-center gap-1">
-                        <span>No Unstake required</span>
-                        <Image src="/images/status/success-white.svg" alt="success" width={26} height={26} />
-                      </span>
-                    ) : (
-                      "Step1: Unstake"
-                    )}
-                  </EnsureMatchNetworkButton>
+                <div className="mt-5 flex w-full flex-col gap-5">
+                  <Link href="https://migration-helper.darwinia.network" passHref target="_blank" rel="noopener">
+                    <EnsureMatchNetworkButton className="h-10 w-full border border-primary bg-primary text-sm font-bold text-white">
+                      Step 1: Unstake and Migrate
+                    </EnsureMatchNetworkButton>
+                  </Link>
 
-                  {currentStep === 2 ? (
-                    <Link
-                      href="https://ringdao.notion.site/How-do-you-migrate-your-deposits-fffaad1d671e81ab8caeddf83974b9ad"
-                      passHref
+                  <Link href="https://collator-staking.ringdao.com" passHref target="_blank" rel="noopener">
+                    <EnsureMatchNetworkButton className="h-10 w-full border border-primary bg-primary text-sm font-bold text-white">
+                      Step 2: Stake in New Pool
+                    </EnsureMatchNetworkButton>
+                  </Link>
+                  <p className=" text-center text-sm font-light text-gray-500">
+                    🔔 Need help? Check out{" "}
+                    <a
+                      href="https://ringdao.notion.site/How-to-unstake-and-migrate-your-assets-119aad1d671e80ea990cceea71334b89"
                       target="_blank"
                       rel="noopener"
+                      className="text-[#FF0083]"
                     >
-                      <EnsureMatchNetworkButton
-                        className="h-10 w-full border border-primary bg-primary text-sm font-bold text-white"
-                        disabled={isLoading}
-                      >
-                        Step2: Migrate
-                      </EnsureMatchNetworkButton>
-                    </Link>
-                  ) : (
-                    <EnsureMatchNetworkButton
-                      className="h-10 w-full border border-primary bg-primary text-sm font-bold text-white"
-                      disabled
-                    >
-                      Step2: Migrate
-                    </EnsureMatchNetworkButton>
-                  )}
-
-                  {currentStep === 2 ? (
-                    <Link href="https://collator-staking.ringdao.com" passHref target="_blank" rel="noopener">
-                      <EnsureMatchNetworkButton
-                        className="h-10 w-full border border-primary bg-primary text-sm font-bold text-white"
-                        disabled={isLoading}
-                      >
-                        Step3: Stake in new pool
-                      </EnsureMatchNetworkButton>
-                    </Link>
-                  ) : (
-                    <EnsureMatchNetworkButton
-                      className="h-10 w-full border border-primary bg-primary text-sm font-bold text-white"
-                      disabled
-                    >
-                      Step3: Stake in new pool
-                    </EnsureMatchNetworkButton>
-                  )}
+                      the tutorial
+                    </a>{" "}
+                    for detailed instructions.
+                  </p>
                 </div>
               </div>
               {isLoading && (
