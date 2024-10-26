@@ -4,7 +4,7 @@ import { MigrationModal } from "./migration";
 import { useChainId } from "wagmi";
 import { ChainID } from "@/types";
 
-const NETWORKS_REQUIRING_MIGRATION = [ChainID.CRAB, ChainID.KOI];
+const NETWORKS_REQUIRING_MIGRATION = [ChainID.CRAB, ChainID.KOI, ChainID.DARWINIA];
 
 export function Migration() {
   const [modals, setModals] = useState({ start: false, migration: false });
