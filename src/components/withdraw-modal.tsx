@@ -52,7 +52,7 @@ export default function WithdrawModal({
             abi: contractAbi,
             functionName: "claim",
             args: [],
-            overrides: {
+            request: {
               gasLimit: 1000000, // Specify the gas limit (adjust as needed)
             },
           }));
